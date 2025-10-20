@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 /* Kyy's letters — mini starter fonctionnel (TypeScript + Vite)
    — Liste de séries + recherche
