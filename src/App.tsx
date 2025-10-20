@@ -1,10 +1,9 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useMemo, useState } from "react";
 
-/* ==========================================================
-   Kyy's letters — Site de scan sombre
-   Auteur : Chris (Team Kyy)
-   Stack : React + Tailwind (Vite)
-   ========================================================== */
+/* Kyy's letters — mini starter fonctionnel (TypeScript + Vite)
+   — Liste de séries + recherche
+   — Thème sombre via classes utilitaires (ok même sans Tailwind)
+*/
 
 type Chapter = {
   id: string;
@@ -41,7 +40,7 @@ const LIBRARY: Series[] = [
         number: 1,
         lang: "FR",
         releaseDate: "2025-10-18",
-        pages: Array.from({ length: 10 }).map(
+        pages: Array.from({ length: 3 }).map(
           (_, i) => `https://picsum.photos/seed/tributs-${i + 1}/1200/1800`
         ),
       },
@@ -53,8 +52,7 @@ const LIBRARY: Series[] = [
     slug: "kansuke",
     tags: ["FR", "Action", "Team Kyy"],
     cover: "https://picsum.photos/seed/kansuke/400/560",
-    description:
-      "Série factice pour test. Ajoutez vos chapitres et pages.",
+    description: "Série factice pour test. Ajoutez vos chapitres et pages.",
     chapters: [
       {
         id: "kyy-002-c01",
@@ -62,94 +60,158 @@ const LIBRARY: Series[] = [
         number: 1,
         lang: "FR",
         releaseDate: "2025-10-10",
-        pages: Array.from({ length: 16 }).map(
+        pages: Array.from({ length: 3 }).map(
           (_, i) => `https://picsum.photos/seed/kansuke-c1-${i + 1}/1200/1800`
-        ),
-      },
-      {
-        id: "kyy-002-c02",
-        name: "Chapitre 2",
-        number: 2,
-        lang: "FR",
-        releaseDate: "2025-10-19",
-        pages: Array.from({ length: 14 }).map(
-          (_, i) => `https://picsum.photos/seed/kansuke-c2-${i + 1}/1200/1800`
         ),
       },
     ],
   },
 ];
 
-const cls = (...arr: (string | false | undefined)[]) =>
-  arr.filter(Boolean).join(" ");
 const formatDate = (d: string) =>
-  new Date(d).toLocaleDateString("fr-FR", {
-    year: "numeric",
-    month: "short",
-    day: "2-digit",
-  });
+  new Date(d).toLocaleDateString("fr-FR", { year: "numeric", month: "short", day: "2-digit" });
 
-function TopBar({ onNavigateHome }: { onNavigateHome: () => void }) {
+function TopBar({ onHome }: { onHome: () => void }) {
   return (
-    <header className="sticky top-0 z-40 bg-zinc-950/80 backdrop-blur border-b border-zinc-800">
-      <div className="mx-auto max-w-6xl px-4 py-3 flex items-center gap-3">
-        <button
-          onClick={onNavigateHome}
-          className="shrink-0 rounded-xl border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-zinc-200 hover:bg-zinc-800"
-        >
+    <header style={{position:"sticky",top:0,zIndex:10,background:"#0a0a0a",borderBottom:"1px solid #27272a"}}>
+      <div style={{maxWidth:960,margin:"0 auto",padding:"12px 16px",display:"flex",gap:12,alignItems:"center"}}>
+        <button onClick={onHome} style={{border:"1px solid #3f3f46",background:"#18181b",color:"#e4e4e7",padding:"8px 12px",borderRadius:10}}>
           ← Accueil
         </button>
-        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-zinc-100">
-          Kyy's letters
-        </h1>
-        <div className="ml-auto text-xs text-zinc-400">
-          Site de scan — Team Kyy
-        </div>
+        <h1 style={{color:"#fafafa",fontWeight:800,margin:0}}>Kyy&apos;s letters</h1>
+        <div style={{marginLeft:"auto",color:"#a1a1aa",fontSize:12}}>Site de scan — Team Kyy</div>
       </div>
     </header>
   );
 }
 
-function SearchBar({
-  value,
-  setValue,
-}: {
-  value: string;
-  setValue: (v: string) => void;
-}) {
+function SearchBar({ value, setValue }: { value: string; setValue: (v: string) => void }) {
   return (
-    <div className="relative">
-      <input
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
-        placeholder="Rechercher une série, un tag, une langue..."
-        className="w-full rounded-2xl bg-zinc-900 border border-zinc-800 px-4 py-3 text-zinc-200 placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-      />
-      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 text-sm">
-        ⌘K
-      </span>
-    </div>
+    <input
+      value={value}
+      onChange={(e) => setValue(e.target.value)}
+      placeholder="Rechercher une série, un tag, une langue..."
+      style={{
+        width:"100%", border:"1px solid #27272a", background:"#18181b", color:"#e4e4e7",
+        padding:"12px 14px", borderRadius:14
+      }}
+    />
   );
 }
 
-function SeriesCard({
-  series,
-  onOpen,
-}: {
-  series: Series;
-  onOpen: (s: Series) => void;
-}) {
-  const totalCh = series.chapters.length;
-  const latest = series.chapters.reduce((a, b) =>
-    a.releaseDate > b.releaseDate ? a : b
-  );
+function SeriesCard({ s, onOpen }: { s: Series; onOpen: (s: Series) => void }) {
+  const latest = s.chapters.reduce((a,b)=> (a.releaseDate > b.releaseDate ? a : b));
   return (
-    <button
-      onClick={() => onOpen(series)}
-      className="text-left rounded-2xl border border-zinc-800 bg-zinc-925 hover:bg-zinc-900 overflow-hidden group"
-    >
-      <div className="aspect-[2/3] w-full overflow-hidden">
-        <img
-          src={series.cover}
-          alt={series.title}
-          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+    <button onClick={()=>onOpen(s)} style={{textAlign:"left",background:"#0f0f12",border:"1px solid #27272a",borderRadius:16,overflow:"hidden"}}>
+      <div style={{aspectRatio:"2/3",width:"100%",overflow:"hidden"}}>
+        <img src={s.cover} alt={s.title} style={{width:"100%",height:"100%",objectFit:"cover"}} />
+      </div>
+      <div style={{padding:12}}>
+        <div style={{color:"#fafafa",fontWeight:700}}>{s.title}</div>
+        <div style={{color:"#a1a1aa",fontSize:12,marginTop:4}}>{s.description}</div>
+        <div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:8}}>
+          {s.tags.map((t)=>(
+            <span key={t} style={{fontSize:10,color:"#a1a1aa",border:"1px solid #3f3f46",padding:"4px 8px",borderRadius:999}}>{t}</span>
+          ))}
+          <span style={{fontSize:10,color:"#a7f3d0",border:"1px solid #065f46",padding:"4px 8px",borderRadius:999}}>
+            {s.chapters.length} chap.
+          </span>
+          <span style={{fontSize:10,color:"#93c5fd",border:"1px solid #1d4ed8",padding:"4px 8px",borderRadius:999}}>
+            Maj {formatDate(latest.releaseDate)}
+          </span>
+        </div>
+      </div>
+    </button>
+  );
+}
+
+export default function App() {
+  const [query, setQuery] = useState("");
+  const [current, setCurrent] = useState<Series | null>(null);
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return LIBRARY;
+    return LIBRARY.filter(
+      s =>
+        s.title.toLowerCase().includes(q) ||
+        s.tags.some(t => t.toLowerCase().includes(q))
+    );
+  }, [query]);
+
+  return (
+    <div style={{minHeight:"100vh",background:"#0a0a0a",color:"#e5e7eb"}}>
+      <TopBar onHome={() => setCurrent(null)} />
+
+      {!current && (
+        <main style={{maxWidth:960,margin:"0 auto",padding:"24px 16px"}}>
+          <div style={{display:"grid",gap:16,gridTemplateColumns:"1fr 1fr"}}>
+            <div style={{gridColumn:"span 1 / span 1"}}>
+              <SearchBar value={query} setValue={setQuery} />
+            </div>
+            <div style={{border:"1px solid #27272a",background:"#0f0f12",borderRadius:16,padding:12}}>
+              <div style={{fontWeight:700,marginBottom:6}}>Bienvenue sur Kyy&apos;s letters</div>
+              <div style={{color:"#a1a1aa",fontSize:14}}>Lecteur de scans privé (Team Kyy).</div>
+            </div>
+          </div>
+
+          <h2 style={{color:"#a1a1aa",fontSize:12,marginTop:24,letterSpacing:1,textTransform:"uppercase"}}>
+            Bibliothèque
+          </h2>
+          <div style={{display:"grid",gap:12,gridTemplateColumns:"repeat(auto-fill,minmax(180px,1fr))"}}>
+            {filtered.map((s)=>(
+              <SeriesCard key={s.id} s={s} onOpen={setCurrent} />
+            ))}
+          </div>
+        </main>
+      )}
+
+      {current && (
+        <main style={{maxWidth:960,margin:"0 auto",padding:"24px 16px"}}>
+          <button
+            onClick={() => setCurrent(null)}
+            style={{border:"1px solid #27272a",background:"#18181b",color:"#e4e4e7",padding:"8px 12px",borderRadius:10,marginBottom:12}}
+          >
+            ← Retour
+          </button>
+
+          <div style={{display:"grid",gap:16,gridTemplateColumns:"220px 1fr"}}>
+            <img src={current.cover} alt="cover" style={{width:"100%",borderRadius:16,border:"1px solid #27272a"}} />
+            <div>
+              <h2 style={{margin:"6px 0 8px 0"}}>{current.title}</h2>
+              <p style={{color:"#d4d4d8"}}>{current.description}</p>
+              <div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:8}}>
+                {current.tags.map((t)=>(
+                  <span key={t} style={{fontSize:10,color:"#a1a1aa",border:"1px solid #3f3f46",padding:"4px 8px",borderRadius:999}}>{t}</span>
+                ))}
+              </div>
+
+              <h3 style={{color:"#a1a1aa",fontSize:12,marginTop:16,letterSpacing:1,textTransform:"uppercase"}}>Chapitres</h3>
+              <div style={{display:"grid",gap:8}}>
+                {current.chapters
+                  .slice()
+                  .sort((a,b)=>b.number-a.number)
+                  .map((ch)=>(
+                    <div key={ch.id} style={{display:"flex",alignItems:"center",gap:8,border:"1px solid #27272a",background:"#0f0f12",borderRadius:12,padding:"8px 10px"}}>
+                      <div style={{color:"#e5e7eb"}}>{ch.name}</div>
+                      <div style={{marginLeft:"auto",color:"#a1a1aa",fontSize:12}}>{ch.lang} • {formatDate(ch.releaseDate)}</div>
+                      <a href={ch.pages[0]} target="_blank" rel="noreferrer"
+                         style={{border:"1px solid #3730a3",background:"#1e1b4b",color:"#c7d2fe",padding:"6px 10px",borderRadius:10,textDecoration:"none"}}>
+                        Ouvrir (démo)
+                      </a>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          </div>
+        </main>
+      )}
+
+      <footer style={{borderTop:"1px solid #18181b",background:"#0a0a0a"}}>
+        <div style={{maxWidth:960,margin:"0 auto",padding:"16px",color:"#a1a1aa",fontSize:12}}>
+          © {new Date().getFullYear()} Kyy&apos;s letters — Team Kyy · Privé (usage interne).
+        </div>
+      </footer>
+    </div>
+  );
+}
