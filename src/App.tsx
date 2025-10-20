@@ -1,8 +1,8 @@
 import { useMemo, useState } from "react";
 
-/* Kyy's letters — mini starter fonctionnel (TypeScript + Vite)
-   — Liste de séries + recherche
-   — Thème sombre via classes utilitaires (ok même sans Tailwind)
+/* Kyy's letters — version large (centrée, pro)
+   Thème sombre + bibliothèque de scans
+   Auteur : Chris (Team Kyy)
 */
 
 type Chapter = {
@@ -69,54 +69,149 @@ const LIBRARY: Series[] = [
 ];
 
 const formatDate = (d: string) =>
-  new Date(d).toLocaleDateString("fr-FR", { year: "numeric", month: "short", day: "2-digit" });
+  new Date(d).toLocaleDateString("fr-FR", {
+    year: "numeric",
+    month: "short",
+    day: "2-digit",
+  });
 
 function TopBar({ onHome }: { onHome: () => void }) {
   return (
-    <header style={{position:"sticky",top:0,zIndex:10,background:"#0a0a0a",borderBottom:"1px solid #27272a"}}>
-      <div style={{maxWidth:960,margin:"0 auto",padding:"12px 16px",display:"flex",gap:12,alignItems:"center"}}>
-        <button onClick={onHome} style={{border:"1px solid #3f3f46",background:"#18181b",color:"#e4e4e7",padding:"8px 12px",borderRadius:10}}>
+    <header
+      style={{
+        position: "sticky",
+        top: 0,
+        zIndex: 10,
+        background: "#0a0a0a",
+        borderBottom: "1px solid #27272a",
+      }}
+    >
+      <div
+        style={{
+          maxWidth: 1280,
+          margin: "0 auto",
+          padding: "12px 16px",
+          display: "flex",
+          gap: 12,
+          alignItems: "center",
+        }}
+      >
+        <button
+          onClick={onHome}
+          style={{
+            border: "1px solid #3f3f46",
+            background: "#18181b",
+            color: "#e4e4e7",
+            padding: "8px 12px",
+            borderRadius: 10,
+          }}
+        >
           ← Accueil
         </button>
-        <h1 style={{color:"#fafafa",fontWeight:800,margin:0}}>Kyy&apos;s letters</h1>
-        <div style={{marginLeft:"auto",color:"#a1a1aa",fontSize:12}}>Site de scan — Team Kyy</div>
+        <h1
+          style={{
+            color: "#fafafa",
+            fontWeight: 800,
+            fontSize: 24,
+            margin: 0,
+          }}
+        >
+          Kyy&apos;s <span style={{ color: "#60a5fa" }}>letters</span>
+        </h1>
+        <div style={{ marginLeft: "auto", color: "#a1a1aa", fontSize: 12 }}>
+          Site de scan — Team Kyy
+        </div>
       </div>
     </header>
   );
 }
 
-function SearchBar({ value, setValue }: { value: string; setValue: (v: string) => void }) {
+function SearchBar({
+  value,
+  setValue,
+}: {
+  value: string;
+  setValue: (v: string) => void;
+}) {
   return (
     <input
       value={value}
       onChange={(e) => setValue(e.target.value)}
       placeholder="Rechercher une série, un tag, une langue..."
       style={{
-        width:"100%", border:"1px solid #27272a", background:"#18181b", color:"#e4e4e7",
-        padding:"12px 14px", borderRadius:14
+        width: "100%",
+        border: "1px solid #27272a",
+        background: "#18181b",
+        color: "#e4e4e7",
+        padding: "12px 14px",
+        borderRadius: 14,
       }}
     />
   );
 }
 
 function SeriesCard({ s, onOpen }: { s: Series; onOpen: (s: Series) => void }) {
-  const latest = s.chapters.reduce((a,b)=> (a.releaseDate > b.releaseDate ? a : b));
+  const latest = s.chapters.reduce((a, b) =>
+    a.releaseDate > b.releaseDate ? a : b
+  );
   return (
-    <button onClick={()=>onOpen(s)} style={{textAlign:"left",background:"#0f0f12",border:"1px solid #27272a",borderRadius:16,overflow:"hidden"}}>
-      <div style={{aspectRatio:"2/3",width:"100%",overflow:"hidden"}}>
-        <img src={s.cover} alt={s.title} style={{width:"100%",height:"100%",objectFit:"cover"}} />
+    <button
+      onClick={() => onOpen(s)}
+      style={{
+        textAlign: "left",
+        background: "#0f0f12",
+        border: "1px solid #27272a",
+        borderRadius: 16,
+        overflow: "hidden",
+      }}
+    >
+      <div style={{ aspectRatio: "2/3", width: "100%", overflow: "hidden" }}>
+        <img
+          src={s.cover}
+          alt={s.title}
+          style={{ width: "100%", height: "100%", objectFit: "cover" }}
+        />
       </div>
-      <div style={{padding:12}}>
-        <div style={{color:"#fafafa",fontWeight:700}}>{s.title}</div>
-        <div style={{color:"#a1a1aa",fontSize:12,marginTop:4}}>{s.description}</div>
-        <div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:8}}>
-          {s.tags.map((t)=>(
-            <span key={t} style={{fontSize:10,color:"#a1a1aa",border:"1px solid #3f3f46",padding:"4px 8px",borderRadius:999}}>{t}</span>
+      <div style={{ padding: 12 }}>
+        <div style={{ color: "#fafafa", fontWeight: 700 }}>{s.title}</div>
+        <div style={{ color: "#a1a1aa", fontSize: 12, marginTop: 4 }}>
+          {s.description}
+        </div>
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 8 }}>
+          {s.tags.map((t) => (
+            <span
+              key={t}
+              style={{
+                fontSize: 10,
+                color: "#a1a1aa",
+                border: "1px solid #3f3f46",
+                padding: "4px 8px",
+                borderRadius: 999,
+              }}
+            >
+              {t}
+            </span>
           ))}
-          <span style={{fontSize:10,color:"#a7f3d0",border:"1px solid #065f46",padding:"4px 8px",borderRadius:999}}>
+          <span
+            style={{
+              fontSize: 10,
+              color: "#a7f3d0",
+              border: "1px solid #065f46",
+              padding: "4px 8px",
+              borderRadius: 999,
+            }}
+          >
             {s.chapters.length} chap.
           </span>
-          <span style={{fontSize:10,color:"#93c5fd",border:"1px solid #1d4ed8",padding:"4px 8px",borderRadius:999}}>
+          <span
+            style={{
+              fontSize: 10,
+              color: "#93c5fd",
+              border: "1px solid #1d4ed8",
+              padding: "4px 8px",
+              borderRadius: 999,
+            }}
+          >
             Maj {formatDate(latest.releaseDate)}
           </span>
         </div>
@@ -133,83 +228,88 @@ export default function App() {
     const q = query.trim().toLowerCase();
     if (!q) return LIBRARY;
     return LIBRARY.filter(
-      s =>
+      (s) =>
         s.title.toLowerCase().includes(q) ||
-        s.tags.some(t => t.toLowerCase().includes(q))
+        s.tags.some((t) => t.toLowerCase().includes(q))
     );
   }, [query]);
 
   return (
-    <div style={{minHeight:"100vh",background:"#0a0a0a",color:"#e5e7eb"}}>
+    <div style={{ minHeight: "100vh", background: "#0a0a0a", color: "#e5e7eb" }}>
       <TopBar onHome={() => setCurrent(null)} />
 
       {!current && (
-        <main style={{maxWidth:960,margin:"0 auto",padding:"24px 16px"}}>
-          <div style={{display:"grid",gap:16,gridTemplateColumns:"1fr 1fr"}}>
-            <div style={{gridColumn:"span 1 / span 1"}}>
+        <main
+          style={{
+            maxWidth: 1280,
+            margin: "0 auto",
+            padding: "24px 16px",
+          }}
+        >
+          <div style={{ display: "grid", gap: 16, gridTemplateColumns: "1fr 1fr" }}>
+            <div style={{ gridColumn: "span 1 / span 1" }}>
               <SearchBar value={query} setValue={setQuery} />
             </div>
-            <div style={{border:"1px solid #27272a",background:"#0f0f12",borderRadius:16,padding:12}}>
-              <div style={{fontWeight:700,marginBottom:6}}>Bienvenue sur Kyy&apos;s letters</div>
-              <div style={{color:"#a1a1aa",fontSize:14}}>Lecteur de scans privé (Team Kyy).</div>
+            <div
+              style={{
+                border: "1px solid #27272a",
+                background: "#0f0f12",
+                borderRadius: 16,
+                padding: 12,
+              }}
+            >
+              <div style={{ fontWeight: 700, marginBottom: 6 }}>
+                Bienvenue sur Kyy&apos;s letters
+              </div>
+              <div style={{ color: "#a1a1aa", fontSize: 14 }}>
+                Lecteur de scans privé (Team Kyy).
+              </div>
             </div>
           </div>
 
-          <h2 style={{color:"#a1a1aa",fontSize:12,marginTop:24,letterSpacing:1,textTransform:"uppercase"}}>
+          <h2
+            style={{
+              color: "#a1a1aa",
+              fontSize: 12,
+              marginTop: 24,
+              letterSpacing: 1,
+              textTransform: "uppercase",
+            }}
+          >
             Bibliothèque
           </h2>
-          <div style={{display:"grid",gap:12,gridTemplateColumns:"repeat(auto-fill,minmax(180px,1fr))"}}>
-            {filtered.map((s)=>(
+          <div
+            style={{
+              display: "grid",
+              gap: 16,
+              gridTemplateColumns: "repeat(auto-fill,minmax(220px,1fr))",
+            }}
+          >
+            {filtered.map((s) => (
               <SeriesCard key={s.id} s={s} onOpen={setCurrent} />
             ))}
           </div>
         </main>
       )}
 
-      {current && (
-        <main style={{maxWidth:960,margin:"0 auto",padding:"24px 16px"}}>
-          <button
-            onClick={() => setCurrent(null)}
-            style={{border:"1px solid #27272a",background:"#18181b",color:"#e4e4e7",padding:"8px 12px",borderRadius:10,marginBottom:12}}
-          >
-            ← Retour
-          </button>
-
-          <div style={{display:"grid",gap:16,gridTemplateColumns:"220px 1fr"}}>
-            <img src={current.cover} alt="cover" style={{width:"100%",borderRadius:16,border:"1px solid #27272a"}} />
-            <div>
-              <h2 style={{margin:"6px 0 8px 0"}}>{current.title}</h2>
-              <p style={{color:"#d4d4d8"}}>{current.description}</p>
-              <div style={{display:"flex",gap:6,flexWrap:"wrap",marginTop:8}}>
-                {current.tags.map((t)=>(
-                  <span key={t} style={{fontSize:10,color:"#a1a1aa",border:"1px solid #3f3f46",padding:"4px 8px",borderRadius:999}}>{t}</span>
-                ))}
-              </div>
-
-              <h3 style={{color:"#a1a1aa",fontSize:12,marginTop:16,letterSpacing:1,textTransform:"uppercase"}}>Chapitres</h3>
-              <div style={{display:"grid",gap:8}}>
-                {current.chapters
-                  .slice()
-                  .sort((a,b)=>b.number-a.number)
-                  .map((ch)=>(
-                    <div key={ch.id} style={{display:"flex",alignItems:"center",gap:8,border:"1px solid #27272a",background:"#0f0f12",borderRadius:12,padding:"8px 10px"}}>
-                      <div style={{color:"#e5e7eb"}}>{ch.name}</div>
-                      <div style={{marginLeft:"auto",color:"#a1a1aa",fontSize:12}}>{ch.lang} • {formatDate(ch.releaseDate)}</div>
-                      <a href={ch.pages[0]} target="_blank" rel="noreferrer"
-                         style={{border:"1px solid #3730a3",background:"#1e1b4b",color:"#c7d2fe",padding:"6px 10px",borderRadius:10,textDecoration:"none"}}>
-                        Ouvrir (démo)
-                      </a>
-                    </div>
-                  ))}
-              </div>
-            </div>
-          </div>
-        </main>
-      )}
-
-      <footer style={{borderTop:"1px solid #18181b",background:"#0a0a0a"}}>
-        <div style={{maxWidth:960,margin:"0 auto",padding:"16px",color:"#a1a1aa",fontSize:12}}>
-          © {new Date().getFullYear()} Kyy&apos;s letters — Team Kyy · Privé (usage interne).
+      <footer
+        style={{
+          borderTop: "1px solid #18181b",
+          background: "#0a0a0a",
+          marginTop: 40,
+        }}
+      >
+        <div
+          style={{
+            maxWidth: 1280,
+            margin: "0 auto",
+            padding: "16px",
+            color: "#a1a1aa",
+            fontSize: 12,
+          }}
+        >
+          © {new Date().getFullYear()} Kyy&apos;s letters — Team Kyy · Privé
+          (usage interne).
         </div>
       </footer>
     </div>
