@@ -23,10 +23,7 @@ type Series = {
   hot?: boolean;
 };
 
-/** ---------- Données démo ----------
- * Tu peux remettre des séries si tu veux voir les cartes se remplir.
- * Laisse vide pour afficher les messages "Aucune série..." / "Aucun chapitre..."
- */
+/** ---------- Données démo (laisse vide si tu veux voir les états vides) ---------- */
 const LIBRARY: Series[] = [
   // {
   //   id: "s1",
@@ -57,7 +54,7 @@ const fmtViews = (n?: number) => {
   return `${n} vues`;
 };
 
-/** ---------- Header (avec bouton Admin) ---------- */
+/** ---------- Header (desktop + mobile) ---------- */
 function Header({
   query,
   setQuery,
@@ -65,9 +62,21 @@ function Header({
   query: string;
   setQuery: (v: string) => void;
 }) {
+  const [menuOpen, setMenuOpen] = useState(false);
+
   return (
     <header className="site-header">
       <div className="container header-inner">
+        <button
+          className="burger"
+          aria-label="Menu"
+          onClick={() => setMenuOpen(true)}
+        >
+          <span />
+          <span />
+          <span />
+        </button>
+
         <div className="brand">K</div>
 
         <nav className="top-nav">
@@ -94,6 +103,48 @@ function Header({
           />
         </div>
       </div>
+
+      {/* Drawer mobile */}
+      <div className={`drawer ${menuOpen ? "open" : ""}`}>
+        <div className="drawer-header">
+          <div className="brand small">K</div>
+          <button
+            className="drawer-close"
+            aria-label="Fermer"
+            onClick={() => setMenuOpen(false)}
+          >
+            ✕
+          </button>
+        </div>
+        <a className="drawer-link" href="#" onClick={() => setMenuOpen(false)}>
+          Perso
+        </a>
+        <a className="drawer-link" href="#" onClick={() => setMenuOpen(false)}>
+          Recrutement
+        </a>
+        <a
+          className="drawer-link accent"
+          href="#/admin"
+          onClick={() => setMenuOpen(false)}
+        >
+          Admin
+        </a>
+        <a className="drawer-link" href="#" onClick={() => setMenuOpen(false)}>
+          Connexion
+        </a>
+
+        <div className="drawer-search">
+          <input
+            className="search-input"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Rechercher…"
+          />
+        </div>
+      </div>
+
+      {/* Overlay mobile */}
+      {menuOpen && <div className="drawer-overlay" onClick={() => setMenuOpen(false)} />}
     </header>
   );
 }
@@ -113,6 +164,30 @@ function SeriesCard({ s }: { s: Series }) {
         </div>
       </div>
     </a>
+  );
+}
+
+/** ---------- Bottom nav (mobile) ---------- */
+function MobileBottomNav() {
+  return (
+    <nav className="bottom-nav">
+      <a href="#" className="bottom-item">
+        <div className="bi">🏠</div>
+        <div className="bt">Accueil</div>
+      </a>
+      <a href="#" className="bottom-item">
+        <div className="bi">🔎</div>
+        <div className="bt">Rechercher</div>
+      </a>
+      <a href="#" className="bottom-item">
+        <div className="bi">🔥</div>
+        <div className="bt">Tendances</div>
+      </a>
+      <a href="#/admin" className="bottom-item">
+        <div className="bi">⚙️</div>
+        <div className="bt">Admin</div>
+      </a>
+    </nav>
   );
 }
 
@@ -254,9 +329,12 @@ export default function App() {
         </section>
 
         <footer className="footer muted">
-          © {new Date().getFullYear()} — Tous droits réservés (structure demo)
+          © {new Date().getFullYear()} — Tous droits réservés
         </footer>
       </main>
+
+      {/* Barre mobile (auto masquée sur desktop) */}
+      <MobileBottomNav />
     </div>
   );
 }
