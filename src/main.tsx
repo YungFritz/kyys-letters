@@ -1,15 +1,8 @@
-import React from "react";
-import ReactDOM from "react-dom/client";
+import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./index.css";
 
-ReactDOM.createRoot(document.getElementById("root")!).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-);
-  // En prod Vercel, pour éviter le double render dev, tu peux enlever StrictMode si tu veux
-  //<React.StrictMode>
-    <App />
-  //</React.StrictMode>
-);
+const el = document.getElementById("root");
+if (!el) throw new Error("Root element #root not found");
+
+createRoot(el).render(<App />);
