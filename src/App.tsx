@@ -23,16 +23,14 @@ type Series = {
   hot?: boolean;
 };
 
-/** ---------- Données démo (laisse vide si tu veux les états “aucune série/chapitre…”) ---------- */
+/** ---------- Données démo (laisse vide pour afficher les états vides) ---------- */
 const LIBRARY: Series[] = [
-  // Exemple si tu veux tester avec des cartes :
+  // Décommente pour tester des cartes :
   // {
   //   id: "s1",
   //   title: "Série A",
   //   slug: "serie-a",
   //   tags: ["FR", "Action"],
-  //   description: "Petit résumé A",
-  //   cover: "",
   //   views: 2400,
   //   hot: true,
   //   chapters: [
@@ -58,7 +56,7 @@ function Header({
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
 
-  // Empêche le scroll de la page quand le drawer est ouvert (iOS friendly)
+  // Empêche le scroll de la page quand le “drawer” est ouvert (iOS friendly)
   useEffect(() => {
     const prev = document.body.style.overflow;
     document.body.style.overflow = menuOpen ? "hidden" : "auto";
@@ -107,7 +105,7 @@ function Header({
         </div>
       </div>
 
-      {/* Drawer mobile */}
+      {/* Drawer mobile (carte flottante) */}
       <div className={`drawer ${menuOpen ? "open" : ""}`}>
         <div className="drawer-header">
           <div className="brand small">K</div>
