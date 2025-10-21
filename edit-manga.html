@@ -1,49 +1,33 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="fr">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Éditer / Supprimer — Admin</title>
-    <link rel="stylesheet" href="/src/index.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Modifier un manga | Kyy’s Letters</title>
+    <link rel="stylesheet" href="/src/index.css" />
   </head>
-  <body class="page-root">
-    <header class="site-header">
-      <div class="container header-inner">
-        <div class="brand">K</div>
-        <nav class="top-nav">
-          <a class="chip" href="/">Accueil</a>
-          <a class="chip chip-accent" href="/admin.html">Admin</a>
-        </nav>
-        <div class="search-wrap"></div>
-      </div>
+  <body class="bg-[#0d0d0d] text-white min-h-screen p-6">
+    <header class="flex justify-between items-center mb-6">
+      <h1 class="text-2xl font-bold">Modifier un manga</h1>
+      <button onclick="window.location.href='admin.html'" class="bg-[#222] px-3 py-1 rounded">
+        Retour
+      </button>
     </header>
 
-    <main class="container admin-wrap">
-      <div class="panel hero">
-        <h1 class="hero-title">Éditer / Supprimer une série</h1>
-        <p class="hero-sub">Clique une carte pour modifier ; bouton rouge pour supprimer.</p>
-      </div>
+    <section class="max-w-xl mx-auto">
+      <input
+        type="text"
+        placeholder="Rechercher un manga..."
+        class="bg-[#1a1a1a] w-full p-2 rounded mb-4"
+      />
 
-      <section id="list" class="grid-cards" style="margin-top:14px;"></section>
-
-      <template id="card-tpl">
-        <div class="card">
-          <div class="card-cover">COVER</div>
-          <div class="card-body">
-            <div class="card-title"></div>
-            <div class="card-meta">
-              <span class="pill series-tags"></span>
-              <span class="muted series-chap"></span>
-            </div>
-            <div style="display:flex;gap:8px;margin-top:8px;">
-              <button class="btn-accent btn-edit" type="button">Éditer</button>
-              <button class="chip btn-del" type="button" style="background:#2a1212;border-color:#442222;">Supprimer</button>
-            </div>
-          </div>
+      <div class="bg-[#1a1a1a] p-4 rounded mb-4">
+        <p class="font-semibold">Exemple Manga</p>
+        <div class="flex gap-2 mt-2">
+          <button class="bg-[#25633c] hover:bg-[#2b7546] px-3 py-1 rounded">Éditer</button>
+          <button class="bg-[#633c3c] hover:bg-[#754646] px-3 py-1 rounded">Supprimer</button>
         </div>
-      </template>
-    </main>
-
-    <script type="module" src="/src/pages/edite-manga.ts"></script>
+      </div>
+    </section>
   </body>
 </html>
