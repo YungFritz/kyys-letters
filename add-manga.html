@@ -1,86 +1,54 @@
 <!doctype html>
 <html lang="fr">
-<head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Ajouter un manga — Kyy’s Letters</title>
-<style>
-  :root{--bg:#0b0b0d;--panel:#101116;--stroke:#1b1c22;--text:#e5e7eb;--muted:#9aa0a6;--accent:#9ef9b3;}
-  body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,Segoe UI,Roboto,Ubuntu,Helvetica,Arial}
-  .header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--stroke);background:#0d0e12}
-  .container{padding:16px;max-width:720px;margin:0 auto}
-  .label{margin:12px 0 6px;color:var(--muted)}
-  input[type="text"]{width:100%;background:#11131a;border:1px solid var(--stroke);border-radius:10px;padding:10px;color:var(--text)}
-  input[type="file"]{color:var(--muted)}
-  .btn{color:#a7f3d0;font-weight:600;border:1px solid #2b4c18;background:#0c1409;padding:8px 14px;border-radius:10px;text-decoration:none;cursor:pointer}
-  .btn:hover{background:#18361c}
-  .back{color:var(--muted);text-decoration:none}
-  .preview{margin-top:10px;border:1px solid var(--stroke);border-radius:12px;overflow:hidden;background:#12131a}
-  .preview img{display:block;width:100%;height:auto}
-  .footer{padding:14px 16px;border-top:1px solid var(--stroke);color:var(--muted);background:#0b0c10;margin-top:20px}
-</style>
-</head>
-<body>
-  <div class="header">
-    <div>Ajouter un manga</div>
-    <div style="display:flex;gap:10px">
-      <a class="back" href="#/admin" onclick="parent.location.hash='#/admin'">← Retour admin</a>
-    </div>
-  </div>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Ajouter une série — Admin</title>
+    <link rel="stylesheet" href="/src/index.css">
+  </head>
+  <body class="page-root">
+    <header class="site-header">
+      <div class="container header-inner">
+        <div class="brand">K</div>
+        <nav class="top-nav">
+          <a class="chip" href="/">Accueil</a>
+          <a class="chip chip-accent" href="/admin.html">Admin</a>
+        </nav>
+        <div class="search-wrap"></div>
+      </div>
+    </header>
 
-  <div class="container">
-    <label class="label">Titre</label>
-    <input id="title" type="text" placeholder="Titre du manga"/>
+    <main class="container admin-wrap">
+      <div class="panel hero">
+        <h1 class="hero-title">Ajouter une série</h1>
+        <p class="hero-sub">Remplis le formulaire et enregistre.</p>
+      </div>
 
-    <label class="label">Cover (image)</label>
-    <input id="file" type="file" accept="image/*"/>
+      <form id="add-form" class="panel" style="display:grid;gap:12px;">
+        <label> Titre
+          <input required name="title" class="search-input" placeholder="Nom de la série" />
+        </label>
 
-    <div id="preview" class="preview" style="display:none"></div>
+        <label> Tags (séparés par des virgules)
+          <input name="tags" class="search-input" placeholder="FR, Action" />
+        </label>
 
-    <div style="display:flex;gap:10px;margin-top:14px">
-      <button class="btn" onclick="create()">Créer</button>
-    </div>
-  </div>
+        <label> Description
+          <textarea name="description" class="search-input" rows="4" placeholder="Résumé (optionnel)"></textarea>
+        </label>
 
-  <div class="footer">© <span id="year"></span> — Kyy’s Letters</div>
+        <label> Cover (image)
+          <input type="file" name="cover" accept="image/*" />
+        </label>
 
-<script>
-const STORAGE_KEY="kyys_letters_library_v2";
-document.getElementById("year").textContent = new Date().getFullYear();
+        <div style="display:flex;gap:10px;align-items:center;">
+          <button class="btn-accent" type="submit">Enregistrer</button>
+          <a class="chip" href="/admin.html">Annuler</a>
+        </div>
+        <div id="msg" class="muted"></div>
+      </form>
+    </main>
 
-let coverData=null;
-document.getElementById("file").addEventListener("change", e=>{
-  const f=e.target.files?.[0]; if(!f) return;
-  const rd=new FileReader();
-  rd.onload=()=>{
-    coverData=rd.result;
-    const pv=document.getElementById("preview");
-    pv.style.display="block";
-    pv.innerHTML=`<img src="${coverData}" alt="cover"/>`;
-  };
-  rd.readAsDataURL(f);
-});
-
-function load(){ try{const raw=localStorage.getItem(STORAGE_KEY);return raw?JSON.parse(raw):[]}catch{return[]} }
-function save(lib){ localStorage.setItem(STORAGE_KEY, JSON.stringify(lib)); }
-function slugify(t){ return t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/(^-|-$)/g,""); }
-
-function create(){
-  const title = (document.getElementById("title").value||"").trim();
-  if(!title){ alert("Mets un titre."); return; }
-  const s = {
-    id: crypto.randomUUID(),
-    title,
-    slug: slugify(title),
-    cover: coverData || null,
-    chapters: []
-  };
-  const lib = load();
-  if(lib.some(x=>x.slug===s.slug)){ alert("Ce slug existe déjà."); return; }
-  lib.push(s);
-  save(lib);
-  parent.location.hash="#/admin";
-}
-</script>
-</body>
+    <script type="module" src="/src/pages/add-manga.ts"></script>
+  </body>
 </html>
