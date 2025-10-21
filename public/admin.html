@@ -1,49 +1,113 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Admin | Kyy’s Letters</title>
-    <link rel="stylesheet" href="/src/index.css" />
-  </head>
-  <body class="bg-[#0d0d0d] text-white flex flex-col min-h-screen">
-    <header class="bg-[#141414] p-4 flex justify-between items-center border-b border-[#222]">
-      <h1 class="text-xl font-bold">Panneau Admin</h1>
-      <button onclick="window.location.href='/'" class="bg-[#222] px-3 py-1 rounded">
-        Retour
-      </button>
-    </header>
-
-    <main class="flex-1 p-6 grid gap-4">
-      <h2 class="text-2xl font-semibold mb-4">Actions rapides</h2>
-
-      <div class="grid md:grid-cols-3 gap-4">
-        <button
-          onclick="window.location.href='add-manga.html'"
-          class="bg-[#1a1a1a] hover:bg-[#222] rounded p-4 text-left"
-        >
-          ➕ Ajouter un manga
-        </button>
-
-        <button
-          onclick="window.location.href='add-chapitre.html'"
-          class="bg-[#1a1a1a] hover:bg-[#222] rounded p-4 text-left"
-        >
-          📘 Ajouter un chapitre
-        </button>
-
-        <button
-          onclick="window.location.href='edit-manga.html'"
-          class="bg-[#1a1a1a] hover:bg-[#222] rounded p-4 text-left"
-        >
-          ✏️ Modifier / Supprimer un manga
-        </button>
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Admin — Kyy’s Letters</title>
+  <link rel="stylesheet" href="/styles/base.css"/>
+</head>
+<body>
+  <div class="header">
+    <div class="bar">
+      <div class="brand">K</div>
+      <div class="badge">Admin</div>
+      <div class="right">
+        <a class="btn" href="/">Accueil</a>
+        <a class="btn" href="/add-manga.html">+ Série</a>
+        <a class="btn" href="/add-chapitre.html">+ Chapitre</a>
+        <a class="btn" href="/edit-manga.html">Éditer série</a>
       </div>
-    </main>
+    </div>
+  </div>
 
-    <footer class="text-center text-gray-400 py-4 border-t border-[#222]">
-      © 2025 Kyy’s Letters
-    </footer>
-  </body>
+  <div class="container grid" style="grid-template-columns:2fr 1fr;">
+    <div class="grid" style="grid-template-columns:1fr;">
+      <div class="card">
+        <h2 style="margin:0 0 10px 0">Panneau Admin</h2>
+        <p class="label">Ajoute des séries et chapitres. Tout est stocké en localStorage, l’accueil les lira automatiquement.</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+          <a class="btn acc" href="/add-manga.html">Ajouter une série</a>
+          <a class="btn" href="/add-chapitre.html">Ajouter un chapitre</a>
+          <a class="btn" href="/edit-manga.html">Modifier / supprimer série</a>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 style="margin:0 0 8px 0">Séries existantes</h3>
+        <table class="table" id="seriesTable">
+          <thead><tr><th>Titre</th><th>Slug</th><th>Tags</th><th>Chapitres</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <h3 style="margin:0 0 8px 0">Derniers chapitres</h3>
+        <table class="table" id="chapTable">
+          <thead><tr><th>Série</th><th>Titre</th><th>#</th><th>Lang</th><th>Date</th></tr></thead>
+        <tbody></tbody></table>
+      </div>
+    </div>
+
+    <aside class="grid">
+      <div class="card">
+        <h3 style="margin:0 0 8px 0">Actions rapides</h3>
+        <div class="grid">
+          <a class="btn acc" href="/add-manga.html">+ Série</a>
+          <a class="btn" href="/add-chapitre.html">+ Chapitre</a>
+          <a class="btn" href="/edit-manga.html">Éditer série</a>
+          <button id="reset" class="btn danger">Vider la base locale</button>
+        </div>
+      </div>
+      <div class="card">
+        <h3 style="margin:0 8px 12px 0">Infos</h3>
+        <div class="label">Les données sont locales (navigateur). Sur un vrai back, on branchera une API.</div>
+      </div>
+    </aside>
+  </div>
+
+  <footer>© 2025 — Admin Kyy’s Letters</footer>
+
+  <!-- utils -->
+  <script src="/js/storage.js"></script>
+  <script>
+    const { allSeries, allChapters, saveSeries, saveChapters } = KyyStore;
+
+    function render() {
+      const s = allSeries(); const c = allChapters();
+      const sBody = document.querySelector("#seriesTable tbody");
+      const cBody = document.querySelector("#chapTable tbody");
+      sBody.innerHTML = s.length ? "" : `<tr><td colspan="4" class="label">Aucune série.</td></tr>`;
+      cBody.innerHTML = c.length ? "" : `<tr><td colspan="5" class="label">Aucun chapitre.</td></tr>`;
+      s.forEach(serie=>{
+        const count = c.filter(x=>x.seriesId===serie.id).length;
+        sBody.insertAdjacentHTML("beforeend",
+          `<tr>
+            <td>${serie.title}</td>
+            <td><span class="badge">${serie.slug}</span></td>
+            <td>${(serie.tags||[]).map(t=>`<span class="badge">${t}</span>`).join(" ")}</td>
+            <td>${count}</td>
+          </tr>`);
+      });
+      c.slice().sort((a,b)=>+new Date(b.date)-+new Date(a.date))
+       .slice(0,10).forEach(ch=>{
+         const serie = s.find(x=>x.id===ch.seriesId);
+         cBody.insertAdjacentHTML("beforeend",
+           `<tr>
+             <td>${serie?serie.title:"—"}</td>
+             <td>${ch.title||"—"}</td>
+             <td>${ch.number||"—"}</td>
+             <td>${ch.lang||"—"}</td>
+             <td>${ch.date||"—"}</td>
+           </tr>`);
+       });
+    }
+    render();
+
+    document.getElementById("reset").onclick = ()=>{
+      if(confirm("Tout effacer du navigateur ?")) {
+        saveSeries([]); saveChapters([]); render();
+      }
+    };
+  </script>
+</body>
 </html>
-
