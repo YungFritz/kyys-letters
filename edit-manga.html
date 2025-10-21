@@ -6,28 +6,90 @@
     <title>Modifier un manga | Kyy’s Letters</title>
     <link rel="stylesheet" href="/src/index.css" />
   </head>
-  <body class="bg-[#0d0d0d] text-white min-h-screen p-6">
-    <header class="flex justify-between items-center mb-6">
-      <h1 class="text-2xl font-bold">Modifier un manga</h1>
-      <button onclick="window.location.href='admin.html'" class="bg-[#222] px-3 py-1 rounded">
-        Retour
+  <body class="bg-[#0d0d0d] text-white min-h-screen flex flex-col">
+    <!-- HEADER -->
+    <header class="bg-[#141414] border-b border-[#222] p-4 flex justify-between items-center">
+      <h1 class="text-xl font-bold">Modifier un manga</h1>
+      <button
+        id="back-btn"
+        class="bg-[#222] hover:bg-[#2c2c2c] px-3 py-1 rounded transition-all"
+      >
+        ← Retour
       </button>
     </header>
 
-    <section class="max-w-xl mx-auto">
-      <input
-        type="text"
-        placeholder="Rechercher un manga..."
-        class="bg-[#1a1a1a] w-full p-2 rounded mb-4"
-      />
+    <!-- CONTENU -->
+    <main class="flex-1 p-6 flex justify-center">
+      <form
+        id="edit-manga-form"
+        class="bg-[#1a1a1a] p-6 rounded-lg shadow-lg w-full max-w-lg grid gap-4"
+      >
+        <label class="flex flex-col gap-1">
+          <span class="font-medium text-gray-300">Titre du manga *</span>
+          <input
+            id="title"
+            type="text"
+            placeholder="Ex : Solo Leveling"
+            class="bg-[#111] p-2 rounded text-white"
+            required
+          />
+        </label>
 
-      <div class="bg-[#1a1a1a] p-4 rounded mb-4">
-        <p class="font-semibold">Exemple Manga</p>
-        <div class="flex gap-2 mt-2">
-          <button class="bg-[#25633c] hover:bg-[#2b7546] px-3 py-1 rounded">Éditer</button>
-          <button class="bg-[#633c3c] hover:bg-[#754646] px-3 py-1 rounded">Supprimer</button>
-        </div>
-      </div>
-    </section>
+        <label class="flex flex-col gap-1">
+          <span class="font-medium text-gray-300">Slug (auto ou manuel)</span>
+          <input
+            id="slug"
+            type="text"
+            placeholder="ex : solo-leveling"
+            class="bg-[#111] p-2 rounded text-white"
+          />
+        </label>
+
+        <label class="flex flex-col gap-1">
+          <span class="font-medium text-gray-300">Tags (séparés par des virgules)</span>
+          <input
+            id="tags"
+            type="text"
+            placeholder="action, aventure, fantasy"
+            class="bg-[#111] p-2 rounded text-white"
+          />
+        </label>
+
+        <label class="flex flex-col gap-1">
+          <span class="font-medium text-gray-300">URL de la cover (facultatif)</span>
+          <input
+            id="cover"
+            type="text"
+            placeholder="https://..."
+            class="bg-[#111] p-2 rounded text-white"
+          />
+        </label>
+
+        <label class="flex flex-col gap-1">
+          <span class="font-medium text-gray-300">Description</span>
+          <textarea
+            id="description"
+            rows="4"
+            placeholder="Résumé du manga..."
+            class="bg-[#111] p-2 rounded text-white resize-none"
+          ></textarea>
+        </label>
+
+        <button
+          type="submit"
+          class="bg-[#25633c] hover:bg-[#2b7546] rounded py-2 mt-3 font-semibold transition-all"
+        >
+          💾 Enregistrer les modifications
+        </button>
+      </form>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="text-center text-gray-400 py-4 border-t border-[#222]">
+      © 2025 Kyy’s Letters
+    </footer>
+
+    <!-- SCRIPT -->
+    <script type="module" src="/src/pages/edit-manga.ts"></script>
   </body>
 </html>
