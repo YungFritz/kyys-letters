@@ -21,7 +21,7 @@ body{
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
-a{ color:inherit; }
+a{ color:inherit; text-decoration:none; }
 
 /* ===== Layout ===== */
 .container{
@@ -99,15 +99,28 @@ a{ color:inherit; }
   display:block; width:22px; height:2px; background:#dfe5ec; margin:5px 0; border-radius:2px;
 }
 
-/* ===== Drawer mobile ===== */
+/* ===== Drawer mobile (fix: rien ne dépasse) ===== */
 .drawer{
-  position: fixed; inset: 0 auto 0 -280px; width: 280px; background: #0f1012;
-  border-right:1px solid var(--border);
-  transition: transform .25s ease; transform: translateX(0);
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 280px;
+  background: #0f1012;
+  border-right: 1px solid var(--border);
   padding: 14px;
   z-index: 70;
+
+  transform: translateX(-100%);
+  transition: transform .25s ease;
+  pointer-events: none;
+  visibility: hidden;
 }
-.drawer.open{ transform: translateX(280px); }
+.drawer.open{
+  transform: translateX(0);
+  pointer-events: auto;
+  visibility: visible;
+}
 .drawer-header{
   display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;
 }
@@ -116,7 +129,7 @@ a{ color:inherit; }
   border-radius:10px; padding:6px 10px; font-weight:700;
 }
 .drawer-link{
-  display:block; padding:12px 10px; border-radius:10px; text-decoration:none;
+  display:block; padding:12px 10px; border-radius:10px;
   color:#e6ebf2; border:1px solid var(--border); background:#131417; margin-bottom:8px;
 }
 .drawer-link.accent{
@@ -124,7 +137,17 @@ a{ color:inherit; }
 }
 .drawer-search{ margin-top:10px; }
 .drawer-overlay{
-  position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 60;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.45);
+  z-index: 60;
+}
+
+/* Cache le drawer sur desktop */
+@media (min-width: 701px){
+  .drawer,
+  .drawer-overlay{
+    display: none !important;
+  }
 }
 
 /* ===== Panels / Cards ===== */
@@ -304,7 +327,7 @@ a{ color:inherit; }
   padding: 6px 10px;
 }
 .bottom-item{
-  flex:1; text-align:center; text-decoration:none;
+  flex:1; text-align:center;
   color:#e7ecf3; display:flex; flex-direction:column; gap:4px; align-items:center;
   padding:6px 4px;
 }
