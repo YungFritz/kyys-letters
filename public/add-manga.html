@@ -1,27 +1,97 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Ajouter un manga | Kyy’s Letters</title>
-    <link rel="stylesheet" href="/src/index.css" />
-  </head>
-  <body class="bg-[#0d0d0d] text-white min-h-screen p-6">
-    <header class="flex justify-between items-center mb-6">
-      <h1 class="text-2xl font-bold">Ajouter un manga</h1>
-      <button onclick="window.location.href='admin.html'" class="bg-[#222] px-3 py-1 rounded">
-        Retour
-      </button>
-    </header>
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Ajouter une série</title>
+  <link rel="stylesheet" href="/styles/base.css"/>
+</head>
+<body>
+  <div class="header">
+    <div class="bar">
+      <div class="brand">K</div>
+      <div class="badge">Ajouter Série</div>
+      <div class="right">
+        <a class="btn" href="/admin.html">Admin</a>
+      </div>
+    </div>
+  </div>
 
-    <form class="grid gap-4 max-w-xl mx-auto">
-      <input type="text" placeholder="Titre du manga" class="bg-[#1a1a1a] p-2 rounded" required />
-      <input type="text" placeholder="Auteur" class="bg-[#1a1a1a] p-2 rounded" required />
-      <textarea placeholder="Description" class="bg-[#1a1a1a] p-2 rounded h-32"></textarea>
-      <button type="submit" class="bg-[#25633c] hover:bg-[#2b7546] rounded py-2 font-semibold">
-        Ajouter
-      </button>
+  <div class="container grid" style="grid-template-columns:1fr 1fr;">
+    <form class="card" id="form">
+      <h2 style="margin:0 0 12px 0">Nouvelle série</h2>
+
+      <div class="label">Titre *</div>
+      <input class="input" id="title" required/>
+
+      <div class="row">
+        <div>
+          <div class="label">Tags (séparés par virgule)</div>
+          <input class="input" id="tags" placeholder="FR, Action"/>
+        </div>
+        <div>
+          <div class="label">Statut</div>
+          <select id="status" class="input">
+            <option value="en-cours">En cours</option>
+            <option value="termine">Terminé</option>
+            <option value="drop">Drop</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="label">Description</div>
+      <textarea class="input" id="desc" rows="5" placeholder="Résumé court..."></textarea>
+
+      <div class="label" style="margin-top:10px;">Cover (image)</div>
+      <input type="file" id="cover" accept="image/*"/>
+
+      <div style="display:flex;gap:8px;margin-top:14px">
+        <button class="btn acc" type="submit">Enregistrer</button>
+        <a class="btn" href="/admin.html">Annuler</a>
+      </div>
     </form>
-  </body>
-</html>
 
+    <div class="card">
+      <h3 style="margin:0 0 8px 0">Aperçu</h3>
+      <div id="preview" class="label">Pas d’image</div>
+    </div>
+  </div>
+
+  <footer>© 2025 — Kyy’s Letters</footer>
+
+  <script src="/js/storage.js"></script>
+  <script>
+    const { allSeries, saveSeries, uid, slugify } = KyyStore;
+    let coverData = "";
+
+    document.getElementById("cover").addEventListener("change", e=>{
+      const f = e.target.files?.[0];
+      if(!f) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        coverData = String(reader.result || "");
+        document.getElementById("preview").innerHTML =
+          `<img src="${coverData}" style="max-width:100%;border-radius:12px"/>`;
+      };
+      reader.readAsDataURL(f);
+    });
+
+    document.getElementById("form").addEventListener("submit", (e)=>{
+      e.preventDefault();
+      const title = document.getElementById("title").value.trim();
+      const tags = document.getElementById("tags").value.split(",").map(s=>s.trim()).filter(Boolean);
+      const status = document.getElementById("status").value;
+      const desc = document.getElementById("desc").value.trim();
+
+      const series = allSeries();
+      series.push({
+        id: uid("serie"),
+        title, slug: slugify(title), tags, status, description: desc, cover: coverData || "", chapters:[]
+      });
+      saveSeries(series);
+      alert("Série enregistrée !");
+      location.href = "/admin.html";
+    });
+  </script>
+</body>
+</html>
