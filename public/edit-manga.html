@@ -1,96 +1,127 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Modifier un manga | Kyy’s Letters</title>
-    <link rel="stylesheet" href="/src/index.css" />
-  </head>
-  <body class="bg-[#0d0d0d] text-white min-h-screen flex flex-col">
-    <!-- HEADER -->
-    <header class="bg-[#141414] border-b border-[#222] p-4 flex justify-between items-center">
-      <h1 class="text-xl font-bold">Modifier un manga</h1>
-      <button
-        id="back-btn"
-        class="bg-[#222] hover:bg-[#2c2c2c] px-3 py-1 rounded transition-all"
-      >
-        ← Retour
-      </button>
-    </header>
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Éditer une série</title>
+  <link rel="stylesheet" href="/styles/base.css"/>
+</head>
+<body>
+  <div class="header">
+    <div class="bar">
+      <div class="brand">K</div>
+      <div class="badge">Éditer Série</div>
+      <div class="right"><a class="btn" href="/admin.html">Admin</a></div>
+    </div>
+  </div>
 
-    <!-- CONTENU -->
-    <main class="flex-1 p-6 flex justify-center">
-      <form
-        id="edit-manga-form"
-        class="bg-[#1a1a1a] p-6 rounded-lg shadow-lg w-full max-w-lg grid gap-4"
-      >
-        <label class="flex flex-col gap-1">
-          <span class="font-medium text-gray-300">Titre du manga *</span>
-          <input
-            id="title"
-            type="text"
-            placeholder="Ex : Solo Leveling"
-            class="bg-[#111] p-2 rounded text-white"
-            required
-          />
-        </label>
+  <div class="container grid" style="grid-template-columns:1fr 1fr;">
+    <div class="card">
+      <div class="label">Choisir une série</div>
+      <select id="pick" class="input"></select>
+    </div>
 
-        <label class="flex flex-col gap-1">
-          <span class="font-medium text-gray-300">Slug (auto ou manuel)</span>
-          <input
-            id="slug"
-            type="text"
-            placeholder="ex : solo-leveling"
-            class="bg-[#111] p-2 rounded text-white"
-          />
-        </label>
+    <form class="card" id="form" style="display:none">
+      <h2 style="margin:0 0 12px 0" id="formTitle">Modifier</h2>
 
-        <label class="flex flex-col gap-1">
-          <span class="font-medium text-gray-300">Tags (séparés par des virgules)</span>
-          <input
-            id="tags"
-            type="text"
-            placeholder="action, aventure, fantasy"
-            class="bg-[#111] p-2 rounded text-white"
-          />
-        </label>
+      <div class="label">Titre</div>
+      <input class="input" id="title"/>
 
-        <label class="flex flex-col gap-1">
-          <span class="font-medium text-gray-300">URL de la cover (facultatif)</span>
-          <input
-            id="cover"
-            type="text"
-            placeholder="https://..."
-            class="bg-[#111] p-2 rounded text-white"
-          />
-        </label>
+      <div class="row">
+        <div>
+          <div class="label">Tags</div>
+          <input class="input" id="tags"/>
+        </div>
+        <div>
+          <div class="label">Statut</div>
+          <select id="status" class="input">
+            <option value="en-cours">En cours</option>
+            <option value="termine">Terminé</option>
+            <option value="drop">Drop</option>
+          </select>
+        </div>
+      </div>
 
-        <label class="flex flex-col gap-1">
-          <span class="font-medium text-gray-300">Description</span>
-          <textarea
-            id="description"
-            rows="4"
-            placeholder="Résumé du manga..."
-            class="bg-[#111] p-2 rounded text-white resize-none"
-          ></textarea>
-        </label>
+      <div class="label">Description</div>
+      <textarea class="input" id="desc" rows="5"></textarea>
 
-        <button
-          type="submit"
-          class="bg-[#25633c] hover:bg-[#2b7546] rounded py-2 mt-3 font-semibold transition-all"
-        >
-          💾 Enregistrer les modifications
-        </button>
-      </form>
-    </main>
+      <div class="label" style="margin-top:10px;">Changer cover</div>
+      <input id="cover" type="file" accept="image/*"/>
 
-    <!-- FOOTER -->
-    <footer class="text-center text-gray-400 py-4 border-t border-[#222]">
-      © 2025 Kyy’s Letters
-    </footer>
+      <div style="display:flex;gap:8px;margin-top:14px">
+        <button class="btn acc" type="submit">Sauvegarder</button>
+        <button class="btn danger" id="del" type="button">Supprimer</button>
+      </div>
+    </form>
 
-    <!-- SCRIPT -->
-    <script type="module" src="/src/pages/edit-manga.ts"></script>
-  </body>
+    <div class="card" id="previewCard" style="display:none">
+      <h3 style="margin:0 0 8px 0">Aperçu cover</h3>
+      <div id="preview" class="label">—</div>
+    </div>
+  </div>
+
+  <footer>© 2025 — Kyy’s Letters</footer>
+
+  <script src="/js/storage.js"></script>
+  <script>
+    const { allSeries, saveSeries, allChapters, saveChapters, slugify } = KyyStore;
+    const pick = document.getElementById("pick");
+    const form = document.getElementById("form");
+    const previewCard = document.getElementById("previewCard");
+    const series = allSeries();
+    if(!series.length){ alert("Aucune série. Ajoute d’abord."); location.href="/add-manga.html"; }
+
+    series.forEach(s=>{
+      const o=document.createElement("option");o.value=s.id;o.textContent=s.title;pick.appendChild(o);
+    });
+    let current=null, coverData="";
+
+    function load(id){
+      current = series.find(x=>x.id===id);
+      if(!current){ form.style.display="none"; previewCard.style.display="none"; return; }
+      form.style.display="block"; previewCard.style.display="block";
+      document.getElementById("formTitle").textContent = `Modifier — ${current.title}`;
+      document.getElementById("title").value = current.title||"";
+      document.getElementById("tags").value = (current.tags||[]).join(", ");
+      document.getElementById("status").value = current.status||"en-cours";
+      document.getElementById("desc").value = current.description||"";
+      coverData = current.cover||"";
+      document.getElementById("preview").innerHTML = coverData? `<img src="${coverData}" style="max-width:100%;border-radius:12px"/>` : "—";
+    }
+    load(pick.value = series[0].id);
+    pick.onchange = ()=>load(pick.value);
+
+    document.getElementById("cover").onchange = e=>{
+      const f = e.target.files?.[0]; if(!f) return;
+      const r = new FileReader();
+      r.onload = ()=>{ coverData = String(r.result||""); document.getElementById("preview").innerHTML = `<img src="${coverData}" style="max-width:100%;border-radius:12px"/>`;};
+      r.readAsDataURL(f);
+    };
+
+    form.onsubmit = (e)=>{
+      e.preventDefault();
+      current.title = document.getElementById("title").value.trim() || current.title;
+      current.slug = slugify(current.title);
+      current.tags = document.getElementById("tags").value.split(",").map(s=>s.trim()).filter(Boolean);
+      current.status = document.getElementById("status").value;
+      current.description = document.getElementById("desc").value.trim();
+      if(coverData) current.cover = coverData;
+      saveSeries(series);
+      alert("Série mise à jour !");
+      load(current.id);
+    };
+
+    document.getElementById("del").onclick = ()=>{
+      if(!confirm("Supprimer la série et ses chapitres ?")) return;
+      // suppr chapitres liés
+      const ch = allChapters().filter(c=>c.seriesId!==current.id);
+      saveChapters(ch);
+      // suppr série
+      const idx = series.findIndex(x=>x.id===current.id);
+      if(idx>=0){ series.splice(idx,1); saveSeries(series); }
+      alert("Supprimé.");
+      location.href="/admin.html";
+    };
+  </script>
+</body>
 </html>
-
