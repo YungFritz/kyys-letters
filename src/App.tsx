@@ -46,6 +46,14 @@ const fmtViews = (n?: number) => {
   return `${n} vues`;
 };
 
+/** ---------- Router ultra-light sur le hash ---------- */
+type Route = "home" | "admin";
+
+function getRouteFromHash(): Route {
+  const h = (typeof window !== "undefined" ? window.location.hash : "").toLowerCase();
+  return h.startsWith("#/admin") ? "admin" : "home";
+}
+
 /** ---------- Header (desktop + mobile) ---------- */
 function Header({
   query,
@@ -204,20 +212,22 @@ function MobileBottomNav() {
   );
 }
 
-/** ---------- App ---------- */
-export default function App() {
-  const [query, setQuery] = useState("");
-
+/** ---------- Page d’accueil (vue Home) ---------- */
+function HomeView({ query, setQuery, library }: {
+  query: string;
+  setQuery: (v:string)=>void;
+  library: Series[];
+}) {
   const popular = useMemo(
     () =>
-      LIBRARY.slice()
+      library.slice()
         .sort((a, b) => (b.views || 0) - (a.views || 0))
         .slice(0, 8),
-    []
+    [library]
   );
 
   const latest = useMemo(() => {
-    const all = LIBRARY.flatMap((s) =>
+    const all = library.flatMap((s) =>
       s.chapters.map((c) => ({ series: s, chapter: c }))
     );
     return all
@@ -226,7 +236,7 @@ export default function App() {
           +new Date(b.chapter.releaseDate) - +new Date(a.chapter.releaseDate)
       )
       .slice(0, 8);
-  }, []);
+  }, [library]);
 
   const filtered = popular.filter((s) => {
     const q = query.trim().toLowerCase();
@@ -237,12 +247,10 @@ export default function App() {
     );
   });
 
-  const totalChapters = LIBRARY.reduce((n, s) => n + s.chapters.length, 0);
+  const totalChapters = library.reduce((n, s) => n + s.chapters.length, 0);
 
   return (
-    <div className="page-root">
-      <Header query={query} setQuery={setQuery} />
-
+    <>
       <main className="container main">
         {/* HERO + SIDE */}
         <section className="grid-hero">
@@ -265,7 +273,7 @@ export default function App() {
             <div className="panel">
               <div className="panel-title">Statistiques</div>
               <p className="muted">
-                Séries: {LIBRARY.length} • Chapitres: {totalChapters}
+                Séries: {library.length} • Chapitres: {totalChapters}
               </p>
             </div>
           </aside>
@@ -327,7 +335,7 @@ export default function App() {
               </div>
               <div className="stats-row">
                 <span className="muted">Séries</span>
-                <strong>{LIBRARY.length}</strong>
+                <strong>{library.length}</strong>
               </div>
               <div className="stats-row">
                 <span className="muted">Chapitres</span>
@@ -348,6 +356,71 @@ export default function App() {
 
       {/* Barre mobile (auto masquée sur desktop) */}
       <MobileBottomNav />
+    </>
+  );
+}
+
+/** ---------- Vue Admin (placeholder propre) ---------- */
+function AdminView() {
+  // Ici on ne fait que l’affichage. Le CRUD viendra après.
+  return (
+    <main className="container admin-wrap">
+      <div className="panel hero">
+        <h1 className="hero-title">Panneau Admin</h1>
+        <p className="hero-sub">
+          Gestion des séries et chapitres (à brancher). Cette page s’affiche
+          bien quand tu cliques sur <strong>Admin</strong>.
+        </p>
+      </div>
+
+      <section className="admin-grid">
+        <div className="panel admin-card">
+          <div className="panel-title">Ajouter une série</div>
+          <p className="muted">Formulaire d’ajout (image, titre, tags…)</p>
+          <button className="btn-accent" disabled>À venir</button>
+        </div>
+
+        <div className="panel admin-card">
+          <div className="panel-title">Ajouter un chapitre</div>
+          <p className="muted">Formulaire d’upload des pages + métadonnées</p>
+          <button className="btn-accent" disabled>À venir</button>
+        </div>
+
+        <div className="panel admin-card">
+          <div className="panel-title">Éditer / Supprimer</div>
+          <p className="muted">Liste des séries pour modifications</p>
+          <button className="btn-accent" disabled>À venir</button>
+        </div>
+      </section>
+
+      <div className="panel" style={{marginTop:18}}>
+        <a className="chip" href="#">← Retour à l’accueil</a>
+      </div>
+    </main>
+  );
+}
+
+/** ---------- App (routeur + rendu) ---------- */
+export default function App() {
+  const [query, setQuery] = useState("");
+  const [route, setRoute] = useState<Route>(getRouteFromHash());
+
+  // écoute le changement de hash pour afficher la bonne vue
+  useEffect(() => {
+    const onHashChange = () => setRoute(getRouteFromHash());
+    window.addEventListener("hashchange", onHashChange);
+    return () => window.removeEventListener("hashchange", onHashChange);
+  }, []);
+
+  // pageHeader commun
+  return (
+    <div className="page-root">
+      <Header query={query} setQuery={setQuery} />
+      {route === "admin" ? (
+        <AdminView />
+      ) : (
+        <HomeView query={query} setQuery={setQuery} library={LIBRARY} />
+      )}
     </div>
   );
 }
