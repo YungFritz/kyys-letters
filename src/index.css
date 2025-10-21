@@ -6,8 +6,8 @@
   --text:#e8e8ea;
   --muted:#a7a7ad;
   --line:rgba(255,255,255,.06);
-  --accent:#2f6f4e;         /* vert foncé boutons */
-  --accent-2:#3b8d62;       /* hover */
+  --accent:#2f6f4e;
+  --accent-2:#3b8d62;
   --chip:#1b1c1f;
   --shadow:0 10px 25px rgba(0,0,0,.35);
 }
@@ -24,7 +24,7 @@ a{color:inherit}
 
 /* ===== Containers ===== */
 .container{ width:min(1150px, 92%); margin:0 auto; }
-.main{ padding:18px 0 84px; } /* bottom free for bottom-nav */
+.main{ padding:18px 0 84px; }
 
 /* ===== Header ===== */
 .site-header{
