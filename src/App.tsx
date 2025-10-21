@@ -498,10 +498,14 @@ export default function App() {
   const [route, setRoute] = useState<Route>(parseRoute(window.location.hash));
   const [library, setLibrary] = useState<Series[]>(() => load());
 
-  useEffect(() => {
-    const h = () => setRoute(parseRoute(window.location.hash));
-    window.addEventListener("hashchange", h);
-    return () => window.removeEventListener("hashchange", h);
+    useEffect(() => {
+    const handleRouteChange = () => {
+      setRoute(parseRoute(window.location.hash));
+    };
+    window.addEventListener("hashchange", handleRouteChange);
+    // 🔥 force un rendu immédiat à l’ouverture
+    handleRouteChange();
+    return () => window.removeEventListener("hashchange", handleRouteChange);
   }, []);
 
   useEffect(() => {
