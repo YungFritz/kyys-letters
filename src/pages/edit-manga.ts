@@ -1,79 +1,146 @@
-import { loadLibrary, saveLibrary, fileToDataUrl } from "../lib/storage";
-import type { Series } from "../lib/types";
+// src/pages/edit-manga.ts
 
-const list = document.getElementById("list")!;
-const tpl = document.getElementById("card-tpl") as HTMLTemplateElement;
+type Chapter = {
+  id: string;
+  name: string;
+  number: number;
+  lang: string;
+  releaseDate: string;
+  pages: string[];
+};
 
-function render() {
-  const lib = loadLibrary();
-  list.innerHTML = "";
-  if (lib.length === 0) {
-    const empty = document.createElement("div");
-    empty.className = "empty";
-    empty.textContent = "Aucune série dans la bibliothèque.";
-    list.appendChild(empty);
-    return;
+type Series = {
+  id: string;
+  title: string;
+  slug: string;
+  tags: string[];
+  cover?: string;
+  description?: string;
+  chapters: Chapter[];
+  views?: number;
+  hot?: boolean;
+};
+
+const STORAGE_KEY = "series";
+
+// ---------- utils localStorage ----------
+function loadSeries(): Series[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? (JSON.parse(raw) as Series[]) : [];
+  } catch {
+    return [];
   }
+}
 
-  for (const s of lib) {
-    const node = tpl.content.cloneNode(true) as DocumentFragment;
-    const el = node.querySelector(".card") as HTMLElement;
-    const cover = node.querySelector(".card-cover") as HTMLElement;
-    const title = node.querySelector(".card-title") as HTMLElement;
-    const tags = node.querySelector(".series-tags") as HTMLElement;
-    const chap = node.querySelector(".series-chap") as HTMLElement;
-    const btnEdit = node.querySelector(".btn-edit") as HTMLButtonElement;
-    const btnDel = node.querySelector(".btn-del") as HTMLButtonElement;
+function saveSeries(list: Series[]) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+}
 
-    if (s.cover) {
-      cover.innerHTML = `<img src="${s.cover}" alt="${s.title}" />`;
-    } else {
-      cover.textContent = "COVER";
+function slugify(v: string) {
+  return v
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)+/g, "");
+}
+
+function getParam(name: string) {
+  const url = new URL(window.location.href);
+  return url.searchParams.get(name);
+}
+
+function goBack() {
+  if (window.history.length > 1) window.history.back();
+  else window.location.href = "/";
+}
+
+// ---------- DOM ----------
+document.addEventListener("DOMContentLoaded", () => {
+  // éléments
+  const form = document.getElementById("edit-manga-form") as HTMLFormElement;
+  const titleInput = document.getElementById("title") as HTMLInputElement;
+  const slugInput = document.getElementById("slug") as HTMLInputElement;
+  const tagsInput = document.getElementById("tags") as HTMLInputElement;
+  const coverInput = document.getElementById("cover") as HTMLInputElement;
+  const descInput = document.getElementById("description") as HTMLTextAreaElement;
+  const backBtn = document.getElementById("back-btn") as HTMLButtonElement;
+
+  const series = loadSeries();
+  const editingId = getParam("id"); // ?id=xxx si on édite
+
+  // Préremplir si édition
+  if (editingId) {
+    const s = series.find((x) => x.id === editingId);
+    if (s) {
+      titleInput.value = s.title ?? "";
+      slugInput.value = s.slug ?? "";
+      tagsInput.value = (s.tags ?? []).join(", ");
+      coverInput.value = s.cover ?? "";
+      descInput.value = s.description ?? "";
     }
-    title.textContent = s.title;
-    tags.textContent = s.tags.join(" • ") || "—";
-    chap.textContent = `${s.chapters.length} chapitres`;
-
-    btnDel.addEventListener("click", () => onDelete(s.id));
-    btnEdit.addEventListener("click", () => onEdit(s));
-
-    list.appendChild(node);
   }
-}
 
-async function onEdit(s: Series) {
-  const newTitle = prompt("Nouveau titre :", s.title)?.trim();
-  if (!newTitle) return;
-  const newTags = prompt("Tags (séparés par des virgules) :", s.tags.join(", ")) ?? "";
-  const lib = loadLibrary();
-  const idx = lib.findIndex((x) => x.id === s.id);
-  if (idx < 0) return;
+  // Génération de slug auto si vide
+  titleInput.addEventListener("input", () => {
+    if (!slugInput.value.trim()) slugInput.value = slugify(titleInput.value);
+  });
 
-  lib[idx].title = newTitle;
-  lib[idx].tags = newTags.split(",").map((t) => t.trim()).filter(Boolean);
+  // Bouton retour
+  backBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    goBack();
+  });
 
-  if (confirm("Changer la cover ?")) {
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = "image/*";
-    input.click();
-    input.onchange = async () => {
-      const f = input.files?.[0];
-      if (f) lib[idx].cover = await fileToDataUrl(f);
-      saveLibrary(lib);
-      render();
-    };
-  } else {
-    saveLibrary(lib);
-    render();
-  }
-}
+  // Submit = créer / mettre à jour
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
 
-function onDelete(id: string) {
-  if (!confirm("Supprimer cette série et tous ses chapitres ?")) return;
-  const lib = loadLibrary().filter((s) => s.id !== id);
-  saveLibrary(lib);
-  render();
-}
+    const title = titleInput.value.trim();
+    const slug = (slugInput.value.trim() || slugify(title)).toLowerCase();
+    const tags = tagsInput.value
+      .split(",")
+      .map((t) => t.trim())
+      .filter(Boolean);
+    const cover = coverInput.value.trim();
+    const description = descInput.value.trim();
 
-render();
+    if (!title) {
+      alert("Le titre est obligatoire.");
+      return;
+    }
+
+    if (editingId) {
+      // update
+      const idx = series.findIndex((x) => x.id === editingId);
+      if (idx !== -1) {
+        series[idx] = {
+          ...series[idx],
+          title,
+          slug,
+          tags,
+          cover,
+          description,
+        };
+      }
+    } else {
+      // create
+      const newItem: Series = {
+        id: crypto.randomUUID(),
+        title,
+        slug,
+        tags,
+        cover,
+        description,
+        chapters: [],
+        views: 0,
+      };
+      series.unshift(newItem);
+    }
+
+    saveSeries(series);
+    alert("Enregistré !");
+    goBack();
+  });
+});
