@@ -1,1 +1,49 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin | Kyy’s Letters</title>
+    <link rel="stylesheet" href="/src/index.css" />
+  </head>
+  <body class="bg-[#0d0d0d] text-white flex flex-col min-h-screen">
+    <header class="bg-[#141414] p-4 flex justify-between items-center border-b border-[#222]">
+      <h1 class="text-xl font-bold">Panneau Admin</h1>
+      <button onclick="window.location.href='/'" class="bg-[#222] px-3 py-1 rounded">
+        Retour
+      </button>
+    </header>
+
+    <main class="flex-1 p-6 grid gap-4">
+      <h2 class="text-2xl font-semibold mb-4">Actions rapides</h2>
+
+      <div class="grid md:grid-cols-3 gap-4">
+        <button
+          onclick="window.location.href='add-manga.html'"
+          class="bg-[#1a1a1a] hover:bg-[#222] rounded p-4 text-left"
+        >
+          ➕ Ajouter un manga
+        </button>
+
+        <button
+          onclick="window.location.href='add-chapitre.html'"
+          class="bg-[#1a1a1a] hover:bg-[#222] rounded p-4 text-left"
+        >
+          📘 Ajouter un chapitre
+        </button>
+
+        <button
+          onclick="window.location.href='edit-manga.html'"
+          class="bg-[#1a1a1a] hover:bg-[#222] rounded p-4 text-left"
+        >
+          ✏️ Modifier / Supprimer un manga
+        </button>
+      </div>
+    </main>
+
+    <footer class="text-center text-gray-400 py-4 border-t border-[#222]">
+      © 2025 Kyy’s Letters
+    </footer>
+  </body>
+</html>
 
