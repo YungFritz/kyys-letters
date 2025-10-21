@@ -1,18 +1,153 @@
-/* Reset simple + plein large */
-:root { color-scheme: dark; }
-* { box-sizing: border-box; }
-
-html, body, #root { height: 100%; }
-
-body {
-  margin: 0;
-  background: #0a0a0a; /* noir doux */
-  color: #e5e7eb;      /* gris clair */
+:root{
+  --bg: #070709;
+  --panel: #0f1112;
+  --muted: #9aa0a6;
+  --accent: #60a5fa;
+  --accent-2: #f59e0b;
+  --card-border: rgba(255,255,255,0.04);
+  --radius-lg: 18px;
+  --radius-md: 12px;
+  --radius-sm: 8px;
+  --glass: rgba(255,255,255,0.02);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
 }
 
-/* Le template Vite met un max-width/padding ici => on l’enlève */
-#root {
-  max-width: none;
-  margin: 0;
-  padding: 0;
+*{box-sizing:border-box}
+html,body,#root{height:100%}
+body{
+  margin:0;
+  background:var(--bg);
+  color:#e6eef6;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+  font-size:15px;
+  line-height:1.4;
+}
+
+/* container */
+.container{ max-width:1280px; margin:0 auto; padding:28px; }
+
+/* header */
+.header{
+  position:sticky; top:0; z-index:40;
+  background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent);
+  border-bottom:1px solid rgba(255,255,255,0.03);
+}
+.header-inner{ display:grid; grid-template-columns:auto auto 1fr auto; align-items:center; gap:12px; max-width:1280px; margin:0 auto; padding:12px 24px; }
+
+/* simple nav buttons */
+.nav-btn{
+  padding:8px 12px;
+  border-radius:10px;
+  border:1px solid rgba(255,255,255,0.04);
+  background:rgba(255,255,255,0.01);
+  color:var(--muted);
+  font-weight:600;
+  text-decoration:none;
+}
+.search-input{
+  width:100%;
+  padding:10px 14px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,0.04);
+  background:#0b0c0d;
+  color:inherit;
+  outline:none;
+}
+
+/* hero */
+.hero{
+  display:grid;
+  grid-template-columns: 2fr 1fr;
+  gap:18px;
+}
+.hero-card{
+  border-radius:var(--radius-lg);
+  background:linear-gradient(180deg,#0d0f10,#0a0b0c);
+  border:1px solid var(--card-border);
+  padding:18px;
+}
+.hero-message{ padding:12px; border-radius:12px; background:rgba(255,255,255,0.01); }
+
+/* right column small card (discord style) */
+.side-card{
+  border-radius:var(--radius-md);
+  background:#081018;
+  border:1px solid rgba(255,255,255,0.02);
+  padding:14px;
+  text-align:center;
+}
+
+/* section wrapper */
+.section{
+  margin-top:20px;
+  border-radius:var(--radius-lg);
+  background:linear-gradient(180deg,#0d0f10,#0b0b0c);
+  border:1px solid var(--card-border);
+  padding:16px;
+}
+
+/* section header */
+.section-header{ display:flex; align-items:center; gap:12px; margin-bottom:12px; }
+.section-title{ color:var(--muted); text-transform:uppercase; font-size:12px; letter-spacing:1px; }
+
+/* grid for cards */
+.grid-cards{
+  display:grid;
+  gap:14px;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+}
+
+/* card */
+.card{
+  background:#0f1112;
+  border-radius:14px;
+  overflow:hidden;
+  border:1px solid var(--card-border);
+  display:flex;
+  flex-direction:column;
+  transition: transform .18s ease, box-shadow .18s ease;
+}
+.card:hover{ transform: translateY(-6px); box-shadow: 0 18px 40px rgba(0,0,0,0.6); }
+
+/* card visual placeholder (where cover would be) */
+.cover{
+  aspect-ratio: 3/4;
+  width:100%;
+  background:linear-gradient(180deg,#141516,#0f1112);
+  display:flex; align-items:center; justify-content:center;
+  color:var(--muted);
+  font-weight:700;
+}
+
+/* card body */
+.card-body{ padding:12px; display:flex; flex-direction:column; gap:8px; }
+.card-title{ font-weight:800; color:#fff; line-height:1.05; font-size:15px }
+.card-meta{ display:flex; align-items:center; gap:8px; color:var(--muted); font-size:13px; }
+
+/* badges */
+.badge-hot{ padding:6px 8px; border-radius:999px; font-weight:800; font-size:12px; color:#0a0a0a; background: linear-gradient(90deg,#ff6b6b,#ffb86b); border:1px solid rgba(0,0,0,0.2); }
+.chips{ display:flex; gap:8px; flex-wrap:wrap; }
+
+/* latest grid larger cards */
+.latest-grid{ display:grid; gap:14px; grid-template-columns: repeat(auto-fill,minmax(240px,1fr)); margin-top:12px; }
+
+/* stats aside */
+.stats{
+  border-radius:18px;
+  border:1px solid rgba(255,255,255,0.02);
+  padding:12px;
+  background:#0f1214;
+  color:var(--muted);
+}
+
+/* footer */
+.footer{ margin-top:28px; padding:18px 0; color:var(--muted); font-size:13px; }
+
+/* responsive */
+@media (max-width:900px){
+  .hero{ grid-template-columns: 1fr; }
+  .header-inner{ grid-template-columns: 1fr auto; }
+  .header-inner a.nav-btn{ display:none; }
+  .container{ padding:18px; }
 }
