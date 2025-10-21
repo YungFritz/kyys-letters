@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import "./index.css";
 
 /** ---------- Types ---------- */
@@ -23,8 +23,9 @@ type Series = {
   hot?: boolean;
 };
 
-/** ---------- Données démo (laisse vide si tu veux voir les états vides) ---------- */
+/** ---------- Données démo (laisse vide si tu veux les états “aucune série/chapitre…”) ---------- */
 const LIBRARY: Series[] = [
+  // Exemple si tu veux tester avec des cartes :
   // {
   //   id: "s1",
   //   title: "Série A",
@@ -35,14 +36,7 @@ const LIBRARY: Series[] = [
   //   views: 2400,
   //   hot: true,
   //   chapters: [
-  //     {
-  //       id: "s1c1",
-  //       name: "Chap 1",
-  //       number: 1,
-  //       lang: "FR",
-  //       releaseDate: "2025-10-01",
-  //       pages: [],
-  //     },
+  //     { id: "s1c1", name: "Chap 1", number: 1, lang: "FR", releaseDate: "2025-10-01", pages: [] },
   //   ],
   // },
 ];
@@ -63,6 +57,15 @@ function Header({
   setQuery: (v: string) => void;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
+
+  // Empêche le scroll de la page quand le drawer est ouvert (iOS friendly)
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = menuOpen ? "hidden" : "auto";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [menuOpen]);
 
   return (
     <header className="site-header">
@@ -116,22 +119,26 @@ function Header({
             ✕
           </button>
         </div>
-        <a className="drawer-link" href="#" onClick={() => setMenuOpen(false)}>
-          Perso
-        </a>
-        <a className="drawer-link" href="#" onClick={() => setMenuOpen(false)}>
-          Recrutement
-        </a>
-        <a
-          className="drawer-link accent"
-          href="#/admin"
-          onClick={() => setMenuOpen(false)}
-        >
-          Admin
-        </a>
-        <a className="drawer-link" href="#" onClick={() => setMenuOpen(false)}>
-          Connexion
-        </a>
+
+        {/* liens dans une zone scrollable */}
+        <div className="drawer-list">
+          <a className="drawer-link" href="#" onClick={() => setMenuOpen(false)}>
+            Perso
+          </a>
+          <a className="drawer-link" href="#" onClick={() => setMenuOpen(false)}>
+            Recrutement
+          </a>
+          <a
+            className="drawer-link accent"
+            href="#/admin"
+            onClick={() => setMenuOpen(false)}
+          >
+            Admin
+          </a>
+          <a className="drawer-link" href="#" onClick={() => setMenuOpen(false)}>
+            Connexion
+          </a>
+        </div>
 
         <div className="drawer-search">
           <input
@@ -144,7 +151,13 @@ function Header({
       </div>
 
       {/* Overlay mobile */}
-      {menuOpen && <div className="drawer-overlay" onClick={() => setMenuOpen(false)} />}
+      {menuOpen && (
+        <div
+          className="drawer-overlay"
+          onClick={() => setMenuOpen(false)}
+          aria-hidden
+        />
+      )}
     </header>
   );
 }
@@ -154,7 +167,9 @@ function SeriesCard({ s }: { s: Series }) {
   return (
     <a className="card-link" href={`/series/${s.slug}`}>
       <div className="card">
-        <div className="card-cover">{s.cover ? <img src={s.cover} /> : "COVER"}</div>
+        <div className="card-cover">
+          {s.cover ? <img src={s.cover} alt={s.title} /> : "COVER"}
+        </div>
         <div className="card-body">
           <div className="card-title">{s.title}</div>
           <div className="card-meta">
@@ -170,7 +185,7 @@ function SeriesCard({ s }: { s: Series }) {
 /** ---------- Bottom nav (mobile) ---------- */
 function MobileBottomNav() {
   return (
-    <nav className="bottom-nav">
+    <nav className="bottom-nav" role="navigation" aria-label="Navigation mobile">
       <a href="#" className="bottom-item">
         <div className="bi">🏠</div>
         <div className="bt">Accueil</div>
