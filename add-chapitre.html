@@ -1,58 +1,26 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="fr">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Ajouter un chapitre — Admin</title>
-    <link rel="stylesheet" href="/src/index.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ajouter un chapitre | Kyy’s Letters</title>
+    <link rel="stylesheet" href="/src/index.css" />
   </head>
-  <body class="page-root">
-    <header class="site-header">
-      <div class="container header-inner">
-        <div class="brand">K</div>
-        <nav class="top-nav">
-          <a class="chip" href="/">Accueil</a>
-          <a class="chip chip-accent" href="/admin.html">Admin</a>
-        </nav>
-        <div class="search-wrap"></div>
-      </div>
+  <body class="bg-[#0d0d0d] text-white min-h-screen p-6">
+    <header class="flex justify-between items-center mb-6">
+      <h1 class="text-2xl font-bold">Ajouter un chapitre</h1>
+      <button onclick="window.location.href='admin.html'" class="bg-[#222] px-3 py-1 rounded">
+        Retour
+      </button>
     </header>
 
-    <main class="container admin-wrap">
-      <div class="panel hero">
-        <h1 class="hero-title">Ajouter un chapitre</h1>
-        <p class="hero-sub">Choisis la série, puis upload les pages.</p>
-      </div>
-
-      <form id="chap-form" class="panel" style="display:grid;gap:12px;">
-        <label> Série
-          <select id="series-select" class="search-input" required></select>
-        </label>
-
-        <label> Numéro de chapitre
-          <input type="number" name="number" class="search-input" min="1" step="1" required />
-        </label>
-
-        <label> Nom du chapitre (optionnel)
-          <input name="name" class="search-input" placeholder="Ex: L’éveil" />
-        </label>
-
-        <label> Langue
-          <input name="lang" class="search-input" placeholder="FR" value="FR" />
-        </label>
-
-        <label> Pages (images) — tu peux en sélectionner plusieurs
-          <input type="file" name="pages" accept="image/*" multiple required />
-        </label>
-
-        <div style="display:flex;gap:10px;align-items:center;">
-          <button class="btn-accent" type="submit">Enregistrer</button>
-          <a class="chip" href="/admin.html">Annuler</a>
-        </div>
-        <div id="msg" class="muted"></div>
-      </form>
-    </main>
-
-    <script type="module" src="/src/pages/add-chapitre.ts"></script>
+    <form class="grid gap-4 max-w-xl mx-auto">
+      <input type="text" placeholder="Nom du manga" class="bg-[#1a1a1a] p-2 rounded" required />
+      <input type="number" placeholder="Numéro du chapitre" class="bg-[#1a1a1a] p-2 rounded" required />
+      <input type="text" placeholder="Titre du chapitre" class="bg-[#1a1a1a] p-2 rounded" />
+      <button type="submit" class="bg-[#25633c] hover:bg-[#2b7546] rounded py-2 font-semibold">
+        Ajouter
+      </button>
+    </form>
   </body>
 </html>
