@@ -3,20 +3,18 @@ import "./index.css";
 
 type Chapter = {
   id: string;
-  title?: string;         // compat
-  name?: string;          // compat
+  name: string;
   number: number;
-  lang?: string;
-  releaseDate?: string;
-  date?: string;          // compat
-  pages?: string[];
+  lang: string;
+  releaseDate: string;
+  pages: string[];
 };
 
 type Series = {
   id: string;
   title: string;
   slug: string;
-  tags?: string[];
+  tags: string[];
   cover?: string;
   description?: string;
   chapters: Chapter[];
@@ -26,6 +24,7 @@ type Series = {
 
 const STORAGE_KEY = "kyys_letters_library_v2";
 
+// helper petites chaines
 const fmtViews = (n?: number) => {
   if (!n) return "0 vues";
   if (n >= 1000) return `${(n / 1000).toFixed(1)}k vues`;
@@ -42,7 +41,7 @@ function Header({
   return (
     <div className="header">
       <div className="header-inner">
-        {/* logo */}
+        {/* left: placeholder logo */}
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <div
             style={{
@@ -60,7 +59,7 @@ function Header({
           </div>
         </div>
 
-        {/* nav gauche */}
+        {/* two small nav buttons */}
         <a className="nav-btn" href="#">
           Perso
         </a>
@@ -68,7 +67,7 @@ function Header({
           Recrutement
         </a>
 
-        {/* recherche */}
+        {/* search */}
         <input
           className="search-input"
           value={query}
@@ -76,7 +75,7 @@ function Header({
           placeholder="Rechercher une série, un tag, une langue..."
         />
 
-        {/* nav droite */}
+        {/* right: boutons */}
         <div style={{ display: "flex", gap: 8 }}>
           <a className="nav-btn" href="#/admin">
             Admin
@@ -90,9 +89,13 @@ function Header({
   );
 }
 
+/* Card placeholder (no image) */
 function Card({ s }: { s: Series }) {
   return (
-    <a style={{ textDecoration: "none", color: "inherit" }} href={`/series/${s.slug}`}>
+    <a
+      style={{ textDecoration: "none", color: "inherit" }}
+      href={`/series/${s.slug}`}
+    >
       <div className="card">
         <div className="cover">COVER</div>
         <div className="card-body">
@@ -115,7 +118,7 @@ function Card({ s }: { s: Series }) {
               <div style={{ color: "var(--muted)" }}>{fmtViews(s.views)}</div>
             </div>
             <div style={{ marginLeft: "auto", color: "var(--muted)" }}>
-              {(s.tags || []).slice(0, 2).join(" • ")}
+              {s.tags?.slice(0, 2).join(" • ")}
             </div>
           </div>
         </div>
@@ -124,10 +127,11 @@ function Card({ s }: { s: Series }) {
   );
 }
 
-export default function Home() {
+export default function App() {
   const [query, setQuery] = useState("");
-  const [library, setLibrary] = useState<Series[]>([]);
 
+  // ==== bibliothèque depuis localStorage (et pas de données mock) ====
+  const [library, setLibrary] = useState<Series[]>([]);
   useEffect(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
@@ -137,41 +141,39 @@ export default function Home() {
     }
   }, []);
 
-  // Stats
-  const totalSeries = library.length;
-  const totalChapters = library.reduce(
-    (n, s) => n + (s.chapters?.length || 0),
-    0
-  );
-
-  // Populaire (tri par vues si présent)
+  // populaire par vues
   const popular = useMemo(() => {
-    const sorted = library.slice().sort((a, b) => (b.views || 0) - (a.views || 0));
-    // filtre rapide par recherche (titre / tags)
-    const q = query.trim().toLowerCase();
-    const filtered = !q
-      ? sorted
-      : sorted.filter(
-          (s) =>
-            s.title.toLowerCase().includes(q) ||
-            (s.tags || []).some((t) => t.toLowerCase().includes(q))
-        );
-    return filtered.slice(0, 8);
-  }, [library, query]);
+    const base = library.slice().sort((a, b) => (b.views || 0) - (a.views || 0));
+    return base.slice(0, 8);
+  }, [library]);
 
-  // Derniers chapitres (par date)
+  // derniers chapitres (trié desc par date)
   const latest = useMemo(() => {
     const all = library.flatMap((s) =>
-      (s.chapters || []).map((c) => ({
-        series: s,
-        chapter: c,
-      }))
+      (s.chapters || []).map((c) => ({ series: s, chapter: c }))
     );
-    const getDate = (c: Chapter) => new Date(c.releaseDate || c.date || 0).getTime();
     return all
-      .sort((a, b) => getDate(b.chapter) - getDate(a.chapter))
+      .sort(
+        (a, b) =>
+          +new Date(b.chapter.releaseDate || 0) -
+          +new Date(a.chapter.releaseDate || 0)
+      )
       .slice(0, 8);
   }, [library]);
+
+  // filtrage simple (appliqué uniquement à la liste populaire pour démo)
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return popular;
+    return popular.filter(
+      (s) =>
+        s.title.toLowerCase().includes(q) ||
+        (s.tags || []).some((t) => t.toLowerCase().includes(q))
+    );
+  }, [popular, query]);
+
+  const totalSeries = library.length;
+  const totalChapters = library.reduce((n, s) => n + (s.chapters?.length || 0), 0);
 
   return (
     <div style={{ minHeight: "100vh", background: "var(--bg)", color: "inherit" }}>
@@ -220,8 +222,8 @@ export default function Home() {
             </div>
           </div>
 
-          {/* IMPORTANT : si aucune série → message vide */}
-          {popular.length === 0 ? (
+          {/* si vide → message propre */}
+          {filtered.length === 0 ? (
             <div
               style={{
                 border: "1px dashed var(--stroke)",
@@ -235,7 +237,7 @@ export default function Home() {
             </div>
           ) : (
             <div className="grid-cards">
-              {popular.map((s) => (
+              {filtered.map((s) => (
                 <Card key={s.id} s={s} />
               ))}
             </div>
@@ -284,12 +286,10 @@ export default function Home() {
                     <div style={{ padding: 12 }}>
                       <div style={{ fontWeight: 800 }}>{series.title}</div>
                       <div style={{ color: "var(--muted)", marginTop: 6 }}>
-                        Chapitre {chapter.number} —{" "}
-                        {chapter.name || chapter.title || ""}
+                        Chapitre {chapter.number} — {chapter.name}
                       </div>
                       <div style={{ marginTop: 8, color: "var(--muted)" }}>
-                        {(chapter.lang || "FR").toUpperCase()} •{" "}
-                        {(chapter.releaseDate || chapter.date || "").toString()}
+                        {chapter.lang} • {chapter.releaseDate}
                       </div>
                     </div>
                   </div>
@@ -322,7 +322,7 @@ export default function Home() {
 
         <div className="footer">
           <div style={{ color: "var(--muted)" }}>
-            © {new Date().getFullYear()} — Tous droits réservés
+            © {new Date().getFullYear()} — Tous droits réservés (structure)
           </div>
         </div>
       </main>
