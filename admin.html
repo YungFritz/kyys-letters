@@ -1,1 +1,101 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Admin — Kyy’s Letters</title>
+<style>
+  :root{--bg:#0b0b0d;--panel:#101116;--stroke:#1b1c22;--text:#e5e7eb;--muted:#9aa0a6;--accent:#9ef9b3;}
+  html,body{height:100%}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,Segoe UI,Roboto,Ubuntu,Helvetica,Arial}
+  .wrap{min-height:100%;display:flex;flex-direction:column}
+  .header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--stroke);background:#0d0e12}
+  .btn{color:#a7f3d0;font-weight:600;border:1px solid #2b4c18;background:#0c1409;padding:6px 12px;border-radius:8px;text-decoration:none}
+  .btn:hover{background:#18361c}
+  .container{padding:16px}
+  .card{border:1px solid var(--stroke);background:var(--panel);border-radius:14px;padding:12px;display:flex;align-items:center;gap:12px}
+  .grid{display:grid;gap:12px}
+  .cover{width:64px;height:86px;background:#12131a;border-radius:8px;display:grid;place-items:center;color:var(--muted);overflow:hidden}
+  img{width:100%;height:100%;object-fit:cover}
+  .muted{color:var(--muted)}
+  .actions{margin-left:auto;display:flex;gap:8px}
+  .danger{border:1px solid #7f1d1d;background:#1a0b0b;color:#fca5a5;padding:6px 10px;border-radius:8px}
+  .back{color:var(--muted);text-decoration:none}
+  .title{font-weight:800}
+  .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+  .footer{margin-top:auto;padding:14px 16px;border-top:1px solid var(--stroke);color:var(--muted);background:#0b0c10}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <div class="title">Panel d’administration</div>
+    <div style="display:flex;gap:10px;align-items:center">
+      <a class="back" href="#/" onclick="parent.location.hash='#/'">← Accueil</a>
+      <a class="btn" href="#/add-manga" onclick="parent.location.hash='#/add-manga'">+ Nouveau manga</a>
+    </div>
+  </div>
 
+  <div class="container">
+    <div class="topbar">
+      <div class="title">Séries</div>
+      <div class="muted" id="stats"></div>
+    </div>
+    <div id="list" class="grid"></div>
+  </div>
+
+  <div class="footer">© <span id="year"></span> — Kyy’s Letters</div>
+</div>
+
+<script>
+const STORAGE_KEY="kyys_letters_library_v2";
+const EDIT_KEY="kyys_edit_slug";
+
+function load(){
+  try{ const raw=localStorage.getItem(STORAGE_KEY); return raw?JSON.parse(raw):[]; }catch{ return []; }
+}
+function save(lib){ localStorage.setItem(STORAGE_KEY, JSON.stringify(lib)); }
+function toEdit(slug){ localStorage.setItem(EDIT_KEY, slug); parent.location.hash="#/edit-manga"; }
+function toAdd(){ parent.location.hash="#/add-manga"; }
+function toHome(){ parent.location.hash="#/"; }
+
+function render(){
+  document.getElementById("year").textContent = new Date().getFullYear();
+  const listEl=document.getElementById("list");
+  const statsEl=document.getElementById("stats");
+  const lib=load();
+  statsEl.textContent = `${lib.length} séries • ${lib.reduce((n,s)=>n+(s.chapters?.length||0),0)} chapitres`;
+
+  listEl.innerHTML="";
+  if(lib.length===0){
+    const d=document.createElement("div");
+    d.className="card muted";
+    d.textContent="Aucune série. Clique sur “+ Nouveau manga”.";
+    listEl.appendChild(d);
+    return;
+  }
+  lib.forEach(s=>{
+    const row=document.createElement("div");
+    row.className="card";
+    const cov=document.createElement("div");
+    cov.className="cover";
+    if(s.cover){ const img=document.createElement("img"); img.src=s.cover; cov.appendChild(img); } else { cov.textContent="—"; }
+    const block=document.createElement("div");
+    block.innerHTML=`<div class="title">${s.title}</div><div class="muted">${(s.chapters?.length||0)} chapitres</div>`;
+    const act=document.createElement("div");
+    act.className="actions";
+    const b1=document.createElement("button"); b1.className="btn"; b1.textContent="Modifier"; b1.onclick=()=>toEdit(s.slug);
+    const b2=document.createElement("button"); b2.className="danger"; b2.textContent="Supprimer";
+    b2.onclick=()=>{
+      if(!confirm("Supprimer cette série ?")) return;
+      const next=load().filter(x=>x.slug!==s.slug);
+      save(next); render();
+    };
+    act.appendChild(b1); act.appendChild(b2);
+    row.appendChild(cov); row.appendChild(block); row.appendChild(act);
+    listEl.appendChild(row);
+  });
+}
+render();
+</script>
+</body>
+</html>
