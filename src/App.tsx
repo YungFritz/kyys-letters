@@ -1,255 +1,169 @@
-import { useMemo } from "react";
-
-/** Kyy's letters — Home style "Scan Reader"
- *  - Hero (gros titre + sous-titre + icône)
- *  - Section "Populaire aujourd'hui" (flamme + bouton Tendances)
- *  - Grille de cartes (badge Hot, titre, vues)
- */
+import { useMemo, useState } from "react";
+import "./index.css";
 
 type Chapter = { id: string; name: string; number: number; lang: string; releaseDate: string; pages: string[] };
-type Series  = { id: string; title: string; slug: string; tags: string[]; cover: string; description: string; chapters: Chapter[]; views?: number; hot?: boolean };
+type Series = { id: string; title: string; slug: string; tags: string[]; cover?: string; description?: string; chapters: Chapter[]; views?: number; hot?: boolean };
 
-// ==== Démo : remplace par tes vraies séries ====
+// ====== Sample data (remplace par tes vrais séries plus tard) ======
 const LIBRARY: Series[] = [
-  {
-    id: "s1",
-    title: "La présidente…",
-    slug: "presidente",
-    tags: ["FR"],
-    cover: "https://picsum.photos/seed/presidente/600/800",
-    description: "…",
-    views: 3241,
-    hot: true,
-    chapters: [{ id: "s1c1", name: "Chapitre 1", number: 1, lang: "FR", releaseDate: "2025-10-10", pages: [] }],
-  },
-  {
-    id: "s2",
-    title: "What Can I Do Alone ?",
-    slug: "alone",
-    tags: ["FR"],
-    cover: "https://picsum.photos/seed/alone/600/800",
-    description: "…",
-    views: 2387,
-    hot: true,
-    chapters: [{ id: "s2c1", name: "Chapitre 1", number: 1, lang: "FR", releaseDate: "2025-10-12", pages: [] }],
-  },
-  {
-    id: "s3",
-    title: "Sensei Life",
-    slug: "sensei-life",
-    tags: ["FR"],
-    cover: "https://picsum.photos/seed/sensei/600/800",
-    description: "…",
-    views: 1085,
-    hot: true,
-    chapters: [{ id: "s3c1", name: "Chapitre 1", number: 1, lang: "FR", releaseDate: "2025-10-14", pages: [] }],
-  },
-  {
-    id: "s4",
-    title: "Exilio",
-    slug: "exilio",
-    tags: ["FR"],
-    cover: "https://picsum.photos/seed/exilio/600/800",
-    description: "…",
-    views: 816,
-    hot: true,
-    chapters: [{ id: "s4c1", name: "Chapitre 1", number: 1, lang: "FR", releaseDate: "2025-10-15", pages: [] }],
-  },
-  {
-    id: "s5",
-    title: "Anita to Osananajimi…",
-    slug: "anita",
-    tags: ["FR"],
-    cover: "https://picsum.photos/seed/anita/600/800",
-    description: "…",
-    views: 771,
-    chapters: [{ id: "s5c1", name: "Chapitre 1", number: 1, lang: "FR", releaseDate: "2025-10-11", pages: [] }],
-  },
-  {
-    id: "s6",
-    title: "Mob Shidai Nendai…",
-    slug: "mob",
-    tags: ["FR"],
-    cover: "https://picsum.photos/seed/mob/600/800",
-    description: "…",
-    views: 742,
-    chapters: [{ id: "s6c1", name: "Chapitre 1", number: 1, lang: "FR", releaseDate: "2025-10-09", pages: [] }],
-  },
-  {
-    id: "s7",
-    title: "Temple Of Dragon King",
-    slug: "todk",
-    tags: ["FR"],
-    cover: "https://picsum.photos/seed/todk/600/800",
-    description: "…",
-    views: 642,
-    chapters: [{ id: "s7c1", name: "Chapitre 1", number: 1, lang: "FR", releaseDate: "2025-10-08", pages: [] }],
-  },
-  {
-    id: "s8",
-    title: "Un sommeil entre tes bras",
-    slug: "bras",
-    tags: ["FR"],
-    cover: "https://picsum.photos/seed/bras/600/800",
-    description: "…",
-    views: 627,
-    chapters: [{ id: "s8c1", name: "Chapitre 1", number: 1, lang: "FR", releaseDate: "2025-10-07", pages: [] }],
-  },
+  { id: "s1", title: "Série A", slug: "serie-a", tags: ["FR","Action"], description: "Petit résumé A", chapters: [{id:"s1c1",name:"Chap 1",number:1,lang:"FR",releaseDate:"2025-10-01",pages:[]}], views: 2400, hot:true },
+  { id: "s2", title: "Série B", slug: "serie-b", tags: ["FR","Comédie"], description: "Petit résumé B", chapters: [{id:"s2c1",name:"Chap 1",number:1,lang:"FR",releaseDate:"2025-10-02",pages:[]}], views: 1800, hot:true },
+  { id: "s3", title: "Série C", slug: "serie-c", tags: ["JP"], description: "Petit résumé C", chapters: [{id:"s3c1",name:"Chap 1",number:1,lang:"JP",releaseDate:"2025-09-29",pages:[]}], views: 1200 },
+  { id: "s4", title: "Série D", slug: "serie-d", tags: ["KR"], description: "Petit résumé D", chapters: [{id:"s4c1",name:"Chap 1",number:1,lang:"KR",releaseDate:"2025-09-30",pages:[]}], views: 900 },
+  { id: "s5", title: "Série E", slug: "serie-e", tags: ["EN"], description: "Petit résumé E", chapters: [{id:"s5c1",name:"Chap 1",number:1,lang:"EN",releaseDate:"2025-09-28",pages:[]}], views: 650 },
+  { id: "s6", title: "Série F", slug: "serie-f", tags: ["FR"], description: "Petit résumé F", chapters: [{id:"s6c1",name:"Chap 1",number:1,lang:"FR",releaseDate:"2025-09-20",pages:[]}], views: 430 },
 ];
 
+// helper petites chaines
 const fmtViews = (n?: number) => {
   if (!n) return "0 vues";
-  if (n >= 1000) return `${(n / 1000).toFixed(1)}k vues`;
+  if (n >= 1000) return `${(n/1000).toFixed(1)}k vues`;
   return `${n} vues`;
 };
 
-const container: React.CSSProperties = { maxWidth: 1280, margin: "0 auto", padding: "24px 16px" };
-
-export default function App() {
-  // tri popularité : vues desc puis récence
-  const popular = useMemo(
-    () =>
-      LIBRARY.slice().sort((a, b) => (b.views ?? 0) - (a.views ?? 0) || +new Date(b.chapters[0]?.releaseDate ?? 0) - +new Date(a.chapters[0]?.releaseDate ?? 0)),
-    []
-  );
-
+function Header({ query, setQuery }: { query: string; setQuery: (v:string)=>void }) {
   return (
-    <div style={{ minHeight: "100vh", background: "#0b0b0c", color: "#eaeaf0" }}>
-      {/* HERO */}
-      <main style={container}>
-        <div
-          style={{
-            border: "1px solid #26262b",
-            background: "linear-gradient(180deg,#121214 0%,#0e0e10 100%)",
-            borderRadius: 20,
-            padding: "28px 24px",
-            marginBottom: 18,
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 6 }}>
-            <div
-              style={{
-                width: 40,
-                height: 40,
-                borderRadius: 12,
-                display: "grid",
-                placeItems: "center",
-                background: "#1f1f26",
-                border: "1px solid #2b2b33",
-                fontSize: 22,
-              }}
-            >
-              📚
-            </div>
-            <h1 style={{ margin: 0, fontSize: 28, fontWeight: 800 }}>Bienvenue sur <span style={{ color: "#ffd15c" }}>Scan Reader</span></h1>
-          </div>
-          <p style={{ margin: 0, color: "#a9aab4" }}>Découvrez les derniers mangas, manhwas et webtoons en ligne</p>
+    <div className="header">
+      <div className="header-inner">
+        {/* left: placeholder logo */}
+        <div style={{ display:"flex", alignItems:"center", gap:12 }}>
+          <div style={{ width:40, height:40, borderRadius:10, background:"linear-gradient(90deg,#111113,#0d0d0e)", display:"grid", placeItems:"center", color:"#fff", fontWeight:800 }}>K</div>
         </div>
 
-        {/* POPULAIRE AUJOURD’HUI */}
-        <section
-          style={{
-            border: "1px solid #26262b",
-            background: "linear-gradient(180deg,#121214 0%,#0e0e10 100%)",
-            borderRadius: 20,
-            padding: 16,
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <span style={{ fontSize: 18 }}>🔥</span>
-              <h2 style={{ margin: 0, fontSize: 18 }}>Populaire aujourd&apos;hui</h2>
-            </div>
-            <div style={{ marginLeft: "auto" }}>
-              <button
-                style={{
-                  border: "1px solid #3a2d12",
-                  background: "#1d1405",
-                  color: "#ffb74d",
-                  borderRadius: 999,
-                  padding: "6px 12px",
-                  fontWeight: 600,
-                }}
-              >
-                Tendances
-              </button>
-            </div>
-          </div>
+        {/* two small nav buttons */}
+        <a className="nav-btn" href="#">Perso</a>
+        <a className="nav-btn" href="#">Recrutement</a>
 
-          <div
-            style={{
-              display: "grid",
-              gap: 14,
-              gridTemplateColumns: "repeat(auto-fill,minmax(210px,1fr))",
-            }}
-          >
-            {popular.map((s) => (
-              <Card key={s.id} s={s} />
-            ))}
-          </div>
-        </section>
-      </main>
+        {/* search */}
+        <input className="search-input" value={query} onChange={e=>setQuery(e.target.value)} placeholder="Rechercher une série, un tag, une langue..." />
 
-      <footer style={{ borderTop: "1px solid #16161a", marginTop: 24 }}>
-        <div style={{ ...container, paddingTop: 14, paddingBottom: 14, color: "#8b8c96", fontSize: 12 }}>
-          © {new Date().getFullYear()} Kyy’s letters — Scan Reader
+        {/* right: placeholder */}
+        <div style={{ display:"flex", gap:8 }}>
+          <a className="nav-btn" href="#">Connexion</a>
         </div>
-      </footer>
+      </div>
     </div>
   );
 }
 
+/* Card placeholder (no image) */
 function Card({ s }: { s: Series }) {
   return (
-    <a
-      href={`/series/${s.slug}`}
-      style={{
-        textDecoration: "none",
-        color: "inherit",
-        border: "1px solid #26262b",
-        background: "#111114",
-        borderRadius: 16,
-        overflow: "hidden",
-        display: "flex",
-        flexDirection: "column",
-      }}
-    >
-      <div style={{ position: "relative" }}>
-        <div style={{ aspectRatio: "3/4", width: "100%", overflow: "hidden" }}>
-          <img src={s.cover} alt={s.title} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
-        </div>
-
-        {/* Badge HOT */}
-        {s.hot && (
-          <div
-            style={{
-              position: "absolute",
-              top: 8,
-              left: 8,
-              background: "linear-gradient(90deg,#ff4d4d,#ff8a4d)",
-              color: "#0b0b0c",
-              fontWeight: 800,
-              fontSize: 12,
-              padding: "4px 8px",
-              borderRadius: 999,
-              border: "1px solid #3a1512",
-            }}
-          >
-            HOT
+    <a style={{ textDecoration:"none", color:"inherit" }} href={`/series/${s.slug}`}>
+      <div className="card">
+        <div className="cover">COVER</div>
+        <div className="card-body">
+          <div className="card-title">{s.title}</div>
+          <div className="card-meta">
+            <div style={{ display:"flex", gap:8, alignItems:"center" }}>
+              <div style={{ width:18, height:18, display:"grid", placeItems:"center", borderRadius:6, background:"#0b0b0b", border:"1px solid rgba(255,255,255,0.02)" }}>👁️</div>
+              <div style={{ color:"var(--muted)" }}>{fmtViews(s.views)}</div>
+            </div>
+            <div style={{ marginLeft:"auto", color:"var(--muted)" }}>{s.tags?.slice(0,2).join(" • ")}</div>
           </div>
-        )}
-      </div>
-
-      {/* Titre + vues */}
-      <div style={{ padding: 12, display: "grid", gap: 6 }}>
-        <div style={{ fontWeight: 800, lineHeight: 1.2 }}>{s.title}</div>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, color: "#a9aab4", fontSize: 12 }}>
-          <span style={{ width: 18, height: 18, borderRadius: 999, display: "grid", placeItems: "center", background: "#1b1b21", border: "1px solid #282830" }}>
-            👁️
-          </span>
-          <span>{fmtViews(s.views)}</span>
         </div>
       </div>
     </a>
+  );
+}
+
+export default function App(){
+  const [query, setQuery] = useState("");
+  // populaire par vues
+  const popular = useMemo(()=> LIBRARY.slice().sort((a,b)=> (b.views||0)-(a.views||0)).slice(0,8), []);
+
+  // derniers chapitres (trié desc par date)
+  const latest = useMemo(()=>{
+    const all = LIBRARY.flatMap(s => s.chapters.map(c => ({series:s, chapter:c})));
+    return all.sort((a,b)=> +new Date(b.chapter.releaseDate) - +new Date(a.chapter.releaseDate)).slice(0,8);
+  },[]);
+
+  // filtrage simple (appliqué uniquement à la liste populaire pour démo)
+  const filtered = popular.filter(s => {
+    const q = query.trim().toLowerCase();
+    if(!q) return true;
+    return s.title.toLowerCase().includes(q) || s.tags.some(t=>t.toLowerCase().includes(q));
+  });
+
+  return (
+    <div style={{ minHeight:"100vh", background:"var(--bg)", color:"inherit" }}>
+      <Header query={query} setQuery={setQuery} />
+
+      <main className="container">
+        {/* HERO */}
+        <div className="hero" style={{ gap:18 }}>
+          <div className="hero-card">
+            <div className="hero-message">
+              <h1 style={{ margin:"0 0 8px 0" }}>Bienvenue</h1>
+              <p style={{ margin:0, color:"var(--muted)" }}>Message d'accueil / accroche. Remplace par ton texte.</p>
+            </div>
+          </div>
+
+          <div style={{ display:"grid", gap:12 }}>
+            <div className="side-card">
+              <div style={{ fontWeight:800, marginBottom:8 }}>Rejoindre</div>
+              <div style={{ color:"var(--muted)", marginBottom:10 }}>Lien discord / contact / bouton</div>
+              <a className="nav-btn" href="#" style={{ display:"inline-block" }}>Ouvrir</a>
+            </div>
+            <div className="side-card">
+              <div style={{ fontWeight:700, marginBottom:6 }}>Statistiques</div>
+              <div style={{ color:"var(--muted)" }}>Séries: {LIBRARY.length} • Chapitres: {LIBRARY.reduce((n,s)=>n+s.chapters.length,0)}</div>
+            </div>
+          </div>
+        </div>
+
+        {/* POPULAIRE */}
+        <section className="section" style={{ marginTop:20 }}>
+          <div className="section-header">
+            <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+              <div style={{ fontSize:18 }}>🔥</div>
+              <div className="section-title">Populaire aujourd'hui</div>
+            </div>
+            <div style={{ marginLeft:"auto" }}>
+              <button className="nav-btn">Tendances</button>
+            </div>
+          </div>
+
+          <div className="grid-cards">
+            {filtered.map(s => <Card key={s.id} s={s} />)}
+          </div>
+        </section>
+
+        {/* Derniers chapitres */}
+        <div style={{ display:"grid", gridTemplateColumns:"3fr 1fr", gap:18, marginTop:20 }}>
+          <div>
+            <div style={{ fontSize:14, color:"var(--muted)", marginBottom:10, textTransform:"uppercase", letterSpacing:1 }}>Derniers chapitres postés</div>
+            <div className="latest-grid">
+              {latest.map(({series,chapter}) => (
+                <div key={chapter.id} className="card">
+                  <div className="cover">PAGE</div>
+                  <div style={{ padding:12 }}>
+                    <div style={{ fontWeight:800 }}>{series.title}</div>
+                    <div style={{ color:"var(--muted)", marginTop:6 }}>Chapitre {chapter.number} — {chapter.name}</div>
+                    <div style={{ marginTop:8, color:"var(--muted)" }}>{chapter.lang} • {chapter.releaseDate}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <aside>
+            <div className="stats">
+              <div style={{ fontWeight:800, marginBottom:8 }}>Statistiques</div>
+              <div style={{ color:"var(--muted)" }}>Visites totales (exemple)</div>
+              <div style={{ marginTop:12, display:"grid", gap:10 }}>
+                <div style={{ display:"flex", justifyContent:"space-between" }}><span style={{ color:"var(--muted)" }}>Séries</span><strong>{LIBRARY.length}</strong></div>
+                <div style={{ display:"flex", justifyContent:"space-between" }}><span style={{ color:"var(--muted)" }}>Chapitres</span><strong>{LIBRARY.reduce((n,s)=>n+s.chapters.length,0)}</strong></div>
+                <div style={{ display:"flex", justifyContent:"space-between" }}><span style={{ color:"var(--muted)" }}>Langue</span><strong>FR</strong></div>
+              </div>
+            </div>
+          </aside>
+        </div>
+
+        <div className="footer">
+          <div style={{ color:"var(--muted)" }}>© {new Date().getFullYear()} — Tous droits réservés (structure demo)</div>
+        </div>
+      </main>
+    </div>
   );
 }
