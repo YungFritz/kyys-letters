@@ -23,7 +23,7 @@ type Series = {
   hot?: boolean;
 };
 
-/* ========= Données (seed) — structure simple ========= */
+/* ========= Données (seed) ========= */
 const SEED: Series[] = [
   {
     id: "s1",
@@ -31,9 +31,7 @@ const SEED: Series[] = [
     slug: "serie-a",
     tags: ["FR", "Action"],
     description: "Petit résumé A",
-    chapters: [
-      { id: "s1c1", name: "Chap 1", number: 1, lang: "FR", releaseDate: "2025-10-01", pages: [] },
-    ],
+    chapters: [{ id: "s1c1", name: "Chap 1", number: 1, lang: "FR", releaseDate: "2025-10-01", pages: [] }],
     views: 2400,
     hot: true,
   },
@@ -43,9 +41,7 @@ const SEED: Series[] = [
     slug: "serie-b",
     tags: ["FR", "Comédie"],
     description: "Petit résumé B",
-    chapters: [
-      { id: "s2c1", name: "Chap 1", number: 1, lang: "FR", releaseDate: "2025-10-02", pages: [] },
-    ],
+    chapters: [{ id: "s2c1", name: "Chap 1", number: 1, lang: "FR", releaseDate: "2025-10-02", pages: [] }],
     views: 1800,
     hot: true,
   },
@@ -55,9 +51,7 @@ const SEED: Series[] = [
     slug: "serie-c",
     tags: ["JP"],
     description: "Petit résumé C",
-    chapters: [
-      { id: "s3c1", name: "Chap 1", number: 1, lang: "JP", releaseDate: "2025-09-29", pages: [] },
-    ],
+    chapters: [{ id: "s3c1", name: "Chap 1", number: 1, lang: "JP", releaseDate: "2025-09-29", pages: [] }],
     views: 1200,
   },
   {
@@ -66,9 +60,7 @@ const SEED: Series[] = [
     slug: "serie-d",
     tags: ["KR"],
     description: "Petit résumé D",
-    chapters: [
-      { id: "s4c1", name: "Chap 1", number: 1, lang: "KR", releaseDate: "2025-09-30", pages: [] },
-    ],
+    chapters: [{ id: "s4c1", name: "Chap 1", number: 1, lang: "KR", releaseDate: "2025-09-30", pages: [] }],
     views: 900,
   },
   {
@@ -77,9 +69,7 @@ const SEED: Series[] = [
     slug: "serie-e",
     tags: ["EN"],
     description: "Petit résumé E",
-    chapters: [
-      { id: "s5c1", name: "Chap 1", number: 1, lang: "EN", releaseDate: "2025-09-28", pages: [] },
-    ],
+    chapters: [{ id: "s5c1", name: "Chap 1", number: 1, lang: "EN", releaseDate: "2025-09-28", pages: [] }],
     views: 650,
   },
   {
@@ -88,9 +78,7 @@ const SEED: Series[] = [
     slug: "serie-f",
     tags: ["FR"],
     description: "Petit résumé F",
-    chapters: [
-      { id: "s6c1", name: "Chap 1", number: 1, lang: "FR", releaseDate: "2025-09-20", pages: [] },
-    ],
+    chapters: [{ id: "s6c1", name: "Chap 1", number: 1, lang: "FR", releaseDate: "2025-09-20", pages: [] }],
     views: 430,
   },
 ];
@@ -110,7 +98,7 @@ const save = (lib: Series[]) => localStorage.setItem(LS_KEY, JSON.stringify(lib)
 /* ========= Helpers ========= */
 const fmtViews = (n?: number) => (!n ? "0 vues" : n >= 1000 ? `${(n / 1000).toFixed(1)}k vues` : `${n} vues`);
 
-/* ========= Mini-router en hash ========= */
+/* ========= Mini-router (hash) ========= */
 type Route =
   | { name: "home" }
   | { name: "admin" }
@@ -131,7 +119,7 @@ const nav = (to: string) => {
   window.location.hash = to;
 };
 
-/* ========= Header (même vibe que ton original) ========= */
+/* ========= Header ========= */
 function Header({ query, setQuery }: { query: string; setQuery: (v: string) => void }) {
   return (
     <div className="header">
@@ -152,12 +140,8 @@ function Header({ query, setQuery }: { query: string; setQuery: (v: string) => v
             K
           </div>
         </div>
-        <a className="nav-btn" href="#">
-          Perso
-        </a>
-        <a className="nav-btn" href="#">
-          Recrutement
-        </a>
+        <a className="nav-btn" href="#">Perso</a>
+        <a className="nav-btn" href="#">Recrutement</a>
 
         <input
           className="search-input"
@@ -167,19 +151,8 @@ function Header({ query, setQuery }: { query: string; setQuery: (v: string) => v
         />
 
         <div style={{ display: "flex", gap: 8 }}>
-          <a
-            className="nav-btn"
-            href="#"
-            onClick={(e) => {
-              e.preventDefault();
-              nav("/admin");
-            }}
-          >
-            Admin
-          </a>
-          <a className="nav-btn" href="#">
-            Connexion
-          </a>
+          <a className="nav-btn" href="#" onClick={(e) => { e.preventDefault(); nav("/admin"); }}>Admin</a>
+          <a className="nav-btn" href="#">Connexion</a>
         </div>
       </div>
     </div>
@@ -196,19 +169,7 @@ function Card({ s }: { s: Series }) {
           <div className="card-title">{s.title}</div>
           <div className="card-meta">
             <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-              <div
-                style={{
-                  width: 18,
-                  height: 18,
-                  display: "grid",
-                  placeItems: "center",
-                  borderRadius: 6,
-                  background: "#0b0b0b",
-                  border: "1px solid rgba(255,255,255,0.02)",
-                }}
-              >
-                👁️
-              </div>
+              <div style={{ width: 18, height: 18, display: "grid", placeItems: "center", borderRadius: 6, background: "#0b0b0b", border: "1px solid rgba(255,255,255,0.02)" }}>👁️</div>
               <div style={{ color: "var(--muted)" }}>{fmtViews(s.views)}</div>
             </div>
             <div style={{ marginLeft: "auto", color: "var(--muted)" }}>{s.tags?.slice(0, 2).join(" • ")}</div>
@@ -219,7 +180,7 @@ function Card({ s }: { s: Series }) {
   );
 }
 
-/* ========= HOME — layout d’accueil ========= */
+/* ========= HOME ========= */
 function Home({ library }: { library: Series[] }) {
   const [query, setQuery] = useState("");
   const popular = useMemo(
@@ -242,9 +203,7 @@ function Home({ library }: { library: Series[] }) {
           <div className="hero-card">
             <div className="hero-message">
               <h1 style={{ margin: "0 0 8px 0" }}>Bienvenue</h1>
-              <p style={{ margin: 0, color: "var(--muted)" }}>
-                Message d'accueil / accroche. Remplace par ton texte.
-              </p>
+              <p style={{ margin: 0, color: "var(--muted)" }}>Message d'accueil / accroche. Remplace par ton texte.</p>
             </div>
           </div>
 
@@ -252,15 +211,12 @@ function Home({ library }: { library: Series[] }) {
             <div className="side-card">
               <div style={{ fontWeight: 800, marginBottom: 8 }}>Rejoindre</div>
               <div style={{ color: "var(--muted)", marginBottom: 10 }}>Lien discord / contact / bouton</div>
-              <a className="nav-btn" href="#">
-                Ouvrir
-              </a>
+              <a className="nav-btn" href="#">Ouvrir</a>
             </div>
             <div className="side-card">
               <div style={{ fontWeight: 700, marginBottom: 6 }}>Statistiques</div>
               <div style={{ color: "var(--muted)" }}>
-                Séries: {library.length} • Chapitres:{" "}
-                {library.reduce((n, s) => n + s.chapters.length, 0)}
+                Séries: {library.length} • Chapitres: {library.reduce((n, s) => n + s.chapters.length, 0)}
               </div>
             </div>
           </div>
@@ -278,33 +234,20 @@ function Home({ library }: { library: Series[] }) {
           </div>
 
           <div className="grid-cards">
-            {filtered.map((s) => (
-              <Card key={s.id} s={s} />
-            ))}
+            {filtered.map((s) => <Card key={s.id} s={s} />)}
           </div>
         </section>
 
         <div style={{ display: "grid", gridTemplateColumns: "3fr 1fr", gap: 18, marginTop: 20 }}>
           <div>
-            <div
-              style={{
-                fontSize: 14,
-                color: "var(--muted)",
-                marginBottom: 10,
-                textTransform: "uppercase",
-                letterSpacing: 1,
-              }}
-            >
+            <div style={{ fontSize: 14, color: "var(--muted)", marginBottom: 10, textTransform: "uppercase", letterSpacing: 1 }}>
               Derniers chapitres postés
             </div>
 
             <div className="latest-grid">
               {library
                 .flatMap((series) => series.chapters.map((chapter) => ({ series, chapter })))
-                .sort(
-                  (a, b) =>
-                    +new Date(b.chapter.releaseDate) - +new Date(a.chapter.releaseDate)
-                )
+                .sort((a, b) => +new Date(b.chapter.releaseDate) - +new Date(a.chapter.releaseDate))
                 .slice(0, 8)
                 .map(({ series, chapter }) => (
                   <div key={chapter.id} className="card">
@@ -329,18 +272,14 @@ function Home({ library }: { library: Series[] }) {
               <div style={{ color: "var(--muted)" }}>Visites totales (exemple)</div>
               <div style={{ marginTop: 12, display: "grid", gap: 10 }}>
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <span style={{ color: "var(--muted)" }}>Séries</span>
-                  <strong>{library.length}</strong>
+                  <span style={{ color: "var(--muted)" }}>Séries</span><strong>{library.length}</strong>
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
                   <span style={{ color: "var(--muted)" }}>Chapitres</span>
-                  <strong>
-                    {library.reduce((n, s) => n + s.chapters.length, 0)}
-                  </strong>
+                  <strong>{library.reduce((n, s) => n + s.chapters.length, 0)}</strong>
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
-                  <span style={{ color: "var(--muted)" }}>Langue</span>
-                  <strong>FR</strong>
+                  <span style={{ color: "var(--muted)" }}>Langue</span><strong>FR</strong>
                 </div>
               </div>
             </div>
@@ -348,39 +287,22 @@ function Home({ library }: { library: Series[] }) {
         </div>
 
         <div className="footer">
-          <div style={{ color: "var(--muted)" }}>
-            © {new Date().getFullYear()} — Tous droits réservés (structure demo)
-          </div>
+          <div style={{ color: "var(--muted)" }}>© {new Date().getFullYear()} — Tous droits réservés (structure demo)</div>
         </div>
       </main>
     </div>
   );
 }
 
-/* ========= Admin (structure légère, sans polluer ton CSS) ========= */
-function AdminLayout({
-  title,
-  right,
-  children,
-}: {
-  title: string;
-  right?: React.ReactNode;
-  children: React.ReactNode;
-}) {
+/* ========= Admin ========= */
+function AdminLayout({ title, right, children }: { title: string; right?: React.ReactNode; children: React.ReactNode }) {
   return (
     <main style={{ maxWidth: 1280, margin: "0 auto", padding: "24px 16px" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
         <h1 style={{ margin: 0, fontSize: 24, fontWeight: 800 }}>{title}</h1>
         <div>{right}</div>
       </div>
-      <div
-        style={{
-          border: "1px solid #26262b",
-          background: "linear-gradient(180deg,#121214 0%,#0e0e10 100%)",
-          borderRadius: 20,
-          padding: 16,
-        }}
-      >
+      <div style={{ border: "1px solid #26262b", background: "linear-gradient(180deg,#121214 0%,#0e0e10 100%)", borderRadius: 20, padding: 16 }}>
         {children}
       </div>
     </main>
@@ -395,7 +317,7 @@ const btn = (b: string, c: string) => ({
   borderRadius: 10,
 });
 
-// ✅ Styles communs pour les inputs (corrige l’erreur "Cannot find name 'inp'")
+// ✅ Styles communs pour inputs (fix “Cannot find name 'inp'”)
 const inp = {
   width: "100%",
   border: "1px solid #27272a",
@@ -403,91 +325,38 @@ const inp = {
   color: "#e5e7eb",
   padding: "10px 12px",
   borderRadius: 10,
-};
+} as const;
 
 /* Liste séries */
-function AdminDashboard({
-  library,
-  onDelete,
-}: {
-  library: Series[];
-  onDelete: (slug: string) => void;
-}) {
+function AdminDashboard({ library, onDelete }: { library: Series[]; onDelete: (slug: string) => void }) {
   const [q, setQ] = useState("");
   const list = useMemo(() => {
     const k = q.trim().toLowerCase();
-    return !k
-      ? library
-      : library.filter(
-          (s) =>
-            s.title.toLowerCase().includes(k) ||
-            s.tags.some((t) => t.toLowerCase().includes(k))
-        );
+    return !k ? library : library.filter((s) => s.title.toLowerCase().includes(k) || s.tags.some((t) => t.toLowerCase().includes(k)));
   }, [q, library]);
 
   return (
     <AdminLayout
       title="Séries"
-      right={
-        <button onClick={() => nav("/admin/manga/new")} style={btn("#3a2d12", "#1d1405")}>
-          + Nouvelle série
-        </button>
-      }
+      right={<button onClick={() => nav("/admin/manga/new")} style={btn("#3a2d12", "#1d1405")}>+ Nouvelle série</button>}
     >
       <input
         value={q}
         onChange={(e) => setQ(e.target.value)}
         placeholder="Rechercher"
-        style={{
-          width: "100%",
-          border: "1px solid #27272a",
-          background: "#0f1012",
-          color: "#e5e7eb",
-          padding: "10px 12px",
-          borderRadius: 12,
-          marginBottom: 12,
-        }}
+        style={{ width: "100%", border: "1px solid #27272a", background: "#0f1012", color: "#e5e7eb", padding: "10px 12px", borderRadius: 12, marginBottom: 12 }}
       />
 
       <div style={{ display: "grid", gap: 12 }}>
         {list.map((s) => (
-          <div
-            key={s.id}
-            style={{
-              display: "flex",
-              gap: 12,
-              alignItems: "center",
-              border: "1px solid #27272a",
-              background: "#0f0f12",
-              borderRadius: 14,
-              padding: 12,
-            }}
-          >
-            <div
-              style={{
-                width: 82,
-                height: 110,
-                borderRadius: 8,
-                background: "#141516",
-                display: "grid",
-                placeItems: "center",
-                color: "#9aa0a6",
-              }}
-            >
-              COVER
-            </div>
+          <div key={s.id} style={{ display: "flex", gap: 12, alignItems: "center", border: "1px solid #27272a", background: "#0f0f12", borderRadius: 14, padding: 12 }}>
+            <div style={{ width: 82, height: 110, borderRadius: 8, background: "#141516", display: "grid", placeItems: "center", color: "#9aa0a6" }}>COVER</div>
             <div style={{ flex: 1 }}>
               <div style={{ fontWeight: 800 }}>{s.title}</div>
-              <div style={{ color: "#9aa0a6", fontSize: 13 }}>
-                {s.tags.join(" • ")} • {s.chapters.length} chap.
-              </div>
+              <div style={{ color: "#9aa0a6", fontSize: 13 }}>{s.tags.join(" • ")} • {s.chapters.length} chap.</div>
             </div>
-            <button onClick={() => nav(`/admin/manga/${s.slug}/edit`)} style={btn("#3f3f46", "#18181b")}>
-              Modifier
-            </button>
-            <button onClick={() => onDelete(s.slug)} style={btn("#7f1d1d", "#1a0b0b")}>
-              Supprimer
-            </button>
+            <button onClick={() => nav(`/admin/manga/${s.slug}/edit`)} style={btn("#3f3f46", "#18181b")}>Modifier</button>
+            <button onClick={() => onDelete(s.slug)} style={btn("#7f1d1d", "#1a0b0b")}>Supprimer</button>
           </div>
         ))}
       </div>
@@ -501,12 +370,12 @@ function AdminAdd({ onCreate }: { onCreate: (s: Series) => void }) {
   const [tags, setTags] = useState("FR");
   const [slug, setSlug] = useState("");
 
+  // makeSlug SANS @ts-expect-error + compatible (retire accents via range diacritiques)
   const makeSlug = (t: string) =>
     t
       .toLowerCase()
       .normalize("NFD")
-      // @ts-expect-error: Unicode property escapes supported in modern TS targets
-      .replace(/\p{Diacritic}/gu, "")
+      .replace(/[\u0300-\u036f]/g, "")
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/(^-|-$)/g, "");
 
@@ -525,10 +394,7 @@ function AdminAdd({ onCreate }: { onCreate: (s: Series) => void }) {
   };
 
   return (
-    <AdminLayout
-      title="Ajouter une série"
-      right={<button onClick={post} style={btn("#2b4c18", "#0c1409")}>Post</button>}
-    >
+    <AdminLayout title="Ajouter une série" right={<button onClick={post} style={btn("#2b4c18", "#0c1409")}>Post</button>}>
       <div style={{ display: "grid", gap: 12 }}>
         <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Titre…" style={inp} />
         <input value={slug} onChange={(e) => setSlug(e.target.value)} placeholder="Slug (optionnel)" style={inp} />
@@ -581,10 +447,7 @@ function AdminEdit({
   };
 
   return (
-    <AdminLayout
-      title={`Modifier : ${s.title}`}
-      right={<button onClick={save} style={btn("#2b4c18", "#0c1409")}>Save</button>}
-    >
+    <AdminLayout title={`Modifier : ${s.title}`} right={<button onClick={save} style={btn("#2b4c18", "#0c1409")}>Save</button>}>
       <div style={{ display: "grid", gap: 12 }}>
         <input value={s.title} onChange={(e) => setS({ ...s, title: e.target.value })} style={inp} />
         <input
@@ -599,9 +462,7 @@ function AdminEdit({
             <input type="number" value={num} onChange={(e) => setNum(parseInt(e.target.value || "0"))} placeholder="Numéro" style={inp} />
             <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nom" style={inp} />
             <select value={lang} onChange={(e) => setLang(e.target.value)} style={inp}>
-              <option>FR</option>
-              <option>EN</option>
-              <option>JP</option>
+              <option>FR</option><option>EN</option><option>JP</option>
             </select>
             <input type="date" value={date} onChange={(e) => setDate(e.target.value)} style={inp} />
           </div>
@@ -618,23 +479,9 @@ function AdminEdit({
               .slice()
               .sort((a, b) => b.number - a.number)
               .map((c) => (
-                <div
-                  key={c.id}
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    border: "1px solid #27272a",
-                    background: "#0f0f12",
-                    borderRadius: 12,
-                    padding: "10px 12px",
-                  }}
-                >
+                <div key={c.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", border: "1px solid #27272a", background: "#0f0f12", borderRadius: 12, padding: "10px 12px" }}>
                   <div>
-                    <strong>Chapitre {c.number}</strong> — {c.name}{" "}
-                    <span style={{ color: "#9aa0a6" }}>
-                      ({c.lang} • {c.releaseDate})
-                    </span>
+                    <strong>Chapitre {c.number}</strong> — {c.name} <span style={{ color: "#9aa0a6" }}>({c.lang} • {c.releaseDate})</span>
                   </div>
                   <div style={{ color: "#9aa0a6", fontSize: 12 }}>{c.pages.length} pages</div>
                 </div>
@@ -676,13 +523,7 @@ export default function App() {
       {route.name === "admin" && <AdminDashboard library={library} onDelete={deleteSeries} />}
       {route.name === "admin-new" && <AdminAdd onCreate={createSeries} />}
       {route.name === "admin-edit" && (
-        <AdminEdit
-          library={library}
-          slug={route.slug}
-          onSave={updateSeries}
-          onAddChapter={addChapter}
-          onDelete={deleteSeries}
-        />
+        <AdminEdit library={library} slug={route.slug} onSave={updateSeries} onAddChapter={addChapter} onDelete={deleteSeries} />
       )}
     </>
   );
