@@ -1,18 +1,17 @@
+// vite.config.ts
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import { resolve } from 'path'
+
+// Pas d'import "path", pas de __dirname.
+// Vite prend "index.html" comme entrée par défaut.
+// Le dossier "public/" est servi tel quel (admin.html, add-manga.html, etc.).
 
 export default defineConfig({
   plugins: [react()],
-  publicDir: 'public', // <-- on garde /public pour nos pages statiques
+  publicDir: 'public',
   build: {
     outDir: 'dist',
     emptyOutDir: true,
-    rollupOptions: {
-      // On NE déclare que index.html comme entrée à builder
-      input: {
-        main: resolve(__dirname, 'index.html'),
-      },
-    },
+    // Aucun rollupOptions.input nécessaire ici.
   },
 })
