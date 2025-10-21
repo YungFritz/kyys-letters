@@ -106,6 +106,17 @@ type Route =
   | { name: "admin-edit"; slug: string };
 
 const parseRoute = (hash: string): Route => {
+  const clean = hash.replace(/^#/, "").trim();
+  console.log("ROUTE:", clean); // 👀 pour debug
+  if (clean === "/admin") return { name: "admin" };
+  if (clean === "/admin/manga/new") return { name: "admin-new" };
+  if (clean.startsWith("/admin/manga/") && clean.endsWith("/edit")) {
+    const slug = clean.slice("/admin/manga/".length, -"/edit".length);
+    return { name: "admin-edit", slug };
+  }
+  return { name: "home" };
+};
+
   const h = hash.replace(/^#/, "");
   if (h === "/admin") return { name: "admin" };
   if (h === "/admin/manga/new") return { name: "admin-new" };
