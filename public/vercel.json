@@ -1,12 +1,12 @@
 {
-  "version": 2,
-  "rewrites": [
-    { "source": "/manga/(.*)", "destination": "/manga.html" },
-    { "source": "/chapitre-:num/(.*)", "destination": "/chapitre.html" }
-  ],
-  "redirects": [
-    { "source": "/home", "destination": "/", "permanent": true }
-  ],
   "cleanUrls": true,
-  "trailingSlash": false
+  "trailingSlash": false,
+  "rewrites": [
+    { "source": "/", "destination": "/" },
+    { "source": "/admin", "destination": "/admin.html" },
+    { "source": "/recrutement", "destination": "/recrutement.html" },
+    { "source": "/personnelle", "destination": "/personnelle.html" },
+    { "source": "/add-manga", "destination": "/add-manga.html" },
+    { "source": "/add-chapitre", "destination": "/add-chapitre.html" }
+  ]
 }
