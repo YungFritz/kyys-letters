@@ -1,7 +1,9 @@
 import { useMemo, useState } from "react";
 import "./index.css";
 
-/* ---------------- Types ---------------- */
+/* ----------------------------------------------------------------
+   Types de données (inchangés)
+----------------------------------------------------------------- */
 type Chapter = {
   id: string;
   name: string;
@@ -23,16 +25,72 @@ type Series = {
   hot?: boolean;
 };
 
-/* ---------- Données de démo (vide par défaut) ---------- */
-const LIBRARY: Series[] = []; // laisse vide pour afficher “Aucune série…”
+/* ----------------------------------------------------------------
+   Données de démo (tu mettras les vraies plus tard)
+----------------------------------------------------------------- */
+const LIBRARY: Series[] = []; // => force l’affichage “Aucune série ajoutée …”
 
-/* ---------- Helpers ---------- */
+/* ----------------------------------------------------------------
+   Utils
+----------------------------------------------------------------- */
 const fmtViews = (n?: number) => {
   if (!n) return "0 vues";
   if (n >= 1000) return `${(n / 1000).toFixed(1)}k vues`;
   return `${n} vues`;
 };
 
+/* ----------------------------------------------------------------
+   Header (desktop) — structure conservée
+----------------------------------------------------------------- */
+function HeaderDesktop({
+  query,
+  setQuery,
+  onOpenMobile,
+}: {
+  query: string;
+  setQuery: (v: string) => void;
+  onOpenMobile: () => void;
+}) {
+  return (
+    <div className="header">
+      <div className="header-inner">
+        {/* Bouton hamburger (visible mobile uniquement) */}
+        <button
+          className="hamburger"
+          aria-label="Ouvrir le menu"
+          onClick={onOpenMobile}
+        >
+          <span />
+          <span />
+          <span />
+        </button>
+
+        {/* Logo K */}
+        <div className="logoK">K</div>
+
+        {/* nav desktop */}
+        <nav className="desktop-nav">
+          <a className="nav-btn" href="#">Perso</a>
+          <a className="nav-btn" href="#">Recrutement</a>
+          <a className="nav-btn active" href="#">Admin</a>
+          <a className="nav-btn" href="#">Connexion</a>
+        </nav>
+
+        {/* Recherche (visible desktop) */}
+        <input
+          className="search-input"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Rechercher une série, un tag, une langue..."
+        />
+      </div>
+    </div>
+  );
+}
+
+/* ----------------------------------------------------------------
+   Carte (tu avais cette esthétique — on la garde)
+----------------------------------------------------------------- */
 function Card({ s }: { s: Series }) {
   return (
     <a className="card-link" href={`/series/${s.slug}`}>
@@ -41,7 +99,7 @@ function Card({ s }: { s: Series }) {
         <div className="card-body">
           <div className="card-title">{s.title}</div>
           <div className="card-meta">
-            <div className="card-views">
+            <div className="meta-left">
               <div className="eye">👁️</div>
               <div className="muted">{fmtViews(s.views)}</div>
             </div>
@@ -53,10 +111,88 @@ function Card({ s }: { s: Series }) {
   );
 }
 
-export default function App() {
-  const [isSheetOpen, setSheetOpen] = useState(false);
+/* ----------------------------------------------------------------
+   Mobile sheet (menu coulissant)
+----------------------------------------------------------------- */
+function MobileSheet({
+  open,
+  onClose,
+}: {
+  open: boolean;
+  onClose: () => void;
+}) {
+  return (
+    <>
+      <div
+        className={`sheet-backdrop ${open ? "show" : ""}`}
+        onClick={onClose}
+      />
+      <aside className={`sheet ${open ? "open" : ""}`}>
+        <div className="sheet-header">
+          <div className="logoK">K</div>
+          <button className="sheet-close" onClick={onClose} aria-label="Fermer">
+            ×
+          </button>
+        </div>
 
-  // on garde la structure que tu avais
+        <div className="sheet-content">
+          <a className="sheet-item" href="#">Perso</a>
+          <a className="sheet-item" href="#">Recrutement</a>
+          <a className="sheet-item" href="#">Admin</a>
+          <a className="sheet-item" href="#">Connexion</a>
+
+          <div className="sheet-divider" />
+          <input
+            className="sheet-search"
+            placeholder="Rechercher…"
+            aria-label="Recherche mobile"
+          />
+
+          <div className="sheet-stats">
+            <div className="muted">
+              Séries: 0 • Chapitres: 0
+            </div>
+          </div>
+        </div>
+      </aside>
+    </>
+  );
+}
+
+/* ----------------------------------------------------------------
+   Barre d’onglets bas (mobile)
+----------------------------------------------------------------- */
+function MobileTabBar() {
+  return (
+    <nav className="mobile-tabbar">
+      <a href="#" className="tab-item">
+        <span className="tab-emoji">🏠</span>
+        <span>Accueil</span>
+      </a>
+      <a href="#" className="tab-item">
+        <span className="tab-emoji">🔎</span>
+        <span>Recherche</span>
+      </a>
+      <a href="#" className="tab-item">
+        <span className="tab-emoji">🔥</span>
+        <span>Tendances</span>
+      </a>
+      <a href="#" className="tab-item">
+        <span className="tab-emoji">⚙️</span>
+        <span>Admin</span>
+      </a>
+    </nav>
+  );
+}
+
+/* ----------------------------------------------------------------
+   Page
+----------------------------------------------------------------- */
+export default function App() {
+  const [query, setQuery] = useState("");
+  const [sheetOpen, setSheetOpen] = useState(false);
+
+  // populaires par vues
   const popular = useMemo(
     () =>
       LIBRARY.slice()
@@ -65,6 +201,7 @@ export default function App() {
     []
   );
 
+  // derniers chapitres
   const latest = useMemo(() => {
     const all = LIBRARY.flatMap((s) =>
       s.chapters.map((c) => ({ series: s, chapter: c }))
@@ -77,213 +214,131 @@ export default function App() {
       .slice(0, 8);
   }, []);
 
-  const go = (href: string) => {
-    window.location.href = href;
-  };
+  // filtrage (démo)
+  const filtered = popular.filter((s) => {
+    const q = query.trim().toLowerCase();
+    if (!q) return true;
+    return (
+      s.title.toLowerCase().includes(q) ||
+      s.tags.some((t) => t.toLowerCase().includes(q))
+    );
+  });
 
   return (
-    <>
-      {/* ======= HEADER ======= */}
-      <header className="site-header">
-        <div className="header-inner">
-          {/* Left : burger + K */}
-          <div className="left">
-            <button
-              className="burger"
-              aria-label="Ouvrir le menu"
-              onClick={() => setSheetOpen(true)}
-            >
-              <span></span>
-              <span></span>
-              <span></span>
-            </button>
+    <div className="app">
+      <HeaderDesktop
+        query={query}
+        setQuery={setQuery}
+        onOpenMobile={() => setSheetOpen(true)}
+      />
 
-            <div className="logo-k">K</div>
-          </div>
+      {/* ---- MENU MOBILE ---- */}
+      <MobileSheet open={sheetOpen} onClose={() => setSheetOpen(false)} />
 
-          {/* Search (desktop seulement) */}
-          <div className="header-search desktop-only">
-            <input placeholder="Rechercher une série, un tag, une langue…" />
-          </div>
-
-          {/* Liens top (desktop seulement) */}
-          <nav className="top-links desktop-only">
-            <a className="chip" href="#">Perso</a>
-            <a className="chip" href="#">Recrutement</a>
-            <button className="chip chip-accent" onClick={() => go("/admin.html")}>
-              Admin
-            </button>
-            <a className="chip" href="#">Connexion</a>
-          </nav>
-        </div>
-      </header>
-
-      {/* ======= SHEET MOBILE ======= */}
-      {isSheetOpen && (
-        <>
-          <div className="sheet-backdrop" onClick={() => setSheetOpen(false)} />
-          <div className="sheet-card" role="dialog" aria-modal="true">
-            <div className="sheet-head">
-              <div className="sheet-logo">K</div>
-              <button
-                className="sheet-close"
-                onClick={() => setSheetOpen(false)}
-                aria-label="Fermer"
-              >
-                ✕
-              </button>
-            </div>
-            <div className="sheet-body">
-              <button className="sheet-item">Perso</button>
-              <button className="sheet-item">Recrutement</button>
-              <button
-                className="sheet-item sheet-item-accent"
-                onClick={() => go("/admin.html")}
-              >
-                Admin
-              </button>
-              <button className="sheet-item">Connexion</button>
-
-              <div className="sheet-search">
-                <input placeholder="Rechercher…" />
-              </div>
-
-              <div className="sheet-stats muted">Séries: 0 • Chapitres: 0</div>
-            </div>
-          </div>
-        </>
-      )}
-
-      {/* ======= CONTENU PRINCIPAL (inchangé) ======= */}
       <main className="container">
-        {/* HERO */}
-        <div className="hero" style={{ gap: 18 }}>
-          <div className="hero-card">
+        {/* HERO / encadrement */}
+        <div className="hero">
+          <div className="hero-card card-like">
             <div className="hero-message">
-              <h1 style={{ margin: "0 0 8px 0" }}>Bienvenue</h1>
-              <p className="muted" style={{ margin: 0 }}>
+              <h1>Bienvenue</h1>
+              <p className="muted">
                 Message d'accueil / accroche. Remplace par ton texte.
               </p>
             </div>
           </div>
 
-          <div className="side-col">
-            <div className="side-card">
+          <div className="hero-side">
+            <div className="side-card card-like">
               <div className="side-title">Rejoindre</div>
               <div className="muted">Lien discord / contact / bouton</div>
-              <a className="chip chip-accent" href="#" style={{ marginTop: 10 }}>
+              <a className="btn" href="#" style={{ marginTop: 10 }}>
                 Ouvrir
               </a>
             </div>
-            <div className="side-card">
+
+            <div className="side-card card-like">
               <div className="side-title">Statistiques</div>
-              <div className="muted">
-                Séries: {LIBRARY.length} • Chapitres:{" "}
-                {LIBRARY.reduce((n, s) => n + s.chapters.length, 0)}
-              </div>
+              <div className="muted">Séries: 0 • Chapitres: 0</div>
             </div>
           </div>
         </div>
 
-        {/* POPULAIRE */}
-        <section className="section" style={{ marginTop: 20 }}>
+        {/* POPULAIRE / encadrement */}
+        <section className="section card-like">
           <div className="section-header">
-            <div className="flame">🔥</div>
-            <div className="section-title">Populaire aujourd'hui</div>
-            <div className="push" />
-            <button className="chip">Tendances</button>
+            <div className="section-left">
+              <span className="flame">🔥</span>
+              <div className="section-title">Populaire aujourd'hui</div>
+            </div>
+            <button className="pill">Tendances</button>
           </div>
 
           <div className="grid-cards">
-            {popular.length === 0 ? (
-              <div className="empty-block">
-                Aucune série ajoutée pour le moment.
-              </div>
+            {filtered.length === 0 ? (
+              <div className="empty">Aucune série ajoutée pour le moment.</div>
             ) : (
-              popular.map((s) => <Card key={s.id} s={s} />)
+              filtered.map((s) => <Card key={s.id} s={s} />)
             )}
           </div>
         </section>
 
-        {/* DERNIERS CHAPITRES + STATSBLOC */}
-        <div className="latest-wrap">
-          <div>
+        {/* Derniers chapitres + Stats (encadrements) */}
+        <div className="bottom-grid">
+          <section className="latest card-like">
             <div className="latest-title">DERNIERS CHAPITRES POSTÉS</div>
-            <div className="latest-grid">
-              {latest.length === 0 ? (
-                <div className="empty-block">
-                  Aucun chapitre publié pour le moment.
-                </div>
-              ) : (
-                latest.map(({ series, chapter }) => (
+
+            {latest.length === 0 ? (
+              <div className="empty">Aucun chapitre publié pour le moment.</div>
+            ) : (
+              <div className="latest-grid">
+                {latest.map(({ series, chapter }) => (
                   <div key={chapter.id} className="card">
                     <div className="cover">PAGE</div>
-                    <div className="card-pad">
-                      <div className="bold">{series.title}</div>
-                      <div className="muted mt6">
+                    <div className="card-body">
+                      <div className="card-title">{series.title}</div>
+                      <div className="muted">
                         Chapitre {chapter.number} — {chapter.name}
                       </div>
-                      <div className="muted mt6">
+                      <div className="muted">
                         {chapter.lang} • {chapter.releaseDate}
                       </div>
                     </div>
                   </div>
-                ))
-              )}
-            </div>
-          </div>
+                ))}
+              </div>
+            )}
+          </section>
 
-          <aside>
-            <div className="stats">
-              <div className="side-title">Statistiques</div>
-              <div className="muted">Visites totales (exemple)</div>
-              <div className="stats-list">
-                <div className="row">
-                  <span className="muted">Séries</span>
-                  <strong>{LIBRARY.length}</strong>
-                </div>
-                <div className="row">
-                  <span className="muted">Chapitres</span>
-                  <strong>
-                    {LIBRARY.reduce((n, s) => n + s.chapters.length, 0)}
-                  </strong>
-                </div>
-                <div className="row">
-                  <span className="muted">Langue</span>
-                  <strong>FR</strong>
-                </div>
+          <aside className="stats card-like">
+            <div className="side-title">Statistiques</div>
+            <div className="stats-grid">
+              <div className="row">
+                <span className="muted">Visites totales (exemple)</span>
+                <strong>0</strong>
+              </div>
+              <div className="row">
+                <span className="muted">Séries</span>
+                <strong>0</strong>
+              </div>
+              <div className="row">
+                <span className="muted">Chapitres</span>
+                <strong>0</strong>
+              </div>
+              <div className="row">
+                <span className="muted">Langue</span>
+                <strong>FR</strong>
               </div>
             </div>
           </aside>
         </div>
 
-        {/* FOOTER */}
         <footer className="footer">
-          <div className="muted">
-            © {new Date().getFullYear()} — Tous droits réservés
-          </div>
+          © {new Date().getFullYear()} — Tous droits réservés
         </footer>
       </main>
 
-      {/* ======= TAB BAR MOBILE (inchangé sauf CSS) ======= */}
-      <nav className="mobile-tabbar">
-        <button className="tab-btn" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
-          <div className="ico">🏠</div>
-          <div>Accueil</div>
-        </button>
-        <button className="tab-btn">
-          <div className="ico">🔍</div>
-          <div>Recherche</div>
-        </button>
-        <button className="tab-btn">
-          <div className="ico">🔥</div>
-          <div>Tendances</div>
-        </button>
-        <button className="tab-btn" onClick={() => go("/admin.html")}>
-          <div className="ico">⚙️</div>
-          <div>Admin</div>
-        </button>
-      </nav>
-    </>
+      {/* ---- TABBAR MOBILE (seulement <860px) ---- */}
+      <MobileTabBar />
+    </div>
   );
 }
