@@ -1,63 +1,95 @@
 <!doctype html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Admin — Ajouter Manga</title>
-  <link rel="stylesheet" href="/src/index.css" />
-  <style>
-    .wrap{max-width:900px;margin:30px auto;padding:0 16px}
-    .f{display:grid;gap:10px}
-    .in{height:38px;border:1px solid var(--border);border-radius:10px;background:#101112;color:#eaecef;padding:0 12px}
-    textarea.in{height:120px;padding:10px}
-    .row{display:flex;gap:10px}
-    .btn{display:inline-grid;place-items:center;height:40px;padding:0 14px;border-radius:10px;border:1px solid #275f41;background:#23724a;color:#fff}
-  </style>
+  <meta charset="utf-8">
+  <title>Ajouter un manga • Kyy’s Letters</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link href="/page.css" rel="stylesheet">
 </head>
 <body>
   <div class="wrap">
-    <div class="card-like">
-      <h2>Ajouter un manga</h2>
-      <div class="f">
-        <input id="title" class="in" placeholder="Titre" />
-        <input id="tags" class="in" placeholder="Tags (FR, Action… séparés par ,)" />
-        <textarea id="desc" class="in" placeholder="Description"></textarea>
-        <div class="row">
-          <input id="cover" type="file" accept="image/*" class="in" />
-          <button class="btn" id="save">Enregistrer</button>
+    <!-- Barre du haut -->
+    <div class="topbar">
+      <a class="pill k" href="/">K</a>
+      <a class="pill" href="/personnelle.html">Personnelle</a>
+      <a class="pill" href="/recrutement.html">Recrutement</a>
+      <a class="pill" href="/admin.html">Admin</a>
+      <a class="pill" href="/">Accueil</a>
+    </div>
+
+    <!-- Carte formulaire -->
+    <div class="card pad">
+      <h1>Ajouter un manga</h1>
+      <div class="row" style="margin-top:12px">
+        <input id="title" class="input" placeholder="Titre">
+        <input id="tags" class="input" placeholder="Tags (FR, Action… séparés par ,)">
+        <textarea id="description" class="textarea" placeholder="Description"></textarea>
+
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <input id="cover" class="file" type="file" accept="image/*">
+          <button id="save" class="btn">Enregistrer</button>
+          <a class="btn ghost" href="/admin.html">← Admin</a>
         </div>
-        <a class="nav-btn" href="/admin.html">← Admin</a>
       </div>
+      <p id="status" style="margin-top:10px;color:var(--muted)"></p>
     </div>
   </div>
 
 <script>
-const MKEY='kl_mangas';
+/* ====== store helpers ====== */
+const get = (k, d) => {
+  try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d }
+}
+const set = (k, v) => localStorage.setItem(k, JSON.stringify(v));
 
-function load(){try{return JSON.parse(localStorage.getItem(MKEY)||'[]')}catch{return[]}}
-function save(a){localStorage.setItem(MKEY,JSON.stringify(a))}
-function slugify(s){return s.toLowerCase().replace(/[^\w]+/g,'-').replace(/^-+|-+$/g,'')}
+/* ====== Save manga ====== */
+document.getElementById('save').addEventListener('click', async () => {
+  const title = document.getElementById('title').value.trim();
+  const tags  = document.getElementById('tags').value.trim()
+                  .split(',').map(s=>s.trim()).filter(Boolean);
+  const description = document.getElementById('description').value.trim();
+  const file = document.getElementById('cover').files[0];
 
-function toBase64(file){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(file)})}
+  if(!title){ return msg("Titre obligatoire."); }
 
-document.getElementById('save').onclick = async ()=>{
-  const title=document.getElementById('title').value.trim();
-  if(!title) return alert('Titre requis');
-  const tags=document.getElementById('tags').value.split(',').map(s=>s.trim()).filter(Boolean);
-  const desc=document.getElementById('desc').value.trim();
-  const f=document.getElementById('cover').files[0];
-  const cover=f?await toBase64(f):'';
-  const slug=slugify(title);
+  let cover = '';
+  if(file){
+    cover = await toBase64(file);
+  }
 
-  const list=load();
-  if(list.some(m=>m.slug===slug)) return alert('Ce manga existe déjà.');
+  const slug = slugify(title);
+  const mangas = get('mangas', []);
+  if(mangas.some(m => m.slug === slug)){
+    return msg("Un manga avec ce titre existe déjà.");
+  }
 
-  list.push({id:crypto.randomUUID(),title,slug,tags,description:desc,cover,chapters:[]});
-  save(list);
+  mangas.push({
+    id: crypto.randomUUID(),
+    title, slug, tags, description, cover,
+    chapters: [], views: 0, hot: false,
+    createdAt: Date.now()
+  });
 
-  alert('Manga ajouté ! URL : /manga/'+slug);
-  location.href='/admin.html';
-};
+  set('mangas', mangas);
+  msg("Manga enregistré ✅");
+  // Optionnel : rediriger sur la page admin
+  // location.href = "/admin.html";
+});
+
+function msg(t){ document.getElementById('status').textContent = t; }
+function slugify(s){
+  return s.toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
+}
+function toBase64(file){
+  return new Promise((res,rej)=>{
+    const fr = new FileReader();
+    fr.onload = () => res(fr.result);
+    fr.onerror = rej;
+    fr.readAsDataURL(file);
+  });
+}
 </script>
 </body>
 </html>
