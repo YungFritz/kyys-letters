@@ -1,52 +1,63 @@
 // src/components/MobileTabBar.tsx
+import { useCallback } from "react";
 
-type MobileTabBarProps = {
-  onNav?: (to: string) => void;
-  current?: string;
+type Props = {
+  /** id du champ recherche pour le focus */
+  searchInputId?: string;
+  /** id du bloc tendances pour y scroller */
+  trendsSectionId?: string;
 };
 
-export default function MobileTabBar({ onNav, current }: MobileTabBarProps) {
-  const go = (to: string) => {
-    if (onNav) onNav(to);
-    else location.hash = `#/${to}`;
-  };
+export default function MobileTabBar({
+  searchInputId = "search-input",
+  trendsSectionId = "trending",
+}: Props) {
+  const goHome = useCallback(() => {
+    // Va à l’accueil sans casser l’état
+    if (location.pathname !== "/") location.href = "/";
+    else window.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
+
+  const openSearch = useCallback(() => {
+    const el = document.getElementById(searchInputId) as
+      | HTMLInputElement
+      | null;
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      setTimeout(() => el.focus(), 250);
+    }
+  }, [searchInputId]);
+
+  const goTrends = useCallback(() => {
+    const el = document.getElementById(trendsSectionId);
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [trendsSectionId]);
+
+  const goAdmin = useCallback(() => {
+    // Ta page admin HTML
+    location.href = "/admin.html";
+  }, []);
 
   return (
-    <nav className="mobilebar" aria-label="Navigation mobile">
-      <button
-        onClick={() => go("")}
-        aria-current={current === "home" ? "page" : undefined}
-        title="Accueil"
-      >
-        <span className="ico">🏠</span>
-        <span>Accueil</span>
+    <nav className="mobile-tabbar" role="navigation" aria-label="Navigation mobile">
+      <button className="mobile-tabitem" onClick={goHome}>
+        <span className="tab-ico" aria-hidden>🏠</span>
+        <span className="tab-txt">Accueil</span>
       </button>
 
-      <button
-        onClick={() => go("search")}
-        aria-current={current === "search" ? "page" : undefined}
-        title="Rechercher"
-      >
-        <span className="ico">🔍</span>
-        <span>Recherche</span>
+      <button className="mobile-tabitem" onClick={openSearch}>
+        <span className="tab-ico" aria-hidden>🔎</span>
+        <span className="tab-txt">Recherche</span>
       </button>
 
-      <button
-        onClick={() => go("trending")}
-        aria-current={current === "trends" ? "page" : undefined}
-        title="Tendances"
-      >
-        <span className="ico">🔥</span>
-        <span>Tendances</span>
+      <button className="mobile-tabitem" onClick={goTrends}>
+        <span className="tab-ico" aria-hidden>🔥</span>
+        <span className="tab-txt">Tendances</span>
       </button>
 
-      <button
-        onClick={() => go("admin")}
-        aria-current={current === "admin" ? "page" : undefined}
-        title="Admin"
-      >
-        <span className="ico">⚙️</span>
-        <span>Admin</span>
+      <button className="mobile-tabitem" onClick={goAdmin}>
+        <span className="tab-ico" aria-hidden>⚙️</span>
+        <span className="tab-txt">Admin</span>
       </button>
     </nav>
   );
