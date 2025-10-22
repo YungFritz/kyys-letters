@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "rewrites": [
+    { "source": "/manga/(.*)", "destination": "/manga.html" },
+    { "source": "/chapitre-:num/(.*)", "destination": "/chapitre.html" }
+  ],
+  "redirects": [
+    { "source": "/home", "destination": "/", "permanent": true }
+  ],
+  "cleanUrls": true,
+  "trailingSlash": false
+}
