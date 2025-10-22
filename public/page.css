@@ -1,0 +1,49 @@
+/* public/page.css */
+/* ====== Variables & reset ====== */
+:root{
+  --bg:#0c0d0e;
+  --panel:#101214;
+  --panel-2:#0f1012;
+  --stroke:rgba(255,255,255,.06);
+  --muted:#9aa3ad;
+  --fg:#e8eef3;
+  --brand:#36a269;
+  --brand-2:#2d8757;
+  --pill:#141619;
+  --shadow:0 10px 24px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.02);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--fg);font:14px/1.4 system-ui,Segoe UI,Roboto,Apple Color Emoji,Segoe UI Emoji}
+a{color:#9ab9ff;text-decoration:none}
+a:hover{text-decoration:underline}
+
+/* ====== Layout ====== */
+.wrap{max-width:1152px;margin:28px auto;padding:0 18px}
+.topbar{display:flex;align-items:center;gap:10px;margin-bottom:18px}
+.pill{height:36px;padding:0 12px;border-radius:10px;display:inline-flex;align-items:center;gap:10px;background:var(--pill);border:1px solid var(--stroke);box-shadow:var(--shadow)}
+.pill.k{width:36px;justify-content:center;font-weight:800}
+.pill:hover{filter:brightness(1.05)}
+
+/* ====== Cards ====== */
+.card{background:linear-gradient(180deg,var(--panel),var(--panel-2));border:1px solid var(--stroke);border-radius:14px;box-shadow:var(--shadow)}
+.card.pad{padding:18px}
+.card h1,.card h2,.card h3{margin:0 0 10px 0}
+.card h1{font-size:32px;letter-spacing:.2px}
+
+/* ====== Form ====== */
+.row{display:grid;gap:10px}
+.input,.select,.textarea{width:100%;border-radius:10px;border:1px solid var(--stroke);background:#0b0c0d;color:var(--fg);padding:12px 14px;outline:none}
+.input::placeholder,.textarea::placeholder{color:var(--muted)}
+.textarea{min-height:160px;resize:vertical}
+.select{appearance:none}
+.file{display:inline-block}
+
+.btn{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:10px;background:var(--brand);border:1px solid #2a7c52;color:#fff;font-weight:700;box-shadow:var(--shadow);cursor:pointer}
+.btn:hover{background:var(--brand-2)}
+.btn.ghost{background:transparent;color:var(--fg);border-color:var(--stroke)}
+.btn.ghost:hover{background:rgba(255,255,255,.02)}
+
+/* ====== Grid helpers ====== */
+.grid-2{display:grid;grid-template-columns:2fr 1fr;gap:18px}
+.grid-1{display:grid;gap:18px}
+@media(max-width:880px){.grid-2{grid-template-columns:1fr}}
