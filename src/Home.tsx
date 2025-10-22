@@ -21,10 +21,9 @@ type Series = {
   hot?: boolean;
 };
 
-// ====== Données placeholders (laisse vide pour affichage "aucune série") ======
+// ====== Données placeholders ======
 const LIBRARY: Series[] = [];
 
-// Petites helpers
 const fmtViews = (n?: number) => {
   if (!n) return "0 vues";
   if (n >= 1000) return `${(n / 1000).toFixed(1)}k vues`;
@@ -42,7 +41,8 @@ function DesktopHeader({
   openMenu: () => void;
 }) {
   const goTo = (path: string) => {
-    window.location.href = path;
+    // force une redirection complète (contourne React)
+    window.location.replace(path);
   };
 
   return (
@@ -95,7 +95,7 @@ function MobileSheet({
   onClose: () => void;
 }) {
   const goTo = (path: string) => {
-    window.location.href = path;
+    window.location.replace(path);
   };
 
   return (
@@ -132,7 +132,7 @@ function MobileSheet({
   );
 }
 
-/* ======================= CARD =========================== */
+// ======================= CARD ===========================
 function Card({ s }: { s: Series }) {
   return (
     <a style={{ textDecoration: "none", color: "inherit" }} href={`/series/${s.slug}`}>
@@ -167,7 +167,7 @@ function Card({ s }: { s: Series }) {
   );
 }
 
-/* ======================= PAGE ACCUEIL =========================== */
+// ======================= HOME ===========================
 export default function Home() {
   const [query, setQuery] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
@@ -206,7 +206,6 @@ export default function Home() {
       )}
 
       <main className="container">
-        {/* HERO */}
         <div className="hero" style={{ gap: 18 }}>
           <div className="hero-card">
             <div className="hero-message">
@@ -237,7 +236,6 @@ export default function Home() {
           </div>
         </div>
 
-        {/* POPULAIRE */}
         <section className="section" style={{ marginTop: 20 }}>
           <div className="section-header">
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -260,7 +258,6 @@ export default function Home() {
           )}
         </section>
 
-        {/* DERNIERS CHAPITRES */}
         <div
           style={{
             display: "grid",
@@ -332,25 +329,6 @@ export default function Home() {
           </div>
         </div>
       </main>
-
-      <nav className="mobile-tabbar">
-        <a className="tab" href="/">
-          <span>🏠</span>
-          <span>Accueil</span>
-        </a>
-        <a className="tab" href="/recherche.html">
-          <span>🔍</span>
-          <span>Recherche</span>
-        </a>
-        <a className="tab" href="/tendances.html">
-          <span>🔥</span>
-          <span>Tendances</span>
-        </a>
-        <a className="tab" href="/admin.html">
-          <span>⚙️</span>
-          <span>Admin</span>
-        </a>
-      </nav>
     </div>
   );
 }
