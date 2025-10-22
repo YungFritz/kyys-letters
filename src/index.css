@@ -299,3 +299,181 @@ body {
   padding: 60px 20px;
   margin-top: 20px;
 }
+
+/* ====== SAFE AREA iOS ====== */
+:root {
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --tabbar-h: 64px; /* hauteur visible hors safe-area */
+  --tabbar-bg: #0f1115;
+  --tabbar-border: rgba(255,255,255,0.06);
+}
+
+.with-tabbar {
+  /* réserve la place de la tabbar + safe-area */
+  padding-bottom: calc(var(--tabbar-h) + var(--safe-bottom));
+}
+
+/* ====== Barre d’onglets mobile (bottom) ====== */
+.mobile-tabbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: calc(var(--tabbar-h) + var(--safe-bottom));
+  background: var(--tabbar-bg);
+  border-top: 1px solid var(--tabbar-border);
+  display: flex;
+  align-items: flex-start;
+  padding: 8px 8px calc(8px + var(--safe-bottom)) 8px;
+  gap: 6px;
+  z-index: 60;
+}
+
+.mobile-tabitem {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 8px 4px;
+  border-radius: 12px;
+  background: transparent;
+  color: #e9eef4;
+  font: 500 12px/1.1 Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+  border: 1px solid transparent;
+}
+
+.mobile-tabitem:active {
+  background: rgba(255,255,255,0.04);
+}
+
+.tab-ico {
+  font-size: 18px;
+  line-height: 1;
+}
+.tab-txt {
+  font-size: 12px;
+  line-height: 1;
+  opacity: .9;
+  white-space: nowrap;
+}
+
+/* Desktop : on masque la tabbar */
+@media (min-width: 768px) {
+  .mobile-tabbar { display: none; }
+  .with-tabbar { padding-bottom: 0; }
+}
+
+/* ====== Burger + Drawer (menu latéral) ====== */
+.burger {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.06);
+}
+.burger span {
+  display: block;
+  width: 18px;
+  height: 2px;
+  background: #e9eef4;
+  border-radius: 2px;
+}
+@media (min-width: 768px) {
+  .burger { display: none; }
+}
+
+/* Overlay */
+.drawer-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .2s ease;
+  z-index: 70;
+}
+.drawer-overlay.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Panel */
+.drawer-panel {
+  position: fixed;
+  inset: 0 auto 0 0;
+  width: min(88vw, 420px);
+  max-width: 420px;
+  background: #0c0e12;
+  border-right: 1px solid rgba(255,255,255,0.06);
+  transform: translateX(-102%);
+  transition: transform .24s ease;
+  z-index: 71;
+  display: flex;
+  flex-direction: column;
+}
+.drawer-panel.is-open { transform: translateX(0); }
+
+.drawer-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 14px calc(14px + var(--safe-top));
+  padding-top: calc(14px + var(--safe-top));
+  background: rgba(255,255,255,0.03);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.drawer-logo {
+  width: 32px; height: 32px;
+  display: grid; place-items: center;
+  border-radius: 8px;
+  background: linear-gradient(180deg,#13161c,#0e1116);
+  color: #fff; font-weight: 800;
+}
+.drawer-close {
+  font-size: 20px; line-height: 1;
+  padding: 6px 10px; border-radius: 10px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.08);
+  color: #e9eef4;
+}
+
+.drawer-list {
+  padding: 16px;
+  display: grid;
+  gap: 10px;
+}
+.drawer-item {
+  display: block;
+  padding: 14px 14px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.06);
+  color: #e9eef4;
+  text-decoration: none;
+  font-weight: 600;
+}
+.drawer-item:active { background: rgba(255,255,255,0.06); }
+
+.drawer-search input {
+  width: 100%;
+  height: 42px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: #0f1218;
+  color: #e9eef4;
+  padding: 0 12px;
+  outline: none;
+}
+
+.drawer-stats {
+  margin-top: 6px;
+  color: #aeb7c4;
+  font-size: 13px;
+  opacity: .85;
+}
