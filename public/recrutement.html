@@ -1,27 +1,57 @@
 <!doctype html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Recrutement — Kyy's Letters</title>
-  <link rel="stylesheet" href="/src/index.css" />
-  <style>
-    .wrap{max-width:900px;margin:30px auto;padding:0 16px}
-    .card-like{margin-top:12px}
-    .cta{display:inline-grid;place-items:center;height:40px;padding:0 16px;background:#23724a;border:1px solid #275f41;border-radius:10px;color:#fff;margin-top:12px}
-  </style>
+  <title>Recrutement — Kyy’s Letters</title>
+
+  <!-- Styles communs (même skin que l'accueil) -->
+  <link rel="stylesheet" href="/styles/common.css" />
 </head>
 <body>
-  <div class="wrap">
-    <a class="nav-btn" href="/">← Retour</a>
-    <div class="card-like">
-      <h2>Recrutement</h2>
-      <p class="muted">
-        Nous cherchons des personnes motivées (trad, clean, check, dev…).  
-        Si tu veux nous rejoindre, contacte-nous !
-      </p>
-      <a class="cta" href="https://discord.gg/" target="_blank">Rejoindre le Discord</a>
-    </div>
-  </div>
+  <!-- Le shell (header/drawer/tabbar) est généré par shell.js -->
+  <main id="page-root" class="with-shell"></main>
+
+  <!-- JS commun -->
+  <script src="/js/shell.js"></script>
+  <script>
+    renderShell({
+      page: "recrutement",            // active l’onglet Recrutement
+      render: (root) => {
+        root.innerHTML = `
+          <div class="container">
+
+            <section class="card">
+              <h1 class="title-xl">Recrutement</h1>
+              <p class="muted">
+                On cherche des personnes <strong>motivées</strong> pour rejoindre l’équipe :
+                éditeurs, traducteurs, clean, typos, dev, QA… Si tu veux filer un coup de main,
+                on t’accueille 🔥
+              </p>
+              <div class="row gap-12 mt-14">
+                <a class="btn btn-primary" href="https://discord.gg/" target="_blank" rel="noreferrer">
+                  Rejoindre le Discord
+                </a>
+                <a class="btn" href="/">Retour à l’accueil</a>
+              </div>
+            </section>
+
+            <section class="card">
+              <h2 class="title-md">Ce qu’on attend</h2>
+              <ul class="muted">
+                <li>✅ Être dispo au moins 2–3h / semaine</li>
+                <li>✅ Être sérieux sur les deadlines (mais on reste cool 😌)</li>
+                <li>✅ Savoir communiquer proprement (Discord)</li>
+              </ul>
+              <p class="muted mt-10">
+                <em>Pas d’expérience ? Pas grave. On t’aide à démarrer.</em>
+              </p>
+            </section>
+
+          </div>
+        `;
+      }
+    });
+  </script>
 </body>
 </html>
