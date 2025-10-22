@@ -9,10 +9,10 @@ export default function App() {
 
   return (
     <div className="app-root">
-      {/* ======= Header ======= */}
+      {/* ===== HEADER ===== */}
       <header className="site-header">
         <div className="header-inner">
-          {/* Burger (mobile) */}
+          {/* Bouton menu mobile */}
           <button
             className="burger"
             onClick={() => setMenuOpen(true)}
@@ -23,12 +23,12 @@ export default function App() {
             <span />
           </button>
 
-          {/* Logo minimal */}
+          {/* Logo */}
           <a className="logo-k" href="/" aria-label="Accueil">
             K
           </a>
 
-          {/* Liens rapides (desktop) */}
+          {/* Liens visibles sur desktop */}
           <nav className="top-links">
             <a href="#" className="chip">
               Perso
@@ -44,7 +44,7 @@ export default function App() {
             </a>
           </nav>
 
-          {/* Recherche */}
+          {/* Barre de recherche */}
           <div className="header-search">
             <input
               id="search-input"
@@ -55,10 +55,9 @@ export default function App() {
         </div>
       </header>
 
-      {/* ======= Contenu principal ======= */}
-      {/* NOTE: with-tabbar réserve l'espace de la barre mobile en bas */}
+      {/* ===== CONTENU PRINCIPAL ===== */}
       <main className="container with-tabbar">
-        {/* HERO */}
+        {/* Section de bienvenue */}
         <section className="hero">
           <div className="hero-card card">
             <h1 className="hero-title">Bienvenue</h1>
@@ -83,7 +82,7 @@ export default function App() {
           </div>
         </section>
 
-        {/* POPULAIRE AUJOURD'HUI */}
+        {/* Section populaire */}
         <section className="section" id="trending">
           <div className="section-header">
             <div className="section-title-row">
@@ -100,7 +99,7 @@ export default function App() {
           </div>
         </section>
 
-        {/* DERNIERS CHAPITRES + STATS */}
+        {/* Derniers chapitres */}
         <section className="grid-2">
           <div className="card block">
             <div className="block-title">DERNIERS CHAPITRES POSTÉS</div>
@@ -132,13 +131,13 @@ export default function App() {
           </aside>
         </section>
 
-        {/* FOOTER */}
+        {/* Footer */}
         <footer className="footer">
           © {new Date().getFullYear()} — Tous droits réservés
         </footer>
       </main>
 
-      {/* ======= UI mobile ======= */}
+      {/* ===== COMPOSANTS MOBILES ===== */}
       <MobileMenu open={menuOpen} onClose={() => setMenuOpen(false)} />
       <MobileTabBar searchInputId="search-input" trendsSectionId="trending" />
     </div>
