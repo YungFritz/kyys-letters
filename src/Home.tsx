@@ -1,38 +1,11 @@
-// src/Home.tsx
 import { useMemo, useState } from "react";
+import "./index.css";
 
-/* ---------- Types ---------- */
-type Chapter = {
-  id: string;
-  name: string;
-  number: number;
-  lang: string;
-  releaseDate: string;
-  pages: string[];
-};
+type Chapter = { id: string; name: string; number: number; lang: string; releaseDate: string; pages: string[] };
+type Series = { id: string; title: string; slug: string; tags: string[]; cover?: string; description?: string; chapters: Chapter[]; views?: number; hot?: boolean };
 
-type Series = {
-  id: string;
-  title: string;
-  slug: string;
-  tags: string[];
-  cover?: string;
-  description?: string;
-  chapters: Chapter[];
-  views?: number;
-  hot?: boolean;
-  createdAt?: number;
-};
-
-/* ---------- Helpers ---------- */
-const getLS = <T,>(key: string, fallback: T): T => {
-  try {
-    const raw = localStorage.getItem(key);
-    return raw ? (JSON.parse(raw) as T) : fallback;
-  } catch {
-    return fallback;
-  }
-};
+// ====== Démo data minimale (tu remplaceras par tes vraies données) ======
+const LIBRARY: Series[] = [];
 
 const fmtViews = (n?: number) => {
   if (!n) return "0 vues";
@@ -40,7 +13,9 @@ const fmtViews = (n?: number) => {
   return `${n} vues`;
 };
 
-/* ---------- Header (structure conservée) ---------- */
+// --------------------------------------
+// Header (avec vrais liens + renommage)
+// --------------------------------------
 function Header({
   query,
   setQuery,
@@ -51,54 +26,35 @@ function Header({
   return (
     <div className="header">
       <div className="header-inner">
-        {/* Logo / K left */}
-        <a className="nav-btn k" href="/">K</a>
+        {/* Logo */}
+        <a href="/" className="logo-chip" aria-label="Accueil">
+          K
+        </a>
 
-        {/* liens (même ordre, mêmes classes) */}
+        {/* Boutons : maintenant de vrais liens */}
         <a className="nav-btn" href="/personnelle.html">Personnelle</a>
         <a className="nav-btn" href="/recrutement.html">Recrutement</a>
         <a className="nav-btn" href="/admin.html">Admin</a>
+        <a className="nav-btn" href="/connexion.html">Connexion</a>
 
-        {/* champ recherche (inchangé) */}
+        {/* Recherche */}
         <input
           className="search-input"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Rechercher une série, un tag, une langue..."
         />
-
-        {/* bouton Connexion (placeholder) */}
-        <a className="nav-btn" href="#">Connexion</a>
       </div>
     </div>
   );
 }
 
-/* ---------- Card (structure conservée) ---------- */
+/* Card placeholder (utile si tu remets des séries plus tard) */
 function Card({ s }: { s: Series }) {
   return (
-    <a
-      style={{ textDecoration: "none", color: "inherit" }}
-      href={`/manga/${s.slug}`}
-    >
+    <a style={{ textDecoration: "none", color: "inherit" }} href={`/series/${s.slug}`}>
       <div className="card">
-        <div className="cover">
-          {/* si pas d'image → placeholder COVER comme avant */}
-          {s.cover ? (
-            <img
-              src={s.cover}
-              alt={s.title}
-              style={{
-                width: "100%",
-                height: "100%",
-                objectFit: "cover",
-                borderRadius: "10px",
-              }}
-            />
-          ) : (
-            "COVER"
-          )}
-        </div>
+        <div className="cover">COVER</div>
         <div className="card-body">
           <div className="card-title">{s.title}</div>
           <div className="card-meta">
@@ -128,27 +84,20 @@ function Card({ s }: { s: Series }) {
   );
 }
 
-/* ---------- Home (structure conservée) ---------- */
 export default function Home() {
   const [query, setQuery] = useState("");
 
-  // Récupération de la “librairie” depuis localStorage (si vide, tableau vide)
-  const library = useMemo<Series[]>(() => getLS<Series[]>("mangas", []), []);
-
-  // Populaire par vues (structure conservée)
   const popular = useMemo(
     () =>
-      library
-        .slice()
+      LIBRARY.slice()
         .sort((a, b) => (b.views || 0) - (a.views || 0))
         .slice(0, 8),
-    [library]
+    []
   );
 
-  // Derniers chapitres (triés par date) (structure conservée)
   const latest = useMemo(() => {
-    const all = library.flatMap((s) =>
-      (s.chapters || []).map((c) => ({ series: s, chapter: c }))
+    const all = LIBRARY.flatMap((s) =>
+      s.chapters.map((c) => ({ series: s, chapter: c }))
     );
     return all
       .sort(
@@ -156,27 +105,22 @@ export default function Home() {
           +new Date(b.chapter.releaseDate) - +new Date(a.chapter.releaseDate)
       )
       .slice(0, 8);
-  }, [library]);
+  }, []);
 
-  // filtrage simple (appliqué uniquement à la liste populaire pour démo)
   const filtered = popular.filter((s) => {
     const q = query.trim().toLowerCase();
     if (!q) return true;
     return (
       s.title.toLowerCase().includes(q) ||
-      (s.tags || []).some((t) => t.toLowerCase().includes(q))
+      s.tags.some((t) => t.toLowerCase().includes(q))
     );
   });
 
-  const totalSeries = library.length;
-  const totalChapters = library.reduce((n, s) => n + (s.chapters?.length || 0), 0);
-
   return (
     <div style={{ minHeight: "100vh", background: "var(--bg)", color: "inherit" }}>
-      {/* Header (structure et classes intactes) */}
+      {/* HEADER */}
       <Header query={query} setQuery={setQuery} />
 
-      {/* Contenu principal : mêmes sections et classes que ton accueil */}
       <main className="container">
         {/* HERO */}
         <div className="hero" style={{ gap: 18 }}>
@@ -184,7 +128,7 @@ export default function Home() {
             <div className="hero-message">
               <h1 style={{ margin: "0 0 8px 0" }}>Bienvenue</h1>
               <p style={{ margin: 0, color: "var(--muted)" }}>
-                Message d'accueil / accroche. Remplace par ton texte.
+                Message d&apos;accueil / accroche. Remplace par ton texte.
               </p>
             </div>
           </div>
@@ -202,47 +146,35 @@ export default function Home() {
             <div className="side-card">
               <div style={{ fontWeight: 700, marginBottom: 6 }}>Statistiques</div>
               <div style={{ color: "var(--muted)" }}>
-                Séries: {totalSeries} • Chapitres: {totalChapters}
+                Séries: {LIBRARY.length} • Chapitres:{" "}
+                {LIBRARY.reduce((n, s) => n + s.chapters.length, 0)}
               </div>
             </div>
           </div>
         </div>
 
-        {/* POPULAIRE AUJOURD'HUI */}
+        {/* POPULAIRE */}
         <section className="section" style={{ marginTop: 20 }}>
           <div className="section-header">
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <div style={{ fontSize: 18 }}>🔥</div>
-              <div className="section-title">Populaire aujourd'hui</div>
+              <div className="section-title">Populaire aujourd&apos;hui</div>
             </div>
             <div style={{ marginLeft: "auto" }}>
               <button className="nav-btn">Tendances</button>
             </div>
           </div>
 
-          {/* si pas de séries → message (structure gardée) */}
-          {filtered.length === 0 ? (
-            <div
-              className="card"
-              style={{
-                padding: 16,
-                color: "var(--muted)",
-                borderRadius: 14,
-                marginTop: 8,
-              }}
-            >
-              Aucune série ajoutée pour le moment.
-            </div>
-          ) : (
-            <div className="grid-cards">
-              {filtered.map((s) => (
-                <Card key={s.id} s={s} />
-              ))}
-            </div>
-          )}
+          <div className="grid-cards">
+            {filtered.length === 0 ? (
+              <div className="empty-block">Aucune série ajoutée pour le moment.</div>
+            ) : (
+              filtered.map((s) => <Card key={s.id} s={s} />)
+            )}
+          </div>
         </section>
 
-        {/* Derniers chapitres + stats (même structure) */}
+        {/* Derniers chapitres + Stats droite */}
         <div
           style={{
             display: "grid",
@@ -263,52 +195,28 @@ export default function Home() {
             >
               Derniers chapitres postés
             </div>
-
-            {latest.length === 0 ? (
-              <div
-                className="card"
-                style={{
-                  padding: 16,
-                  color: "var(--muted)",
-                  borderRadius: 14,
-                }}
-              >
-                Aucun chapitre publié pour le moment.
-              </div>
-            ) : (
-              <div className="latest-grid">
-                {latest.map(({ series, chapter }) => (
+            <div className="latest-grid">
+              {latest.length === 0 ? (
+                <div className="empty-block">
+                  Aucun chapitre publié pour le moment.
+                </div>
+              ) : (
+                latest.map(({ series, chapter }) => (
                   <div key={chapter.id} className="card">
-                    <div className="cover">
-                      {/* On affiche la 1ère page si dispo */}
-                      {chapter.pages?.[0] ? (
-                        <img
-                          src={chapter.pages[0]}
-                          alt={series.title}
-                          style={{
-                            width: "100%",
-                            height: "100%",
-                            objectFit: "cover",
-                            borderRadius: "10px",
-                          }}
-                        />
-                      ) : (
-                        "PAGE"
-                      )}
-                    </div>
+                    <div className="cover">PAGE</div>
                     <div style={{ padding: 12 }}>
                       <div style={{ fontWeight: 800 }}>{series.title}</div>
                       <div style={{ color: "var(--muted)", marginTop: 6 }}>
-                        Chapitre {chapter.number} — {chapter.name || "Sans titre"}
+                        Chapitre {chapter.number} — {chapter.name}
                       </div>
                       <div style={{ marginTop: 8, color: "var(--muted)" }}>
-                        {chapter.lang || "FR"} • {chapter.releaseDate}
+                        {chapter.lang} • {chapter.releaseDate}
                       </div>
                     </div>
                   </div>
-                ))}
-              </div>
-            )}
+                ))
+              )}
+            </div>
           </div>
 
           <aside>
@@ -318,11 +226,13 @@ export default function Home() {
               <div style={{ marginTop: 12, display: "grid", gap: 10 }}>
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
                   <span style={{ color: "var(--muted)" }}>Séries</span>
-                  <strong>{totalSeries}</strong>
+                  <strong>{LIBRARY.length}</strong>
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
                   <span style={{ color: "var(--muted)" }}>Chapitres</span>
-                  <strong>{totalChapters}</strong>
+                  <strong>
+                    {LIBRARY.reduce((n, s) => n + s.chapters.length, 0)}
+                  </strong>
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
                   <span style={{ color: "var(--muted)" }}>Langue</span>
@@ -333,13 +243,33 @@ export default function Home() {
           </aside>
         </div>
 
-        {/* Footer (inchangé) */}
+        {/* Footer */}
         <div className="footer">
           <div style={{ color: "var(--muted)" }}>
             © {new Date().getFullYear()} — Tous droits réservés
           </div>
         </div>
       </main>
+
+      {/* BARRE D’ONGLETS MOBILE — liens sûrs */}
+      <nav className="mobile-tabbar">
+        <a className="tab-item" href="/">
+          <div className="tab-ico">🏠</div>
+          <div className="tab-txt">Accueil</div>
+        </a>
+        <a className="tab-item" href="/recherche.html">
+          <div className="tab-ico">🔍</div>
+          <div className="tab-txt">Recherche</div>
+        </a>
+        <a className="tab-item" href="/tendances.html">
+          <div className="tab-ico">🔥</div>
+          <div className="tab-txt">Tendances</div>
+        </a>
+        <a className="tab-item" href="/admin.html">
+          <div className="tab-ico">⚙️</div>
+          <div className="tab-txt">Admin</div>
+        </a>
+      </nav>
     </div>
   );
 }
