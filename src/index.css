@@ -7,24 +7,23 @@
   --stroke:#1b1c1f;
   --text:#e8e8ea;
   --muted:#a9a9b0;
-  --accent:#1f6f47;      /* vert bouton */
-  --accent-2:#1b5d3c;
+  --accent:#1f6f47;
   --shadow: 0 10px 30px rgba(0,0,0,.35);
 }
 
-/* ====== Reset simple ====== */
+/* ====== Reset ====== */
 *{box-sizing:border-box}
 html,body,#root{height:100%}
 body{
   margin:0;
-  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji","Segoe UI Emoji";
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans";
   background: var(--bg);
   color: var(--text);
 }
 a{ color:inherit; text-decoration:none }
 button{ font: inherit; color: inherit; cursor:pointer; }
 
-/* Utilitaires */
+/* Utils */
 .muted{ color:var(--muted) }
 .bold{ font-weight:800 }
 .mt6{ margin-top:6px }
@@ -32,7 +31,7 @@ button{ font: inherit; color: inherit; cursor:pointer; }
 /* ====== Layout ====== */
 .container{
   width:min(1200px, 94vw);
-  margin: 22px auto 110px;
+  margin: 22px auto 28px;           /* desktop normal */
 }
 
 /* ====== Header ====== */
@@ -52,7 +51,7 @@ button{ font: inherit; color: inherit; cursor:pointer; }
   gap:14px;
 }
 
-/* Left : burger + K collés */
+/* left : burger + K */
 .left{ display:flex; align-items:center; gap:10px; }
 
 .logo-k{
@@ -63,9 +62,9 @@ button{ font: inherit; color: inherit; cursor:pointer; }
   font-weight:900;
 }
 
-/* Burger visible + barres bien contrastées */
+/* Burger : masqué desktop */
 .burger{
-  display:none; /* desktop */
+  display:none;
   width:38px; height:28px; padding:6px 7px;
   border-radius:10px;
   background: rgba(255,255,255,.06);
@@ -76,7 +75,7 @@ button{ font: inherit; color: inherit; cursor:pointer; }
   background:#e6e6e6; border-radius:2px;
 }
 
-/* Search header */
+/* Search header (desktop) */
 .header-search input{
   width:100%;
   height:42px;
@@ -97,7 +96,7 @@ button{ font: inherit; color: inherit; cursor:pointer; }
   border-color: #1c5a3a;
 }
 
-/* ====== Mobile sheet (menu) ====== */
+/* ====== SHEET mobile ====== */
 .sheet-backdrop{
   position:fixed; inset:0; background:rgba(0,0,0,.45);
   z-index:60;
@@ -219,14 +218,17 @@ button{ font: inherit; color: inherit; cursor:pointer; }
   color:var(--muted);
 }
 
-/* ====== Mobile tab bar ====== */
+/* ====== TAB BAR MOBILE ====== */
+/* IMPORTANT : masquée par défaut (desktop) */
 .mobile-tabbar{
+  display:none;                               /* <- desktop : caché */
   position: fixed; z-index:45; left:0; right:0; bottom:0;
   padding: 8px 10px calc(env(safe-area-inset-bottom,0px) + 8px);
   background: rgba(15,16,18,.85);
   backdrop-filter: blur(8px);
   border-top:1px solid var(--stroke-soft);
-  display:grid; grid-template-columns: repeat(4, 1fr); gap:10px;
+  grid-template-columns: repeat(4, 1fr);
+  gap:10px;
 }
 .tab-btn{
   height:64px; border-radius:14px; border:1px solid var(--stroke-soft);
@@ -235,8 +237,11 @@ button{ font: inherit; color: inherit; cursor:pointer; }
 }
 .tab-btn .ico{ font-size:20px; margin-bottom:4px }
 
-/* ====== Responsive ====== */
+/* ====== Helpers visibilité ====== */
 .desktop-only{ display:block }
+.mobile-only{ display:none }
+
+/* ====== Breakpoints ====== */
 @media (max-width: 1100px){
   .grid-cards{ grid-template-columns: repeat(4,minmax(0,1fr)); }
 }
@@ -245,13 +250,18 @@ button{ font: inherit; color: inherit; cursor:pointer; }
   .latest-wrap{ grid-template-columns: 1fr; }
 }
 @media (max-width: 880px){
-  .burger{ display:grid; place-items:center; }             /* affiche le burger */
-  .header-search.desktop-only{ display:none; }             /* masque search header */
-  .top-links.desktop-only{ display:none; }                 /* masque liens top */
+  /* mobile */
+  .burger{ display:grid; place-items:center; }            /* burger visible */
+  .desktop-only{ display:none !important; }               /* cache recherche + liens top */
+  .mobile-only{ display:block; }
+  .mobile-tabbar{ display:grid; }                         /* tabbar visible mobile */
+
+  /* éviter que la tabbar masque le contenu */
+  .container{ margin-bottom: 120px; }
+
   .grid-cards{ grid-template-columns: repeat(2,minmax(0,1fr)); }
   .latest-grid{ grid-template-columns: 1fr; }
 }
 @media (max-width: 520px){
   .grid-cards{ grid-template-columns: 1fr; }
-  .hero-message h1{ font-size:32px; }
 }
