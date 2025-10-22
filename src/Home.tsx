@@ -1,5 +1,5 @@
 // src/Home.tsx
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 /* ---------- Types ---------- */
 type Chapter = {
