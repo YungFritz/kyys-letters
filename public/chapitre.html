@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Chapitre</title>
+  <link rel="stylesheet" href="/src/index.css" />
+  <style>
+    .wrap{max-width:900px;margin:20px auto;padding:0 16px}
+    .page{width:100%;border:1px solid var(--border);border-radius:10px;overflow:hidden;background:#0f1012}
+    .top{display:flex;justify-content:space-between;align-items:center;margin:8px 0}
+    .pill{height:34px;padding:0 10px;border:1px solid var(--border);border-radius:10px;background:#111213}
+    .grid{display:grid;gap:10px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <a class="nav-btn" href="/">Accueil</a>
+      <div id="title">Chapitre</div>
+      <a class="nav-btn" id="toManga" href="#">Manga</a>
+    </div>
+    <div id="pages" class="grid"></div>
+  </div>
+
+<script>
+const MKEY='kl_mangas';
+function load(){try{return JSON.parse(localStorage.getItem(MKEY)||'[]')}catch{return[]}}
+
+function parseRoute(){
+  // /chapitre-<num>/<slug>
+  const p = location.pathname.split('/').filter(Boolean);
+  const numStr = (p[0]||'').replace('chapitre-','');
+  return { num: parseInt(numStr||'0',10), slug: p[1] || '' };
+}
+
+const {num, slug} = parseRoute();
+const list = load();
+const m = list.find(x=>x.slug===slug);
+if(!m){ document.getElementById('title').textContent='Introuvable'; throw 'no manga'; }
+const c = (m.chapters||[]).find(x=>x.number===num);
+if(!c){ document.getElementById('title').textContent='Chapitre introuvable'; throw 'no chapter'; }
+
+document.getElementById('title').textContent = `${m.title} — Chapitre ${c.number} (${c.lang})`;
+document.getElementById('toManga').href = '/manga/'+slug;
+
+const pages = document.getElementById('pages');
+pages.innerHTML = (c.pages||[]).map(src => `
+  <div class="page"><img src="${src}" style="width:100%;display:block"></div>
+`).join('');
+</script>
+</body>
+</html>
