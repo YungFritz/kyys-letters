@@ -1,282 +1,87 @@
-import { useMemo, useState } from "react";
+import React from "react";
+import "./index.css";
 
-type Chapter = {
-  id: string;
-  name: string;
-  number: number;
-  lang: string;
-  releaseDate: string;
-  pages: string[];
-};
+// ———————————————————————————————————————
+// UI réutilisable
+const SectionCard: React.FC<React.PropsWithChildren<{ className?: string }>> = ({ className, children }) => (
+  <div className={`card-block ${className || ""}`}>{children}</div>
+);
 
-type Series = {
-  id: string;
+const TitleBar: React.FC<{
+  icon?: React.ReactNode;
   title: string;
-  slug: string;
-  tags: string[];
-  cover?: string;
-  description?: string;
-  chapters: Chapter[];
-  views?: number;
-  hot?: boolean;
-};
+  right?: React.ReactNode;
+}> = ({ icon, title, right }) => (
+  <div className="titlebar">
+    <div className="titlebar-left">
+      {icon ? <span className="titlebar-ico">{icon}</span> : null}
+      <h3 className="titlebar-title">{title}</h3>
+    </div>
+    {right ? <div className="titlebar-right">{right}</div> : null}
+  </div>
+);
 
-// ====== Lib vide par défaut (donc messages “Aucune série…”) ======
-const LIBRARY: Series[] = [];
-
-// Helper
-const fmt = {
-  views(n?: number) {
-    if (!n) return "0 vues";
-    if (n >= 1000) return `${(n / 1000).toFixed(1)}k vues`;
-    return `${n} vues`;
-  },
-};
-
-// Header (desktop + bouton Admin)
-function Header({
-  query,
-  setQuery,
-  onOpenDrawer,
-}: {
-  query: string;
-  setQuery: (v: string) => void;
-  onOpenDrawer: () => void;
-}) {
-  return (
-    <header className="site-header">
-      <div className="container header-inner">
-        <a href="/" className="brand">K</a>
-
-        <nav className="top-nav">
-          <a className="chip" href="#">Perso</a>
-          <a className="chip" href="#">Recrutement</a>
-          <a className="chip chip-accent" href="/admin.html">Admin</a>
-          <a className="chip" href="#">Connexion</a>
-        </nav>
-
-        <div className="search-wrap">
-          <input
-            className="search-input"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Rechercher une série, un tag, une langue..."
-          />
-        </div>
-
-        <button className="burger" onClick={onOpenDrawer} aria-label="Open menu">
-          <span></span><span></span><span></span>
-        </button>
-      </div>
-    </header>
-  );
-}
-
-// Drawer mobile (menu 3 barres) — recouvre la zone sous le header
-function Drawer({
-  open,
-  onClose,
-  query,
-  setQuery,
-}: {
-  open: boolean;
-  onClose: () => void;
-  query: string;
-  setQuery: (v: string) => void;
-}) {
-  return (
-    <>
-      {open && <div className="drawer-overlay" onClick={onClose} />}
-      <aside className={`drawer ${open ? "open" : ""}`} aria-hidden={!open}>
-        <div className="drawer-header">
-          <div className="brand small">K</div>
-          <button className="drawer-close" onClick={onClose}>✕</button>
-        </div>
-
-        <div className="drawer-list">
-          <a className="drawer-link" href="#">Perso</a>
-          <a className="drawer-link" href="#">Recrutement</a>
-          <a className="drawer-link accent" href="/admin.html">Admin</a>
-          <a className="drawer-link" href="#">Connexion</a>
-        </div>
-
-        <div className="drawer-search">
-          <input
-            className="search-input"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Rechercher…"
-          />
-        </div>
-      </aside>
-    </>
-  );
-}
-
-// Card placeholder (si on met des séries plus tard)
-function Card({ s }: { s: Series }) {
-  return (
-    <a className="card-link" href={`/series/${s.slug}`}>
-      <div className="card">
-        <div className="card-cover">COVER</div>
-        <div className="card-body">
-          <div className="card-title">{s.title}</div>
-          <div className="card-meta">
-            <span className="pill">{fmt.views(s.views)}</span>
-            <span className="muted">{s.tags.slice(0, 2).join(" • ")}</span>
-          </div>
-        </div>
-      </div>
-    </a>
-  );
-}
-
+// ———————————————————————————————————————
+// Page d’accueil
 export default function Home() {
-  const [query, setQuery] = useState("");
-  const [drawer, setDrawer] = useState(false);
-
-  const popular = useMemo(
-    () => LIBRARY.slice().sort((a, b) => (b.views || 0) - (a.views || 0)).slice(0, 6),
-    []
-  );
-
-  const latest = useMemo(() => {
-    const all = LIBRARY.flatMap((s) => s.chapters.map((c) => ({ series: s, chapter: c })));
-    return all
-      .sort(
-        (a, b) =>
-          +new Date(b.chapter.releaseDate) - +new Date(a.chapter.releaseDate)
-      )
-      .slice(0, 8);
-  }, []);
-
-  const filtered = popular.filter((s) => {
-    const q = query.trim().toLowerCase();
-    if (!q) return true;
-    return (
-      s.title.toLowerCase().includes(q) ||
-      s.tags.some((t) => t.toLowerCase().includes(q))
-    );
-  });
-
   return (
-    <>
-      <Header query={query} setQuery={setQuery} onOpenDrawer={() => setDrawer(true)} />
-      <Drawer open={drawer} onClose={() => setDrawer(false)} query={query} setQuery={setQuery} />
+    <div className="home-wrap">
+      {/* Bandeau accueil + encart latéral (Rejoindre / Stats) */}
+      <div className="grid grid-2">
+        <SectionCard>
+          <h1 className="welcome-title">Bienvenue</h1>
+          <p className="welcome-sub">
+            Message d'accueil / accroche. Remplace par ton texte.
+          </p>
+        </SectionCard>
 
-      <main className="container main">
-        {/* HERO */}
-        <div className="grid-hero">
-          <section className="panel hero">
-            <h1 className="hero-title">Bienvenue</h1>
-            <p className="hero-sub">
-              Message d'accueil / accroche. Remplace par ton texte.
-            </p>
-          </section>
+        <div className="side-stack">
+          <SectionCard>
+            <h4 className="side-title">Rejoindre</h4>
+            <p className="muted">Lien discord / contact / bouton</p>
+            <a className="btn-primary" href="#" aria-label="Ouvrir le lien d’invitation">
+              Ouvrir
+            </a>
+          </SectionCard>
 
-          <div className="stack">
-            <section className="panel">
-              <div style={{ fontWeight: 800, marginBottom: 8 }}>Rejoindre</div>
-              <div className="muted" style={{ marginBottom: 12 }}>
-                Lien discord / contact / bouton
-              </div>
-              <a className="btn-accent" href="#">Ouvrir</a>
-            </section>
-
-            <section className="panel">
-              <div style={{ fontWeight: 800, marginBottom: 8 }}>Statistiques</div>
-              <div className="stats-list">
-                <div className="stats-row">
-                  <span className="muted">Séries</span>
-                  <b>{LIBRARY.length}</b>
-                </div>
-                <div className="stats-row">
-                  <span className="muted">Chapitres</span>
-                  <b>{LIBRARY.reduce((n, s) => n + s.chapters.length, 0)}</b>
-                </div>
-                <div className="stats-row">
-                  <span className="muted">Langue</span>
-                  <b>FR</b>
-                </div>
-              </div>
-            </section>
-          </div>
+          <SectionCard>
+            <h4 className="side-title">Statistiques</h4>
+            <div className="muted">Séries: 0 • Chapitres: 0</div>
+          </SectionCard>
         </div>
+      </div>
 
-        {/* POPULAIRE */}
-        <section className="section panel">
-          <div className="section-header">
-            <div className="section-title">🔥 Populaire aujourd'hui</div>
-            <button className="chip">Tendances</button>
-          </div>
+      {/* Populaire aujourd’hui */}
+      <SectionCard className="mt24">
+        <TitleBar
+          icon={<span>🔥</span>}
+          title="Populaire aujourd'hui"
+          right={<button className="pill" onClick={() => location.hash = "#/trending"}>Tendances</button>}
+        />
+        <div className="placeholder-line">Aucune série ajoutée pour le moment.</div>
+      </SectionCard>
 
-          {filtered.length === 0 ? (
-            <div className="empty">Aucune série ajoutée pour le moment.</div>
-          ) : (
-            <div className="grid-cards">
-              {filtered.map((s) => (
-                <Card key={s.id} s={s} />
-              ))}
-            </div>
-          )}
-        </section>
+      {/* Derniers chapitres + Stats (de droite) */}
+      <div className="grid grid-2 mt24">
+        <SectionCard>
+          <h4 className="zone-title">DERNIERS CHAPITRES POSTÉS</h4>
+          <div className="placeholder-box">Aucun chapitre publié pour le moment.</div>
+        </SectionCard>
 
-        {/* DERNIERS CHAPITRES */}
-        <div className="grid-latest">
-          <section className="panel">
-            <div className="section-caption" style={{ marginBottom: 8 }}>
-              DERNIERS CHAPITRES POSTÉS
-            </div>
+        <SectionCard>
+          <h4 className="side-title">Statistiques</h4>
+          <ul className="stats-list">
+            <li><span className="muted">Visites totales (exemple)</span><strong>0</strong></li>
+            <li><span className="muted">Séries</span><strong>0</strong></li>
+            <li><span className="muted">Chapitres</span><strong>0</strong></li>
+            <li><span className="muted">Langue</span><strong>FR</strong></li>
+          </ul>
+        </SectionCard>
+      </div>
 
-            {latest.length === 0 ? (
-              <div className="empty">Aucun chapitre publié pour le moment.</div>
-            ) : (
-              <div className="grid-latest-cards">
-                {latest.map(({ series, chapter }) => (
-                  <div key={chapter.id} className="card">
-                    <div className="card-cover">PAGE</div>
-                    <div className="card-body">
-                      <div className="card-title">{series.title}</div>
-                      <div className="muted">
-                        Chapitre {chapter.number} — {chapter.name}
-                      </div>
-                      <div className="muted" style={{ marginTop: 6 }}>
-                        {chapter.lang} • {chapter.releaseDate}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
-
-          <aside className="panel">
-            <div style={{ fontWeight: 800, marginBottom: 8 }}>Statistiques</div>
-            <div className="stats-list">
-              <div className="stats-row">
-                <span className="muted">Visites totales (exemple)</span>
-                <b>0</b>
-              </div>
-              <div className="stats-row">
-                <span className="muted">Séries</span>
-                <b>{LIBRARY.length}</b>
-              </div>
-              <div className="stats-row">
-                <span className="muted">Chapitres</span>
-                <b>{LIBRARY.reduce((n, s) => n + s.chapters.length, 0)}</b>
-              </div>
-              <div className="stats-row">
-                <span className="muted">Langue</span>
-                <b>FR</b>
-              </div>
-            </div>
-          </aside>
-        </div>
-
-        <footer className="footer">
-          © {new Date().getFullYear()} — Tous droits réservés
-        </footer>
-      </main>
-    </>
+      <footer className="footer">
+        © {new Date().getFullYear()} — Tous droits réservés
+      </footer>
+    </div>
   );
 }
