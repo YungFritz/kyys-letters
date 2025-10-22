@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Personnelle — Kyy's Letters</title>
+  <link rel="stylesheet" href="/src/index.css" />
+  <style>
+    .wrap{max-width:1100px;margin:30px auto;padding:0 16px}
+    .grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+    @media(max-width:860px){.grid{grid-template-columns:1fr 1fr}}
+    .p-card{background:#121315;border:1px solid var(--border);border-radius:12px;overflow:hidden}
+    .p-img{height:160px;background:#0f1012;display:grid;place-items:center;color:var(--muted)}
+    .p-body{padding:10px}
+    .p-name{font-weight:800}
+    .p-meta{color:var(--muted);font-size:13px;margin-top:4px}
+    .row{display:flex;gap:8px;margin-top:10px}
+    .b{display:inline-grid;place-items:center;height:34px;padding:0 10px;border:1px solid var(--border);border-radius:10px;background:#101112}
+    .cta{margin-left:auto}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card-like">
+      <div style="display:flex;align-items:center;gap:10px">
+        <h2 style="margin:0">Équipe</h2>
+        <a class="b" href="/admin-add-profil.html">Ajouter un profil</a>
+        <a class="b" href="/">Accueil</a>
+      </div>
+    </div>
+
+    <div id="grid" class="grid" style="margin-top:12px"></div>
+  </div>
+
+<script>
+const key = 'kl_members';
+
+function load(){
+  try{
+    return JSON.parse(localStorage.getItem(key)||'[]');
+  }catch(e){return []}
+}
+
+function card(m){
+  return `
+  <div class="p-card">
+    <div class="p-img">${m.photo ? `<img src="${m.photo}" alt="" style="width:100%;height:100%;object-fit:cover">` : 'IMAGE'}</div>
+    <div class="p-body">
+      <div class="p-name">${m.name||'—'}</div>
+      <div class="p-meta">${m.role||''}</div>
+      <div class="p-meta">${m.bio||''}</div>
+      <div class="row">
+        <a class="b" href="mailto:${m.contact||''}">Contacter</a>
+        <a class="b cta" href="/admin-edit-profil.html?id=${m.id}">Éditer</a>
+      </div>
+    </div>
+  </div>`;
+}
+
+function render(){
+  const data = load();
+  const grid = document.getElementById('grid');
+  grid.innerHTML = data.length ? data.map(card).join('') :
+    `<div class="card-like" style="grid-column:1/-1">Aucun profil pour le moment.</div>`;
+}
+
+render();
+</script>
+</body>
+</html>
