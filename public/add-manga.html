@@ -1,97 +1,63 @@
 <!doctype html>
 <html lang="fr">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Ajouter une série</title>
-  <link rel="stylesheet" href="/styles/base.css"/>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Admin — Ajouter Manga</title>
+  <link rel="stylesheet" href="/src/index.css" />
+  <style>
+    .wrap{max-width:900px;margin:30px auto;padding:0 16px}
+    .f{display:grid;gap:10px}
+    .in{height:38px;border:1px solid var(--border);border-radius:10px;background:#101112;color:#eaecef;padding:0 12px}
+    textarea.in{height:120px;padding:10px}
+    .row{display:flex;gap:10px}
+    .btn{display:inline-grid;place-items:center;height:40px;padding:0 14px;border-radius:10px;border:1px solid #275f41;background:#23724a;color:#fff}
+  </style>
 </head>
 <body>
-  <div class="header">
-    <div class="bar">
-      <div class="brand">K</div>
-      <div class="badge">Ajouter Série</div>
-      <div class="right">
-        <a class="btn" href="/admin.html">Admin</a>
+  <div class="wrap">
+    <div class="card-like">
+      <h2>Ajouter un manga</h2>
+      <div class="f">
+        <input id="title" class="in" placeholder="Titre" />
+        <input id="tags" class="in" placeholder="Tags (FR, Action… séparés par ,)" />
+        <textarea id="desc" class="in" placeholder="Description"></textarea>
+        <div class="row">
+          <input id="cover" type="file" accept="image/*" class="in" />
+          <button class="btn" id="save">Enregistrer</button>
+        </div>
+        <a class="nav-btn" href="/admin.html">← Admin</a>
       </div>
     </div>
   </div>
 
-  <div class="container grid" style="grid-template-columns:1fr 1fr;">
-    <form class="card" id="form">
-      <h2 style="margin:0 0 12px 0">Nouvelle série</h2>
+<script>
+const MKEY='kl_mangas';
 
-      <div class="label">Titre *</div>
-      <input class="input" id="title" required/>
+function load(){try{return JSON.parse(localStorage.getItem(MKEY)||'[]')}catch{return[]}}
+function save(a){localStorage.setItem(MKEY,JSON.stringify(a))}
+function slugify(s){return s.toLowerCase().replace(/[^\w]+/g,'-').replace(/^-+|-+$/g,'')}
 
-      <div class="row">
-        <div>
-          <div class="label">Tags (séparés par virgule)</div>
-          <input class="input" id="tags" placeholder="FR, Action"/>
-        </div>
-        <div>
-          <div class="label">Statut</div>
-          <select id="status" class="input">
-            <option value="en-cours">En cours</option>
-            <option value="termine">Terminé</option>
-            <option value="drop">Drop</option>
-          </select>
-        </div>
-      </div>
+function toBase64(file){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(file)})}
 
-      <div class="label">Description</div>
-      <textarea class="input" id="desc" rows="5" placeholder="Résumé court..."></textarea>
+document.getElementById('save').onclick = async ()=>{
+  const title=document.getElementById('title').value.trim();
+  if(!title) return alert('Titre requis');
+  const tags=document.getElementById('tags').value.split(',').map(s=>s.trim()).filter(Boolean);
+  const desc=document.getElementById('desc').value.trim();
+  const f=document.getElementById('cover').files[0];
+  const cover=f?await toBase64(f):'';
+  const slug=slugify(title);
 
-      <div class="label" style="margin-top:10px;">Cover (image)</div>
-      <input type="file" id="cover" accept="image/*"/>
+  const list=load();
+  if(list.some(m=>m.slug===slug)) return alert('Ce manga existe déjà.');
 
-      <div style="display:flex;gap:8px;margin-top:14px">
-        <button class="btn acc" type="submit">Enregistrer</button>
-        <a class="btn" href="/admin.html">Annuler</a>
-      </div>
-    </form>
+  list.push({id:crypto.randomUUID(),title,slug,tags,description:desc,cover,chapters:[]});
+  save(list);
 
-    <div class="card">
-      <h3 style="margin:0 0 8px 0">Aperçu</h3>
-      <div id="preview" class="label">Pas d’image</div>
-    </div>
-  </div>
-
-  <footer>© 2025 — Kyy’s Letters</footer>
-
-  <script src="/js/storage.js"></script>
-  <script>
-    const { allSeries, saveSeries, uid, slugify } = KyyStore;
-    let coverData = "";
-
-    document.getElementById("cover").addEventListener("change", e=>{
-      const f = e.target.files?.[0];
-      if(!f) return;
-      const reader = new FileReader();
-      reader.onload = () => {
-        coverData = String(reader.result || "");
-        document.getElementById("preview").innerHTML =
-          `<img src="${coverData}" style="max-width:100%;border-radius:12px"/>`;
-      };
-      reader.readAsDataURL(f);
-    });
-
-    document.getElementById("form").addEventListener("submit", (e)=>{
-      e.preventDefault();
-      const title = document.getElementById("title").value.trim();
-      const tags = document.getElementById("tags").value.split(",").map(s=>s.trim()).filter(Boolean);
-      const status = document.getElementById("status").value;
-      const desc = document.getElementById("desc").value.trim();
-
-      const series = allSeries();
-      series.push({
-        id: uid("serie"),
-        title, slug: slugify(title), tags, status, description: desc, cover: coverData || "", chapters:[]
-      });
-      saveSeries(series);
-      alert("Série enregistrée !");
-      location.href = "/admin.html";
-    });
-  </script>
+  alert('Manga ajouté ! URL : /manga/'+slug);
+  location.href='/admin.html';
+};
+</script>
 </body>
 </html>
