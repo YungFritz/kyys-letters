@@ -31,6 +31,7 @@ const fmtViews = (n?: number) => {
   return `${n} vues`;
 };
 
+// ======================= HEADER ===========================
 function DesktopHeader({
   query,
   setQuery,
@@ -40,26 +41,23 @@ function DesktopHeader({
   setQuery: (v: string) => void;
   openMenu: () => void;
 }) {
+  const goTo = (path: string) => {
+    window.location.href = path;
+  };
+
   return (
     <div className="header">
       <div className="header-inner">
-        {/* Burger mobile */}
-        <button
-          className="burger"
-          aria-label="Ouvrir le menu"
-          onClick={openMenu}
-        >
+        <button className="burger" aria-label="Ouvrir le menu" onClick={openMenu}>
           <span />
           <span />
           <span />
         </button>
 
-        {/* Logo */}
         <a className="logo-badge" href="/" aria-label="Accueil">
           K
         </a>
 
-        {/* Recherche (desktop) */}
         <input
           className="search-input"
           value={query}
@@ -67,26 +65,26 @@ function DesktopHeader({
           placeholder="Rechercher une série, un tag, une langue..."
         />
 
-        {/* Boutons nav Desktop — liens directs vers /public */}
         <nav className="desktop-nav">
-          <a className="nav-btn" href="/personnelle.html">
+          <button className="nav-btn" onClick={() => goTo("/personnelle.html")}>
             Personnelle
-          </a>
-          <a className="nav-btn" href="/recrutement.html">
+          </button>
+          <button className="nav-btn" onClick={() => goTo("/recrutement.html")}>
             Recrutement
-          </a>
-          <a className="nav-btn" href="/admin.html">
+          </button>
+          <button className="nav-btn" onClick={() => goTo("/admin.html")}>
             Admin
-          </a>
-          <a className="nav-btn" href="/connexion.html">
+          </button>
+          <button className="nav-btn" onClick={() => goTo("/connexion.html")}>
             Connexion
-          </a>
+          </button>
         </nav>
       </div>
     </div>
   );
 }
 
+// ======================= MENU MOBILE ===========================
 function MobileSheet({
   query,
   setQuery,
@@ -96,6 +94,10 @@ function MobileSheet({
   setQuery: (v: string) => void;
   onClose: () => void;
 }) {
+  const goTo = (path: string) => {
+    window.location.href = path;
+  };
+
   return (
     <div className="sheet-overlay" onClick={onClose}>
       <div className="sheet-card" onClick={(e) => e.stopPropagation()}>
@@ -106,21 +108,19 @@ function MobileSheet({
           </button>
         </div>
 
-        {/* Liens du menu mobile */}
-        <a className="sheet-link" href="/personnelle.html">
+        <button className="sheet-link" onClick={() => goTo("/personnelle.html")}>
           Personnelle
-        </a>
-        <a className="sheet-link" href="/recrutement.html">
+        </button>
+        <button className="sheet-link" onClick={() => goTo("/recrutement.html")}>
           Recrutement
-        </a>
-        <a className="sheet-link" href="/admin.html">
+        </button>
+        <button className="sheet-link" onClick={() => goTo("/admin.html")}>
           Admin
-        </a>
-        <a className="sheet-link" href="/connexion.html">
+        </button>
+        <button className="sheet-link" onClick={() => goTo("/connexion.html")}>
           Connexion
-        </a>
+        </button>
 
-        {/* Recherche mobile */}
         <input
           className="search-input"
           value={query}
@@ -132,7 +132,7 @@ function MobileSheet({
   );
 }
 
-/* Card placeholder pour démo */
+/* ======================= CARD =========================== */
 function Card({ s }: { s: Series }) {
   return (
     <a style={{ textDecoration: "none", color: "inherit" }} href={`/series/${s.slug}`}>
@@ -167,11 +167,11 @@ function Card({ s }: { s: Series }) {
   );
 }
 
+/* ======================= PAGE ACCUEIL =========================== */
 export default function Home() {
   const [query, setQuery] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
 
-  // Pas de séries -> affichages "Aucune série"
   const popular = useMemo(
     () => LIBRARY.slice().sort((a, b) => (b.views || 0) - (a.views || 0)).slice(0, 8),
     []
@@ -199,10 +199,8 @@ export default function Home() {
 
   return (
     <div style={{ minHeight: "100vh", background: "var(--bg)", color: "inherit" }}>
-      {/* header */}
       <DesktopHeader query={query} setQuery={setQuery} openMenu={() => setMenuOpen(true)} />
 
-      {/* menu mobile (sheet) */}
       {menuOpen && (
         <MobileSheet query={query} setQuery={setQuery} onClose={() => setMenuOpen(false)} />
       )}
@@ -251,7 +249,6 @@ export default function Home() {
             </div>
           </div>
 
-          {/* si pas de séries */}
           {filtered.length === 0 ? (
             <div className="empty-box">Aucune série ajoutée pour le moment.</div>
           ) : (
@@ -263,7 +260,7 @@ export default function Home() {
           )}
         </section>
 
-        {/* Derniers chapitres */}
+        {/* DERNIERS CHAPITRES */}
         <div
           style={{
             display: "grid",
@@ -318,9 +315,7 @@ export default function Home() {
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
                   <span style={{ color: "var(--muted)" }}>Chapitres</span>
-                  <strong>
-                    {LIBRARY.reduce((n, s) => n + s.chapters.length, 0)}
-                  </strong>
+                  <strong>{LIBRARY.reduce((n, s) => n + s.chapters.length, 0)}</strong>
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
                   <span style={{ color: "var(--muted)" }}>Langue</span>
@@ -338,7 +333,6 @@ export default function Home() {
         </div>
       </main>
 
-      {/* Barre d’onglets mobile (liens réels) */}
       <nav className="mobile-tabbar">
         <a className="tab" href="/">
           <span>🏠</span>
