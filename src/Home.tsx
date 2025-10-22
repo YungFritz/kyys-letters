@@ -1,55 +1,138 @@
 import { useMemo, useState } from "react";
 import "./index.css";
 
-type Chapter = { id: string; name: string; number: number; lang: string; releaseDate: string; pages: string[] };
-type Series = { id: string; title: string; slug: string; tags: string[]; cover?: string; description?: string; chapters: Chapter[]; views?: number; hot?: boolean };
+type Chapter = {
+  id: string;
+  name: string;
+  number: number;
+  lang: string;
+  releaseDate: string;
+  pages: string[];
+};
+type Series = {
+  id: string;
+  title: string;
+  slug: string;
+  tags: string[];
+  cover?: string;
+  description?: string;
+  chapters: Chapter[];
+  views?: number;
+  hot?: boolean;
+};
 
-// ====== Démo data minimale (tu remplaceras par tes vraies données) ======
+// ====== Données placeholders (laisse vide pour affichage "aucune série") ======
 const LIBRARY: Series[] = [];
 
+// Petites helpers
 const fmtViews = (n?: number) => {
   if (!n) return "0 vues";
   if (n >= 1000) return `${(n / 1000).toFixed(1)}k vues`;
   return `${n} vues`;
 };
 
-// --------------------------------------
-// Header (avec vrais liens + renommage)
-// --------------------------------------
-function Header({
+function DesktopHeader({
   query,
   setQuery,
+  openMenu,
 }: {
   query: string;
   setQuery: (v: string) => void;
+  openMenu: () => void;
 }) {
   return (
     <div className="header">
       <div className="header-inner">
+        {/* Burger mobile */}
+        <button
+          className="burger"
+          aria-label="Ouvrir le menu"
+          onClick={openMenu}
+        >
+          <span />
+          <span />
+          <span />
+        </button>
+
         {/* Logo */}
-        <a href="/" className="logo-chip" aria-label="Accueil">
+        <a className="logo-badge" href="/" aria-label="Accueil">
           K
         </a>
 
-        {/* Boutons : maintenant de vrais liens */}
-        <a className="nav-btn" href="/personnelle.html">Personnelle</a>
-        <a className="nav-btn" href="/recrutement.html">Recrutement</a>
-        <a className="nav-btn" href="/admin.html">Admin</a>
-        <a className="nav-btn" href="/connexion.html">Connexion</a>
-
-        {/* Recherche */}
+        {/* Recherche (desktop) */}
         <input
           className="search-input"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Rechercher une série, un tag, une langue..."
         />
+
+        {/* Boutons nav Desktop — liens directs vers /public */}
+        <nav className="desktop-nav">
+          <a className="nav-btn" href="/personnelle.html">
+            Personnelle
+          </a>
+          <a className="nav-btn" href="/recrutement.html">
+            Recrutement
+          </a>
+          <a className="nav-btn" href="/admin.html">
+            Admin
+          </a>
+          <a className="nav-btn" href="/connexion.html">
+            Connexion
+          </a>
+        </nav>
       </div>
     </div>
   );
 }
 
-/* Card placeholder (utile si tu remets des séries plus tard) */
+function MobileSheet({
+  query,
+  setQuery,
+  onClose,
+}: {
+  query: string;
+  setQuery: (v: string) => void;
+  onClose: () => void;
+}) {
+  return (
+    <div className="sheet-overlay" onClick={onClose}>
+      <div className="sheet-card" onClick={(e) => e.stopPropagation()}>
+        <div className="sheet-head">
+          <div className="logo-badge">K</div>
+          <button className="sheet-close" onClick={onClose} aria-label="Fermer">
+            ×
+          </button>
+        </div>
+
+        {/* Liens du menu mobile */}
+        <a className="sheet-link" href="/personnelle.html">
+          Personnelle
+        </a>
+        <a className="sheet-link" href="/recrutement.html">
+          Recrutement
+        </a>
+        <a className="sheet-link" href="/admin.html">
+          Admin
+        </a>
+        <a className="sheet-link" href="/connexion.html">
+          Connexion
+        </a>
+
+        {/* Recherche mobile */}
+        <input
+          className="search-input"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Rechercher…"
+        />
+      </div>
+    </div>
+  );
+}
+
+/* Card placeholder pour démo */
 function Card({ s }: { s: Series }) {
   return (
     <a style={{ textDecoration: "none", color: "inherit" }} href={`/series/${s.slug}`}>
@@ -86,15 +169,13 @@ function Card({ s }: { s: Series }) {
 
 export default function Home() {
   const [query, setQuery] = useState("");
+  const [menuOpen, setMenuOpen] = useState(false);
 
+  // Pas de séries -> affichages "Aucune série"
   const popular = useMemo(
-    () =>
-      LIBRARY.slice()
-        .sort((a, b) => (b.views || 0) - (a.views || 0))
-        .slice(0, 8),
+    () => LIBRARY.slice().sort((a, b) => (b.views || 0) - (a.views || 0)).slice(0, 8),
     []
   );
-
   const latest = useMemo(() => {
     const all = LIBRARY.flatMap((s) =>
       s.chapters.map((c) => ({ series: s, chapter: c }))
@@ -118,8 +199,13 @@ export default function Home() {
 
   return (
     <div style={{ minHeight: "100vh", background: "var(--bg)", color: "inherit" }}>
-      {/* HEADER */}
-      <Header query={query} setQuery={setQuery} />
+      {/* header */}
+      <DesktopHeader query={query} setQuery={setQuery} openMenu={() => setMenuOpen(true)} />
+
+      {/* menu mobile (sheet) */}
+      {menuOpen && (
+        <MobileSheet query={query} setQuery={setQuery} onClose={() => setMenuOpen(false)} />
+      )}
 
       <main className="container">
         {/* HERO */}
@@ -128,7 +214,7 @@ export default function Home() {
             <div className="hero-message">
               <h1 style={{ margin: "0 0 8px 0" }}>Bienvenue</h1>
               <p style={{ margin: 0, color: "var(--muted)" }}>
-                Message d&apos;accueil / accroche. Remplace par ton texte.
+                Message d'accueil / accroche. Remplace par ton texte.
               </p>
             </div>
           </div>
@@ -158,23 +244,26 @@ export default function Home() {
           <div className="section-header">
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <div style={{ fontSize: 18 }}>🔥</div>
-              <div className="section-title">Populaire aujourd&apos;hui</div>
+              <div className="section-title">Populaire aujourd'hui</div>
             </div>
             <div style={{ marginLeft: "auto" }}>
               <button className="nav-btn">Tendances</button>
             </div>
           </div>
 
-          <div className="grid-cards">
-            {filtered.length === 0 ? (
-              <div className="empty-block">Aucune série ajoutée pour le moment.</div>
-            ) : (
-              filtered.map((s) => <Card key={s.id} s={s} />)
-            )}
-          </div>
+          {/* si pas de séries */}
+          {filtered.length === 0 ? (
+            <div className="empty-box">Aucune série ajoutée pour le moment.</div>
+          ) : (
+            <div className="grid-cards">
+              {filtered.map((s) => (
+                <Card key={s.id} s={s} />
+              ))}
+            </div>
+          )}
         </section>
 
-        {/* Derniers chapitres + Stats droite */}
+        {/* Derniers chapitres */}
         <div
           style={{
             display: "grid",
@@ -195,13 +284,12 @@ export default function Home() {
             >
               Derniers chapitres postés
             </div>
-            <div className="latest-grid">
-              {latest.length === 0 ? (
-                <div className="empty-block">
-                  Aucun chapitre publié pour le moment.
-                </div>
-              ) : (
-                latest.map(({ series, chapter }) => (
+
+            {latest.length === 0 ? (
+              <div className="empty-box">Aucun chapitre publié pour le moment.</div>
+            ) : (
+              <div className="latest-grid">
+                {latest.map(({ series, chapter }) => (
                   <div key={chapter.id} className="card">
                     <div className="cover">PAGE</div>
                     <div style={{ padding: 12 }}>
@@ -214,9 +302,9 @@ export default function Home() {
                       </div>
                     </div>
                   </div>
-                ))
-              )}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <aside>
@@ -243,7 +331,6 @@ export default function Home() {
           </aside>
         </div>
 
-        {/* Footer */}
         <div className="footer">
           <div style={{ color: "var(--muted)" }}>
             © {new Date().getFullYear()} — Tous droits réservés
@@ -251,23 +338,23 @@ export default function Home() {
         </div>
       </main>
 
-      {/* BARRE D’ONGLETS MOBILE — liens sûrs */}
+      {/* Barre d’onglets mobile (liens réels) */}
       <nav className="mobile-tabbar">
-        <a className="tab-item" href="/">
-          <div className="tab-ico">🏠</div>
-          <div className="tab-txt">Accueil</div>
+        <a className="tab" href="/">
+          <span>🏠</span>
+          <span>Accueil</span>
         </a>
-        <a className="tab-item" href="/recherche.html">
-          <div className="tab-ico">🔍</div>
-          <div className="tab-txt">Recherche</div>
+        <a className="tab" href="/recherche.html">
+          <span>🔍</span>
+          <span>Recherche</span>
         </a>
-        <a className="tab-item" href="/tendances.html">
-          <div className="tab-ico">🔥</div>
-          <div className="tab-txt">Tendances</div>
+        <a className="tab" href="/tendances.html">
+          <span>🔥</span>
+          <span>Tendances</span>
         </a>
-        <a className="tab-item" href="/admin.html">
-          <div className="tab-ico">⚙️</div>
-          <div className="tab-txt">Admin</div>
+        <a className="tab" href="/admin.html">
+          <span>⚙️</span>
+          <span>Admin</span>
         </a>
       </nav>
     </div>
