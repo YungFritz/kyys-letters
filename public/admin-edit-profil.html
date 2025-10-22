@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Admin — Éditer un profil</title>
+  <link rel="stylesheet" href="/src/index.css" />
+  <style>
+    .wrap{max-width:800px;margin:30px auto;padding:0 16px}
+    .f{display:grid;gap:10px}
+    .in{height:38px;border:1px solid var(--border);border-radius:10px;background:#101112;color:#eaecef;padding:0 12px}
+    textarea.in{height:90px;padding:10px}
+    .row{display:flex;gap:10px;align-items:center}
+    .btn{display:inline-grid;place-items:center;height:40px;padding:0 14px;border-radius:10px;border:1px solid #275f41;background:#23724a;color:#fff}
+    .danger{background:#742828;border-color:#6b1f1f}
+    .preview{width:120px;height:120px;border:1px solid var(--border);border-radius:10px;overflow:hidden;display:grid;place-items:center;background:#0f1012}
+    .preview img{width:100%;height:100%;object-fit:cover}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card-like">
+      <h2>Éditer un profil</h2>
+      <div class="f">
+        <input id="name" class="in" placeholder="Nom" />
+        <input id="role" class="in" placeholder="Rôle" />
+        <textarea id="bio" class="in" placeholder="Bio courte"></textarea>
+        <input id="contact" class="in" placeholder="Email / contact" />
+        <div class="row">
+          <div class="preview" id="phPrev">Aperçu</div>
+          <input id="photo" type="file" accept="image/*" class="in" />
+        </div>
+        <div class="row">
+          <button class="btn" id="save">Enregistrer</button>
+          <button class="btn danger" id="del">Supprimer</button>
+          <a class="nav-btn" href="/personnelle.html">Annuler</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+const key = 'kl_members';
+function load(){ try{ return JSON.parse(localStorage.getItem(key)||'[]'); }catch{ return [] } }
+function save(arr){ localStorage.setItem(key, JSON.stringify(arr)); }
+
+const params = new URLSearchParams(location.search);
+const id = params.get('id');
+
+let members = load();
+let me = members.find(m => m.id===id);
+if(!me){ alert('Profil introuvable.'); location.href='/personnelle.html'; }
+
+const nameEl = document.getElementById('name');
+const roleEl = document.getElementById('role');
+const bioEl = document.getElementById('bio');
+const contactEl = document.getElementById('contact');
+const photoEl = document.getElementById('photo');
+const phPrev = document.getElementById('phPrev');
+
+function render(){
+  nameEl.value = me.name||'';
+  roleEl.value = me.role||'';
+  bioEl.value = me.bio||'';
+  contactEl.value = me.contact||'';
+  phPrev.innerHTML = me.photo ? `<img src="${me.photo}">` : 'Aperçu';
+}
+render();
+
+function toBase64(file){
+  return new Promise((res,rej)=>{
+    const r = new FileReader();
+    r.onload = () => res(r.result);
+    r.onerror = rej;
+    r.readAsDataURL(file);
+  });
+}
+
+photoEl.onchange = async ()=>{
+  const f = photoEl.files[0];
+  if(!f) return;
+  me.photo = await toBase64(f);
+  render();
+}
+
+document.getElementById('save').onclick = ()=>{
+  me.name = nameEl.value.trim();
+  me.role = roleEl.value.trim();
+  me.bio = bioEl.value.trim();
+  me.contact = contactEl.value.trim();
+  members = members.map(m=> m.id===id? me : m);
+  save(members);
+  alert('Enregistré.');
+  location.href='/personnelle.html';
+};
+
+document.getElementById('del').onclick = ()=>{
+  if(!confirm('Supprimer ce profil ?')) return;
+  members = members.filter(m => m.id!==id);
+  save(members);
+  location.href='/personnelle.html';
+};
+</script>
+</body>
+</html>
