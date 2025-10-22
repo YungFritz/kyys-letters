@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Manga</title>
+  <link rel="stylesheet" href="/src/index.css" />
+  <style>
+    .wrap{max-width:1000px;margin:30px auto;padding:0 16px}
+    .head{display:grid;grid-template-columns:160px 1fr;gap:14px}
+    @media(max-width:860px){.head{grid-template-columns:1fr}}
+    .cover{width:100%;height:220px;background:#0f1012;border:1px solid var(--border);border-radius:10px;overflow:hidden;display:grid;place-items:center}
+    .grid{display:grid;gap:10px}
+    .item{display:flex;justify-content:space-between;align-items:center;border:1px solid var(--border);background:#101112;border-radius:10px;padding:10px}
+    .pill{height:30px;padding:0 10px;border:1px solid var(--border);border-radius:10px;background:#111213}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <a class="nav-btn" href="/">← Accueil</a>
+
+    <div class="card-like" id="manga">
+      <div class="head">
+        <div class="cover" id="img">COVER</div>
+        <div>
+          <h2 id="title" style="margin:0 0 6px 0">—</h2>
+          <div class="muted" id="tags"></div>
+          <p class="muted" id="desc"></p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card-like" style="margin-top:12px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <h3 style="margin:0">Chapitres</h3>
+      </div>
+      <div id="chapters" class="grid"></div>
+    </div>
+  </div>
+
+<script>
+const MKEY='kl_mangas';
+function load(){try{return JSON.parse(localStorage.getItem(MKEY)||'[]')}catch{return[]}}
+
+function pathSlug(){
+  // /manga/<slug>
+  const parts = location.pathname.split('/').filter(Boolean);
+  return parts[1] || '';
+}
+
+const slug = pathSlug();
+const list = load();
+const m = list.find(x=>x.slug===slug);
+if(!m){ document.getElementById('manga').innerHTML = '<h2>Introuvable</h2>'; throw 'no manga'; }
+
+document.getElementById('title').textContent = m.title;
+document.getElementById('tags').textContent = (m.tags||[]).join(' • ');
+document.getElementById('desc').textContent = m.description||'';
+if(m.cover){
+  document.getElementById('img').innerHTML = `<img src="${m.cover}" style="width:100%;height:100%;object-fit:cover">`;
+}
+
+const chEl = document.getElementById('chapters');
+const chs = (m.chapters||[]).slice().sort((a,b)=>a.number-b.number);
+if(!chs.length){
+  chEl.innerHTML = '<div class="muted">Aucun chapitre.</div>';
+}else{
+  chEl.innerHTML = chs.map(c => `
+    <div class="item">
+      <div>#${c.number} — ${c.name||''} <span class="muted">(${c.lang})</span></div>
+      <a class="pill" href="/chapitre-${c.number}/${m.slug}">Lire</a>
+    </div>
+  `).join('');
+}
+</script>
+</body>
+</html>
