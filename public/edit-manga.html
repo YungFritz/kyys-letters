@@ -3,38 +3,49 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Éditer une série</title>
+  <title>Admin — Éditer une série</title>
   <link rel="stylesheet" href="/styles/base.css"/>
+  <style>
+    .container{max-width:1100px;margin:22px auto;padding:0 16px}
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+    .in{height:38px;border:1px solid var(--border);border-radius:10px;background:#101112;color:#eaecef;padding:0 12px}
+    textarea.in{height:120px;padding:10px}
+    .preview{border:1px solid var(--border);border-radius:12px;background:#0f1012;display:grid;place-items:center;color:var(--muted);min-height:220px}
+    .preview img{max-width:100%;border-radius:12px}
+    .row{display:flex;gap:10px}
+  </style>
 </head>
 <body>
   <div class="header">
     <div class="bar">
       <div class="brand">K</div>
-      <div class="badge">Éditer Série</div>
-      <div class="right"><a class="btn" href="/admin.html">Admin</a></div>
+      <div class="badge">Admin</div>
+      <div class="right"><a class="btn" href="/admin.html">Panneau</a></div>
     </div>
   </div>
 
-  <div class="container grid" style="grid-template-columns:1fr 1fr;">
+  <div class="container grid2">
     <div class="card">
       <div class="label">Choisir une série</div>
-      <select id="pick" class="input"></select>
+      <select id="pick" class="in"></select>
     </div>
 
-    <form class="card" id="form" style="display:none">
+    <div class="card">
+      <h3 style="margin:0 0 8px 0">Aperçu cover</h3>
+      <div id="preview" class="preview">—</div>
+    </div>
+
+    <form class="card" id="form" style="grid-column:1 / span 2;display:none">
       <h2 style="margin:0 0 12px 0" id="formTitle">Modifier</h2>
 
-      <div class="label">Titre</div>
-      <input class="input" id="title"/>
-
       <div class="row">
-        <div>
-          <div class="label">Tags</div>
-          <input class="input" id="tags"/>
+        <div style="flex:1">
+          <div class="label">Titre</div>
+          <input class="in" id="title"/>
         </div>
-        <div>
+        <div style="width:210px">
           <div class="label">Statut</div>
-          <select id="status" class="input">
+          <select id="status" class="in">
             <option value="en-cours">En cours</option>
             <option value="termine">Terminé</option>
             <option value="drop">Drop</option>
@@ -42,22 +53,21 @@
         </div>
       </div>
 
-      <div class="label">Description</div>
-      <textarea class="input" id="desc" rows="5"></textarea>
+      <div class="label" style="margin-top:6px">Tags</div>
+      <input class="in" id="tags" placeholder="tags, séparés, par, virgules"/>
+
+      <div class="label" style="margin-top:6px">Description</div>
+      <textarea class="in" id="desc"></textarea>
 
       <div class="label" style="margin-top:10px;">Changer cover</div>
       <input id="cover" type="file" accept="image/*"/>
 
-      <div style="display:flex;gap:8px;margin-top:14px">
+      <div class="row" style="margin-top:14px">
         <button class="btn acc" type="submit">Sauvegarder</button>
         <button class="btn danger" id="del" type="button">Supprimer</button>
       </div>
+      <div id="msg" class="label" style="margin-top:8px"></div>
     </form>
-
-    <div class="card" id="previewCard" style="display:none">
-      <h3 style="margin:0 0 8px 0">Aperçu cover</h3>
-      <div id="preview" class="label">—</div>
-    </div>
   </div>
 
   <footer>© 2025 — Kyy’s Letters</footer>
@@ -65,63 +75,71 @@
   <script src="/js/storage.js"></script>
   <script>
     const { allSeries, saveSeries, allChapters, saveChapters, slugify } = KyyStore;
-    const pick = document.getElementById("pick");
-    const form = document.getElementById("form");
-    const previewCard = document.getElementById("previewCard");
+
+    const pick = document.getElementById('pick');
+    const form = document.getElementById('form');
+    const preview = document.getElementById('preview');
+    const msgEl = document.getElementById('msg');
+
     const series = allSeries();
     if(!series.length){ alert("Aucune série. Ajoute d’abord."); location.href="/add-manga.html"; }
 
     series.forEach(s=>{
-      const o=document.createElement("option");o.value=s.id;o.textContent=s.title;pick.appendChild(o);
+      const o=document.createElement('option');
+      o.value=s.id; o.textContent=s.title; pick.appendChild(o);
     });
+
     let current=null, coverData="";
 
     function load(id){
       current = series.find(x=>x.id===id);
-      if(!current){ form.style.display="none"; previewCard.style.display="none"; return; }
-      form.style.display="block"; previewCard.style.display="block";
-      document.getElementById("formTitle").textContent = `Modifier — ${current.title}`;
-      document.getElementById("title").value = current.title||"";
-      document.getElementById("tags").value = (current.tags||[]).join(", ");
-      document.getElementById("status").value = current.status||"en-cours";
-      document.getElementById("desc").value = current.description||"";
-      coverData = current.cover||"";
-      document.getElementById("preview").innerHTML = coverData? `<img src="${coverData}" style="max-width:100%;border-radius:12px"/>` : "—";
+      if(!current){ form.style.display="none"; preview.innerHTML='—'; return; }
+      form.style.display="block";
+      document.getElementById('formTitle').textContent = `Modifier — ${current.title}`;
+      document.getElementById('title').value = current.title||'';
+      document.getElementById('tags').value = (current.tags||[]).join(', ');
+      document.getElementById('status').value = current.status||'en-cours';
+      document.getElementById('desc').value = current.description||'';
+      coverData = current.cover||'';
+      preview.innerHTML = coverData ? `<img src="${coverData}" />` : '—';
+      msg('');
     }
     load(pick.value = series[0].id);
     pick.onchange = ()=>load(pick.value);
 
-    document.getElementById("cover").onchange = e=>{
+    document.getElementById('cover').onchange = e=>{
       const f = e.target.files?.[0]; if(!f) return;
       const r = new FileReader();
-      r.onload = ()=>{ coverData = String(r.result||""); document.getElementById("preview").innerHTML = `<img src="${coverData}" style="max-width:100%;border-radius:12px"/>`;};
+      r.onload = ()=>{ coverData = String(r.result||''); preview.innerHTML = `<img src="${coverData}" />`; };
       r.readAsDataURL(f);
     };
 
     form.onsubmit = (e)=>{
       e.preventDefault();
-      current.title = document.getElementById("title").value.trim() || current.title;
+      current.title = document.getElementById('title').value.trim() || current.title;
       current.slug = slugify(current.title);
-      current.tags = document.getElementById("tags").value.split(",").map(s=>s.trim()).filter(Boolean);
-      current.status = document.getElementById("status").value;
-      current.description = document.getElementById("desc").value.trim();
+      current.tags = document.getElementById('tags').value.split(',').map(s=>s.trim()).filter(Boolean);
+      current.status = document.getElementById('status').value;
+      current.description = document.getElementById('desc').value.trim();
       if(coverData) current.cover = coverData;
       saveSeries(series);
-      alert("Série mise à jour !");
+      msg('Série mise à jour ✅');
       load(current.id);
     };
 
-    document.getElementById("del").onclick = ()=>{
-      if(!confirm("Supprimer la série et ses chapitres ?")) return;
-      // suppr chapitres liés
-      const ch = allChapters().filter(c=>c.seriesId!==current.id);
-      saveChapters(ch);
-      // suppr série
+    document.getElementById('del').onclick = ()=>{
+      if(!confirm('Supprimer la série et ses chapitres ?')) return;
+      // supprime chapitres liés
+      const remainCh = allChapters().filter(c=>c.seriesId!==current.id);
+      saveChapters(remainCh);
+      // supprime la série
       const idx = series.findIndex(x=>x.id===current.id);
       if(idx>=0){ series.splice(idx,1); saveSeries(series); }
-      alert("Supprimé.");
-      location.href="/admin.html";
+      alert('Supprimé.');
+      location.href='/admin.html';
     };
+
+    function msg(t){ msgEl.textContent=t; }
   </script>
 </body>
 </html>
