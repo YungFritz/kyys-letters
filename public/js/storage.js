@@ -1,47 +1,87 @@
-/* /public/js/storage.js
-   Mini store unique pour Kyy's Letters (front only)
-   — tout en localStorage, blindé contre JSON foireux.
+/* public/js/storage.js
+   Store minimal unifié pour Kyy’s Letters (LocalStorage).
 */
 (function (global) {
-  const LS_KEYS = {
-    series: 'kl_series',
-    chapters: 'kl_chapters',
-    members: 'kl_members',
+  const KEYS = {
+    series: "kl_series",
+    chapters: "kl_chapters",
+    members: "kl_members",
+    history: "kl_history",
+    fav: "kl_fav",
   };
 
-  function safeGet(key, fallback = []) {
-    try {
-      const raw = localStorage.getItem(key);
-      return raw ? JSON.parse(raw) : fallback;
-    } catch { return fallback; }
+  const safeParse = (txt, def) => {
+    try { return JSON.parse(txt ?? "") ?? def; } catch { return def; }
+  };
+  const get = (k, def=[]) => safeParse(localStorage.getItem(k), def);
+  const set = (k, v) => localStorage.setItem(k, JSON.stringify(v));
+
+  // --------- Séries ---------
+  function allSeries() { return get(KEYS.series); }
+  function saveSeries(arr) { set(KEYS.series, arr); }
+  function upsertSeries(serie) {
+    const list = allSeries();
+    const i = list.findIndex(s => s.id === serie.id);
+    if (i >= 0) list[i] = serie; else list.push(serie);
+    saveSeries(list);
   }
-  function safeSet(key, value) {
-    localStorage.setItem(key, JSON.stringify(value));
+  function deleteSeries(id) {
+    saveSeries(allSeries().filter(s => s.id !== id));
+    // supprime aussi les chapitres liés
+    saveChapters(allChapters().filter(c => c.seriesId !== id));
   }
 
-  const uid = () => Math.random().toString(36).slice(2, 10);
-  const slugify = (s = '') =>
-    s.toLowerCase()
-     .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-     .replace(/[^a-z0-9]+/g, '-')
-     .replace(/(^-|-$)/g, '');
+  // --------- Chapitres ---------
+  function allChapters() { return get(KEYS.chapters); }
+  function saveChapters(arr) { set(KEYS.chapters, arr); }
+  function addChapter(ch) { saveChapters([...allChapters(), ch]); }
+  function deleteChapter(id) { saveChapters(allChapters().filter(c => c.id !== id)); }
 
-  // Séries
-  const allSeries    = () => safeGet(LS_KEYS.series, []);
-  const saveSeries   = (arr) => safeSet(LS_KEYS.series, arr);
+  // --------- Membres (profils) ---------
+  function allMembers() { return get(KEYS.members); }
+  function saveMembers(arr) { set(KEYS.members, arr); }
+  function upsertMember(m) {
+    const list = allMembers();
+    const i = list.findIndex(x => x.id === m.id);
+    if (i >= 0) list[i] = m; else list.push(m);
+    saveMembers(list);
+  }
+  function deleteMember(id) { saveMembers(allMembers().filter(m => m.id !== id)); }
 
-  // Chapitres
-  const allChapters  = () => safeGet(LS_KEYS.chapters, []);
-  const saveChapters = (arr) => safeSet(LS_KEYS.chapters, arr);
+  // --------- Divers ---------
+  function uid(prefix="id") { return `${prefix}_${Math.random().toString(36).slice(2,10)}`; }
+  function slugify(s) {
+    return (s || "").toString().toLowerCase()
+      .normalize("NFD").replace(/[\u0300-\u036f]/g,"")
+      .replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"").slice(0,80);
+  }
 
-  // Membres (équipe)
-  const allMembers   = () => safeGet(LS_KEYS.members, []);
-  const saveMembers  = (arr) => safeSet(LS_KEYS.members, arr);
+  // Historique / fav basiques si tu veux t’en servir plus tard
+  function getHistory() { return get(KEYS.history); }
+  function pushHistory(entry) {
+    const arr = getHistory().filter(e => e.key !== entry.key);
+    arr.unshift(entry);
+    set(KEYS.history, arr.slice(0,200));
+  }
+  function getFav() { return get(KEYS.fav); }
+  function toggleFav(key) {
+    let arr = getFav();
+    arr = arr.includes(key) ? arr.filter(x=>x!==key) : [...arr, key];
+    set(KEYS.fav, arr);
+    return arr.includes(key);
+  }
 
   global.KyyStore = {
-    LS_KEYS, uid, slugify,
-    allSeries, saveSeries,
-    allChapters, saveChapters,
-    allMembers, saveMembers,
+    KEYS,
+    // séries
+    allSeries, saveSeries, upsertSeries, deleteSeries,
+    // chapitres
+    allChapters, saveChapters, addChapter, deleteChapter,
+    // profils
+    allMembers, saveMembers, upsertMember, deleteMember,
+    // util
+    uid, slugify,
+    // bonus
+    getHistory, pushHistory, getFav, toggleFav,
   };
 })(window);
