@@ -31,6 +31,16 @@ const fmtViews = (n?: number) => {
 
 const ICON_TREND = "❤️‍🔥";
 
+/* Nav util blindée: force la navigation même si un script bloque les liens */
+function goHard(path: string) {
+  try {
+    // on stoppe tout script global qui ferait preventDefault
+    window.onbeforeunload = null as any;
+  } catch {}
+  // remplace l’URL immédiatement
+  window.location.href = path; // assign/replace, peu importe ici
+}
+
 /* ======================= HEADER =========================== */
 function DesktopHeader({
   query,
@@ -65,17 +75,62 @@ function DesktopHeader({
           placeholder="Rechercher une série, un tag, une langue..."
         />
 
+        {/* Liens HTML + clic forcé */}
         <nav className="desktop-nav">
-          <a className="nav-btn" href="/personnelle.html">
+          <a
+            className="nav-btn"
+            href="/personnelle.html"
+            onClick={(e) => {
+              e.stopPropagation();
+              // si jamais l’href était réécrit en "#", on force
+              if ((e.currentTarget as HTMLAnchorElement).getAttribute("href") === "#" || e.defaultPrevented) {
+                e.preventDefault();
+                goHard("/personnelle.html");
+              }
+            }}
+          >
             Personnelle
           </a>
-          <a className="nav-btn" href="/recrutement.html">
+
+          <a
+            className="nav-btn"
+            href="/recrutement.html"
+            onClick={(e) => {
+              e.stopPropagation();
+              if ((e.currentTarget as HTMLAnchorElement).getAttribute("href") === "#" || e.defaultPrevented) {
+                e.preventDefault();
+                goHard("/recrutement.html");
+              }
+            }}
+          >
             Recrutement
           </a>
-          <a className="nav-btn" href="/admin.html">
+
+          <a
+            className="nav-btn"
+            href="/admin.html"
+            onClick={(e) => {
+              e.stopPropagation();
+              if ((e.currentTarget as HTMLAnchorElement).getAttribute("href") === "#" || e.defaultPrevented) {
+                e.preventDefault();
+                goHard("/admin.html");
+              }
+            }}
+          >
             Admin
           </a>
-          <a className="nav-btn" href="/connexion.html">
+
+          <a
+            className="nav-btn"
+            href="/connexion.html"
+            onClick={(e) => {
+              e.stopPropagation();
+              if ((e.currentTarget as HTMLAnchorElement).getAttribute("href") === "#" || e.defaultPrevented) {
+                e.preventDefault();
+                goHard("/connexion.html");
+              }
+            }}
+          >
             Connexion
           </a>
         </nav>
@@ -108,16 +163,60 @@ function MobileSheet({
         </div>
 
         <div className="sheet-content">
-          <a className="sheet-item" href="/personnelle.html">
+          {/* Liens + clic forcé */}
+          <a
+            className="sheet-item"
+            href="/personnelle.html"
+            onClick={(e) => {
+              onClose();
+              if ((e.currentTarget as HTMLAnchorElement).getAttribute("href") === "#" || e.defaultPrevented) {
+                e.preventDefault();
+                goHard("/personnelle.html");
+              }
+            }}
+          >
             Personnelle
           </a>
-          <a className="sheet-item" href="/recrutement.html">
+
+          <a
+            className="sheet-item"
+            href="/recrutement.html"
+            onClick={(e) => {
+              onClose();
+              if ((e.currentTarget as HTMLAnchorElement).getAttribute("href") === "#" || e.defaultPrevented) {
+                e.preventDefault();
+                goHard("/recrutement.html");
+              }
+            }}
+          >
             Recrutement
           </a>
-          <a className="sheet-item" href="/admin.html">
+
+          <a
+            className="sheet-item"
+            href="/admin.html"
+            onClick={(e) => {
+              onClose();
+              if ((e.currentTarget as HTMLAnchorElement).getAttribute("href") === "#" || e.defaultPrevented) {
+                e.preventDefault();
+                goHard("/admin.html");
+              }
+            }}
+          >
             Admin
           </a>
-          <a className="sheet-item" href="/connexion.html">
+
+          <a
+            className="sheet-item"
+            href="/connexion.html"
+            onClick={(e) => {
+              onClose();
+              if ((e.currentTarget as HTMLAnchorElement).getAttribute("href") === "#" || e.defaultPrevented) {
+                e.preventDefault();
+                goHard("/connexion.html");
+              }
+            }}
+          >
             Connexion
           </a>
 
