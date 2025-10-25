@@ -7,6 +7,24 @@
   </head>
   <body>
     <div id="root"></div>
+
+    <!-- script principal React -->
     <script type="module" src="/src/main.tsx"></script>
+
+    <!-- Patch "Perso" → "Personnelle" -->
+    <script>
+      window.addEventListener('DOMContentLoaded', function () {
+        document
+          .querySelectorAll(
+            '.nav-btn, .sheet-item, .desktop-nav a, .desktop-nav button'
+          )
+          .forEach(function (el) {
+            const txt = (el.textContent || '').trim();
+            if (txt === 'Perso' || txt === 'PERSO') {
+              el.textContent = 'Personnelle';
+            }
+          });
+      });
+    </script>
   </body>
 </html>
