@@ -247,15 +247,26 @@ export default function Home() {
             </div>
           </div>
 
-          {filtered.length === 0 ? (
-            <div className="empty-box">Aucune série ajoutée pour le moment.</div>
-          ) : (
-            <div className="grid-cards">
-              {filtered.map((s) => (
-                <Card key={s.id} s={s} />
-              ))}
-            </div>
-          )}
+{filtered.length === 0 ? (
+  <div
+    className="empty-box"
+    style={{
+      width: "100%",
+      minHeight: "100px",
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+    }}
+  >
+    Aucune série ajoutée pour le moment.
+  </div>
+) : (
+  <div className="grid-cards">
+    {filtered.map((s) => (
+      <Card key={s.id} s={s} />
+    ))}
+  </div>
+)}
         </section>
 
         <div
