@@ -29,6 +29,10 @@ const fmtViews = (n?: number) => {
   return `${n} vues`;
 };
 
+// Icône de tendance (facile à changer si tu veux la flamme 🔥 à la place)
+const ICON_TREND = "❤️‍🔥";
+
+/* ======================= HEADER =========================== */
 function DesktopHeader({
   query,
   setQuery,
@@ -85,6 +89,7 @@ function DesktopHeader({
   );
 }
 
+/* ======================= MENU MOBILE =========================== */
 function MobileSheet({
   query,
   setQuery,
@@ -140,6 +145,7 @@ function MobileSheet({
   );
 }
 
+/* ======================= CARD =========================== */
 function Card({ s }: { s: Series }) {
   return (
     <a className="card-link" href={`/series/${s.slug}`}>
@@ -162,6 +168,7 @@ function Card({ s }: { s: Series }) {
   );
 }
 
+/* ======================= HOME =========================== */
 export default function Home() {
   const [query, setQuery] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
@@ -244,7 +251,7 @@ export default function Home() {
         <section className="section">
           <div className="section-header">
             <div className="section-left">
-              <div style={{ fontSize: 18 }}>❤️‍🔥</div>
+              <div style={{ fontSize: 18 }}>{ICON_TREND}</div>
               <div className="section-title">Populaire aujourd'hui</div>
             </div>
             <a className="pill" href="/tendances.html">
@@ -335,7 +342,7 @@ export default function Home() {
           Recherche
         </a>
         <a className="tab-item" href="/tendances.html">
-          <span className="tab-emoji">❤️‍🔥</span>
+          <span className="tab-emoji">{ICON_TREND}</span>
           Tendances
         </a>
         <a className="tab-item" href="/admin.html">
