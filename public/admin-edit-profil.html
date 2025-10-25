@@ -4,102 +4,160 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Admin — Éditer un profil</title>
-  <link rel="stylesheet" href="/src/index.css" />
+  <link rel="stylesheet" href="/styles/base.css" />
   <style>
-    .wrap{max-width:800px;margin:30px auto;padding:0 16px}
+    .wrap{max-width:1060px;margin:22px auto;padding:0 16px}
+    .cols{display:grid;grid-template-columns:300px 1fr;gap:18px}
     .f{display:grid;gap:10px}
     .in{height:38px;border:1px solid var(--border);border-radius:10px;background:#101112;color:#eaecef;padding:0 12px}
-    textarea.in{height:90px;padding:10px}
+    textarea.in{height:110px;padding:10px}
     .row{display:flex;gap:10px;align-items:center}
-    .btn{display:inline-grid;place-items:center;height:40px;padding:0 14px;border-radius:10px;border:1px solid #275f41;background:#23724a;color:#fff}
-    .danger{background:#742828;border-color:#6b1f1f}
-    .preview{width:120px;height:120px;border:1px solid var(--border);border-radius:10px;overflow:hidden;display:grid;place-items:center;background:#0f1012}
+    .preview{width:100px;height:100px;border:1px solid var(--border);border-radius:12px;overflow:hidden;display:grid;place-items:center;background:#0f1012;color:var(--muted)}
     .preview img{width:100%;height:100%;object-fit:cover}
+    .list button{width:100%;justify-content:flex-start}
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="card-like">
-      <h2>Éditer un profil</h2>
-      <div class="f">
-        <input id="name" class="in" placeholder="Nom" />
-        <input id="role" class="in" placeholder="Rôle" />
-        <textarea id="bio" class="in" placeholder="Bio courte"></textarea>
-        <input id="contact" class="in" placeholder="Email / contact" />
-        <div class="row">
-          <div class="preview" id="phPrev">Aperçu</div>
-          <input id="photo" type="file" accept="image/*" class="in" />
-        </div>
-        <div class="row">
-          <button class="btn" id="save">Enregistrer</button>
-          <button class="btn danger" id="del">Supprimer</button>
-          <a class="nav-btn" href="/personnelle.html">Annuler</a>
-        </div>
+  <!-- Header identique -->
+  <div class="header">
+    <div class="bar">
+      <div class="brand">K</div>
+      <div class="badge">Admin</div>
+      <div class="right">
+        <a class="btn" href="/">Accueil</a>
+        <a class="btn" href="/admin.html">Panneau</a>
+        <a class="btn" href="/personnelle.html">Équipe</a>
       </div>
     </div>
   </div>
 
-<script>
-const key = 'kl_members';
-function load(){ try{ return JSON.parse(localStorage.getItem(key)||'[]'); }catch{ return [] } }
-function save(arr){ localStorage.setItem(key, JSON.stringify(arr)); }
+  <div class="wrap">
+    <div class="cols">
+      <!-- Liste profils -->
+      <div class="card">
+        <h3 style="margin:0 0 10px 0">Profils</h3>
+        <div id="list" class="grid list" style="grid-template-columns:1fr; gap:8px"></div>
+        <div class="label" id="empty" style="display:none">Aucun profil. <a href="/admin-add-profil.html">Ajouter</a></div>
+      </div>
 
-const params = new URLSearchParams(location.search);
-const id = params.get('id');
+      <!-- Edition -->
+      <div class="card">
+        <h2 style="margin:0 0 12px 0">Éditer le profil</h2>
+        <form id="editForm" class="f">
+          <input id="name" class="in" placeholder="Nom" required />
+          <input id="role" class="in" placeholder="Rôle" />
+          <textarea id="bio" class="in" placeholder="Bio courte"></textarea>
+          <input id="contact" class="in" placeholder="Email / contact" />
+          <div class="row">
+            <div class="preview" id="pv"><span>IMG</span></div>
+            <input id="photo" type="file" accept="image/*" class="in" style="flex:1" />
+          </div>
+          <div class="row">
+            <button class="btn acc" type="submit">Enregistrer</button>
+            <button class="btn danger" id="del" type="button">Supprimer</button>
+            <a class="btn" href="/personnelle.html">Annuler</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
 
-let members = load();
-let me = members.find(m => m.id===id);
-if(!me){ alert('Profil introuvable.'); location.href='/personnelle.html'; }
+  <footer>© 2025 — Admin Kyy’s Letters</footer>
 
-const nameEl = document.getElementById('name');
-const roleEl = document.getElementById('role');
-const bioEl = document.getElementById('bio');
-const contactEl = document.getElementById('contact');
-const photoEl = document.getElementById('photo');
-const phPrev = document.getElementById('phPrev');
+  <script>
+    const key = 'kl_members';
+    const load = () => { try { return JSON.parse(localStorage.getItem(key) || '[]'); } catch { return [] } };
+    const save = (arr) => localStorage.setItem(key, JSON.stringify(arr));
 
-function render(){
-  nameEl.value = me.name||'';
-  roleEl.value = me.role||'';
-  bioEl.value = me.bio||'';
-  contactEl.value = me.contact||'';
-  phPrev.innerHTML = me.photo ? `<img src="${me.photo}">` : 'Aperçu';
-}
-render();
+    const $ = (s)=>document.querySelector(s);
+    const listEl = $('#list');
+    const emptyEl = $('#empty');
+    const nameEl = $('#name'), roleEl = $('#role'), bioEl = $('#bio'), contactEl = $('#contact'), photoEl = $('#photo');
+    const pv = $('#pv');
+    let currentId = null;
 
-function toBase64(file){
-  return new Promise((res,rej)=>{
-    const r = new FileReader();
-    r.onload = () => res(r.result);
-    r.onerror = rej;
-    r.readAsDataURL(file);
-  });
-}
+    function renderList() {
+      const arr = load();
+      listEl.innerHTML = '';
+      emptyEl.style.display = arr.length ? 'none' : 'block';
+      for (const p of arr) {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'btn';
+        b.innerHTML = `<strong style="margin-right:8px">${p.name || 'Sans nom'}</strong><span class="badge">${p.role || '—'}</span>`;
+        b.onclick = () => loadForm(p.id);
+        listEl.appendChild(b);
+      }
+      // Autoload premier si id absent
+      if (!currentId && arr[0]) loadForm(arr[0].id);
+    }
 
-photoEl.onchange = async ()=>{
-  const f = photoEl.files[0];
-  if(!f) return;
-  me.photo = await toBase64(f);
-  render();
-}
+    function loadForm(id) {
+      const p = load().find(x => x.id === id);
+      if (!p) return;
+      currentId = id;
+      nameEl.value = p.name || '';
+      roleEl.value = p.role || '';
+      bioEl.value = p.bio || '';
+      contactEl.value = p.contact || '';
+      if (p.photo) { pv.innerHTML = '<img />'; pv.firstChild.src = p.photo; } else { pv.innerHTML = '<span>IMG</span>'; }
+    }
 
-document.getElementById('save').onclick = ()=>{
-  me.name = nameEl.value.trim();
-  me.role = roleEl.value.trim();
-  me.bio = bioEl.value.trim();
-  me.contact = contactEl.value.trim();
-  members = members.map(m=> m.id===id? me : m);
-  save(members);
-  alert('Enregistré.');
-  location.href='/personnelle.html';
-};
+    function fileToBase64(file){
+      return new Promise((res, rej) => {
+        const r = new FileReader();
+        r.onload = () => res(String(r.result));
+        r.onerror = rej;
+        r.readAsDataURL(file);
+      });
+    }
 
-document.getElementById('del').onclick = ()=>{
-  if(!confirm('Supprimer ce profil ?')) return;
-  members = members.filter(m => m.id!==id);
-  save(members);
-  location.href='/personnelle.html';
-};
-</script>
+    photoEl.addEventListener('change', async () => {
+      const f = photoEl.files?.[0];
+      if (!f) return;
+      const b64 = await fileToBase64(f);
+      pv.innerHTML = '<img />'; pv.firstChild.src = b64;
+    });
+
+    // Save
+    document.getElementById('editForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!currentId) { alert('Choisis un profil à gauche.'); return; }
+      const arr = load();
+      const idx = arr.findIndex(x => x.id === currentId);
+      if (idx < 0) return;
+
+      let photo = arr[idx].photo || '';
+      const f = photoEl.files?.[0];
+      if (f) photo = await fileToBase64(f);
+
+      arr[idx] = {
+        ...arr[idx],
+        name: nameEl.value.trim(),
+        role: roleEl.value.trim(),
+        bio: bioEl.value.trim(),
+        contact: contactEl.value.trim(),
+        photo
+      };
+      save(arr);
+      alert('Profil mis à jour.');
+      renderList();
+    });
+
+    // Delete
+    document.getElementById('del').addEventListener('click', () => {
+      if (!currentId) return;
+      if (!confirm('Supprimer ce profil ?')) return;
+      const arr = load().filter(x => x.id !== currentId);
+      save(arr);
+      currentId = null;
+      nameEl.value = roleEl.value = bioEl.value = contactEl.value = '';
+      pv.innerHTML = '<span>IMG</span>';
+      renderList();
+    });
+
+    // init
+    renderList();
+  </script>
 </body>
 </html>
