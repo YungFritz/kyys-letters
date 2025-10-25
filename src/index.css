@@ -194,3 +194,10 @@ a{ color:inherit; text-decoration:none }
   color:#dfe2e6
 }
 .tab-emoji{ font-size:18px; margin-bottom:2px; display:block }
+
+/* Étend la boîte vide sur toute la largeur de la grille */
+.grid-cards > .empty,
+.grid-cards > .empty--full {
+  grid-column: 1 / -1;
+  min-height: 140px;
+}
