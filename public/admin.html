@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Admin — Kyy’s Letters</title>
+  <title>Panneau Admin — Kyy’s Letters</title>
   <link rel="stylesheet" href="/styles/base.css"/>
 </head>
 <body>
@@ -22,11 +22,11 @@
     </div>
   </div>
 
-  <div class="container grid" style="grid-template-columns:2fr 1fr;">
+  <div class="container" style="display:grid;grid-template-columns:1fr 340px;gap:18px;margin-top:18px">
     <div class="grid" style="grid-template-columns:1fr;">
       <div class="card">
         <h2 style="margin:0 0 10px 0">Panneau Admin</h2>
-        <p class="label">Ajoute des séries et chapitres. Tout est stocké en localStorage, l’accueil les lira automatiquement.</p>
+        <p class="label">Tout est stocké en localStorage. L’accueil lit ces données.</p>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
           <a class="btn acc" href="/add-manga.html">Ajouter une série</a>
           <a class="btn" href="/add-chapitre.html">Ajouter un chapitre</a>
@@ -38,17 +38,17 @@
 
       <div class="card">
         <h3 style="margin:0 0 8px 0">Séries existantes</h3>
-        <table class="table" id="seriesTable">
+        <table class="table">
           <thead><tr><th>Titre</th><th>Slug</th><th>Tags</th><th>Chapitres</th></tr></thead>
-          <tbody></tbody>
+          <tbody id="seriesBody"></tbody>
         </table>
       </div>
 
       <div class="card">
         <h3 style="margin:0 0 8px 0">Derniers chapitres</h3>
-        <table class="table" id="chapTable">
+        <table class="table">
           <thead><tr><th>Série</th><th>Titre</th><th>#</th><th>Lang</th><th>Date</th></tr></thead>
-          <tbody></tbody>
+          <tbody id="chapBody"></tbody>
         </table>
       </div>
     </div>
@@ -74,69 +74,54 @@
 
   <footer>© 2025 — Admin Kyy’s Letters</footer>
 
-  <!-- utils -->
   <script src="/js/storage.js"></script>
   <script>
-    // Petite aide DOM
-    const $ = (sel, root=document) => root.querySelector(sel);
-
-    // Sécurise l'accès aux <tbody> même s'ils manquent dans le HTML
-    const ensureTbody = (tableId) => {
-      const table = document.getElementById(tableId);
-      if (!table) return null;
-      let tb = table.querySelector('tbody');
-      if (!tb) { tb = document.createElement('tbody'); table.appendChild(tb); }
-      return tb;
-    };
-
-    const { allSeries, allChapters, saveSeries, saveChapters } = window.KyyStore || {};
+    const { allSeries, allChapters, saveSeries, saveChapters } = KyyStore;
 
     function render() {
-      const s = (allSeries && allSeries()) || [];
-      const c = (allChapters && allChapters()) || [];
+      const s = allSeries();
+      const c = allChapters();
 
-      const sBody = ensureTbody('seriesTable');
-      const cBody = ensureTbody('chapTable');
-      if (!sBody || !cBody) return;
+      const sBody = document.getElementById("seriesBody");
+      const cBody = document.getElementById("chapBody");
+      sBody.innerHTML = s.length ? "" : `<tr><td colspan="4" class="label">Aucune série.</td></tr>`;
+      cBody.innerHTML = c.length ? "" : `<tr><td colspan="5" class="label">Aucun chapitre.</td></tr>`;
 
-      sBody.innerHTML = s.length ? '' : `<tr><td colspan="4" class="label">Aucune série.</td></tr>`;
-      cBody.innerHTML = c.length ? '' : `<tr><td colspan="5" class="label">Aucun chapitre.</td></tr>`;
-
-      s.forEach(serie => {
+      for (const serie of s) {
         const count = c.filter(x => x.seriesId === serie.id).length;
-        sBody.insertAdjacentHTML('beforeend', `
-          <tr>
-            <td>${serie.title || '—'}</td>
-            <td><span class="badge">${serie.slug || '—'}</span></td>
-            <td>${(serie.tags || []).map(t => `<span class="badge">${t}</span>`).join(' ') || '—'}</td>
+        sBody.insertAdjacentHTML(
+          "beforeend",
+          `<tr>
+            <td>${serie.title || "—"}</td>
+            <td><span class="badge">${serie.slug || "—"}</span></td>
+            <td>${(serie.tags || []).map(t => `<span class="badge">${t}</span>`).join(" ")}</td>
             <td>${count}</td>
-          </tr>
-        `);
-      });
+          </tr>`
+        );
+      }
 
-      c.slice().sort((a,b)=> +new Date(b.date||0) - +new Date(a.date||0))
-       .slice(0,10).forEach(ch => {
-        const serie = s.find(x => x.id === ch.seriesId);
-        cBody.insertAdjacentHTML('beforeend', `
-          <tr>
-            <td>${serie ? (serie.title || '—') : '—'}</td>
-            <td>${ch.title  || '—'}</td>
-            <td>${ch.number || '—'}</td>
-            <td>${ch.lang   || '—'}</td>
-            <td>${ch.date   || '—'}</td>
-          </tr>
-        `);
-      });
+      c.slice().sort((a,b)=>+new Date(b.date)-+new Date(a.date))
+       .slice(0,10).forEach(ch=>{
+         const serie = s.find(x=>x.id===ch.seriesId);
+         cBody.insertAdjacentHTML("beforeend",
+           `<tr>
+             <td>${serie ? serie.title : "—"}</td>
+             <td>${ch.title || "—"}</td>
+             <td>${ch.number ?? "—"}</td>
+             <td>${ch.lang || "—"}</td>
+             <td>${ch.date || "—"}</td>
+           </tr>`
+         );
+       });
     }
 
-    render();
-
-    // Vidage local
-    document.getElementById('reset')?.addEventListener('click', () => {
-      if (confirm('Tout effacer du navigateur ?')) {
+    document.getElementById("reset").onclick = () => {
+      if (confirm("Tout effacer du navigateur ?")) {
         saveSeries([]); saveChapters([]); render();
       }
-    });
+    };
+
+    render();
   </script>
 </body>
 </html>
