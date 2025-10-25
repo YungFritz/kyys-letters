@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import "./index.css";
 
 type Chapter = {
@@ -21,27 +21,24 @@ type Series = {
   hot?: boolean;
 };
 
-const LIBRARY: Series[] = [];
-
+// ------- helpers UI -------
 const fmtViews = (n?: number) => {
   if (!n) return "0 vues";
   if (n >= 1000) return `${(n / 1000).toFixed(1)}k vues`;
   return `${n} vues`;
 };
 
-const ICON_TREND = "❤️‍🔥";
-
-/* Nav util blindée: force la navigation même si un script bloque les liens */
-function goHard(path: string) {
+// ------- lecture localStorage -------
+function getLibraryFromStorage(): Series[] {
   try {
-    // on stoppe tout script global qui ferait preventDefault
-    window.onbeforeunload = null as any;
-  } catch {}
-  // remplace l’URL immédiatement
-  window.location.href = path; // assign/replace, peu importe ici
+    const raw = localStorage.getItem("kl_series");
+    const arr = raw ? JSON.parse(raw) : [];
+    return Array.isArray(arr) ? arr : [];
+  } catch {
+    return [];
+  }
 }
 
-/* ======================= HEADER =========================== */
 function DesktopHeader({
   query,
   setQuery,
@@ -54,17 +51,13 @@ function DesktopHeader({
   return (
     <div className="header">
       <div className="header-inner">
-        <button
-          className="hamburger"
-          aria-label="Ouvrir le menu"
-          onClick={openMenu}
-        >
+        <button className="burger" aria-label="Ouvrir le menu" onClick={openMenu}>
           <span />
           <span />
           <span />
         </button>
 
-        <a className="logoK" href="/" aria-label="Accueil">
+        <a className="logo-badge" href="/" aria-label="Accueil">
           K
         </a>
 
@@ -75,179 +68,61 @@ function DesktopHeader({
           placeholder="Rechercher une série, un tag, une langue..."
         />
 
-        {/* Liens HTML + clic forcé */}
         <nav className="desktop-nav">
-          <a
-            className="nav-btn"
-            href="/personnelle.html"
-            onClick={(e) => {
-              e.stopPropagation();
-              // si jamais l’href était réécrit en "#", on force
-              if ((e.currentTarget as HTMLAnchorElement).getAttribute("href") === "#" || e.defaultPrevented) {
-                e.preventDefault();
-                goHard("/personnelle.html");
-              }
-            }}
-          >
-            Personnelle
-          </a>
-
-          <a
-            className="nav-btn"
-            href="/recrutement.html"
-            onClick={(e) => {
-              e.stopPropagation();
-              if ((e.currentTarget as HTMLAnchorElement).getAttribute("href") === "#" || e.defaultPrevented) {
-                e.preventDefault();
-                goHard("/recrutement.html");
-              }
-            }}
-          >
-            Recrutement
-          </a>
-
-          <a
-            className="nav-btn"
-            href="/admin.html"
-            onClick={(e) => {
-              e.stopPropagation();
-              if ((e.currentTarget as HTMLAnchorElement).getAttribute("href") === "#" || e.defaultPrevented) {
-                e.preventDefault();
-                goHard("/admin.html");
-              }
-            }}
-          >
-            Admin
-          </a>
-
-          <a
-            className="nav-btn"
-            href="/connexion.html"
-            onClick={(e) => {
-              e.stopPropagation();
-              if ((e.currentTarget as HTMLAnchorElement).getAttribute("href") === "#" || e.defaultPrevented) {
-                e.preventDefault();
-                goHard("/connexion.html");
-              }
-            }}
-          >
-            Connexion
-          </a>
+          <a className="nav-btn" href="/personnelle.html">Personnelle</a>
+          <a className="nav-btn" href="/recrutement.html">Recrutement</a>
+          <a className="nav-btn" href="/admin.html">Admin</a>
+          <a className="nav-btn" href="/connexion.html">Connexion</a>
         </nav>
       </div>
     </div>
   );
 }
 
-/* ======================= MENU MOBILE =========================== */
 function MobileSheet({
   query,
   setQuery,
-  isOpen,
   onClose,
 }: {
   query: string;
   setQuery: (v: string) => void;
-  isOpen: boolean;
   onClose: () => void;
 }) {
   return (
-    <>
-      <div className={`sheet-backdrop ${isOpen ? "show" : ""}`} onClick={onClose} />
-      <aside className={`sheet ${isOpen ? "open" : ""}`} aria-hidden={!isOpen}>
-        <div className="sheet-header">
-          <div className="logoK">K</div>
-          <button className="sheet-close" onClick={onClose} aria-label="Fermer">
-            ×
-          </button>
+    <div className="sheet-overlay" onClick={onClose}>
+      <div className="sheet-card" onClick={(e) => e.stopPropagation()}>
+        <div className="sheet-head">
+          <div className="logo-badge">K</div>
+          <button className="sheet-close" onClick={onClose} aria-label="Fermer">×</button>
         </div>
-
-        <div className="sheet-content">
-          {/* Liens + clic forcé */}
-          <a
-            className="sheet-item"
-            href="/personnelle.html"
-            onClick={(e) => {
-              onClose();
-              if ((e.currentTarget as HTMLAnchorElement).getAttribute("href") === "#" || e.defaultPrevented) {
-                e.preventDefault();
-                goHard("/personnelle.html");
-              }
-            }}
-          >
-            Personnelle
-          </a>
-
-          <a
-            className="sheet-item"
-            href="/recrutement.html"
-            onClick={(e) => {
-              onClose();
-              if ((e.currentTarget as HTMLAnchorElement).getAttribute("href") === "#" || e.defaultPrevented) {
-                e.preventDefault();
-                goHard("/recrutement.html");
-              }
-            }}
-          >
-            Recrutement
-          </a>
-
-          <a
-            className="sheet-item"
-            href="/admin.html"
-            onClick={(e) => {
-              onClose();
-              if ((e.currentTarget as HTMLAnchorElement).getAttribute("href") === "#" || e.defaultPrevented) {
-                e.preventDefault();
-                goHard("/admin.html");
-              }
-            }}
-          >
-            Admin
-          </a>
-
-          <a
-            className="sheet-item"
-            href="/connexion.html"
-            onClick={(e) => {
-              onClose();
-              if ((e.currentTarget as HTMLAnchorElement).getAttribute("href") === "#" || e.defaultPrevented) {
-                e.preventDefault();
-                goHard("/connexion.html");
-              }
-            }}
-          >
-            Connexion
-          </a>
-
-          <div className="sheet-divider" />
-
-          <input
-            className="sheet-search"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Rechercher…"
-          />
-        </div>
-      </aside>
-    </>
+        <a className="sheet-link" href="/personnelle.html">Personnelle</a>
+        <a className="sheet-link" href="/recrutement.html">Recrutement</a>
+        <a className="sheet-link" href="/admin.html">Admin</a>
+        <a className="sheet-link" href="/connexion.html">Connexion</a>
+        <input
+          className="search-input"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Rechercher…"
+        />
+      </div>
+    </div>
   );
 }
 
-/* ======================= CARD =========================== */
 function Card({ s }: { s: Series }) {
   return (
-    <a className="card-link" href={`/series/${s.slug}`}>
+    <a style={{ textDecoration: "none", color: "inherit" }} href={`/series/${s.slug}`}>
       <div className="card">
-        <div className="cover">COVER</div>
+        <div className="cover">{s.cover ? <img src={s.cover} alt={s.title} style={{width:'100%',height:'100%',objectFit:'cover'}}/> : "COVER"}</div>
         <div className="card-body">
           <div className="card-title">{s.title}</div>
           <div className="card-meta">
-            <div className="meta-left">
+            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
               <div className="eye">👁️</div>
-              <div className="muted">{fmtViews(s.views)}</div>
+              <div style={{ color: "var(--muted)" }}>{fmtViews(s.views)}</div>
             </div>
-            <div style={{ marginLeft: "auto" }} className="muted">
+            <div style={{ marginLeft: "auto", color: "var(--muted)" }}>
               {s.tags?.slice(0, 2).join(" • ")}
             </div>
           </div>
@@ -257,103 +132,93 @@ function Card({ s }: { s: Series }) {
   );
 }
 
-/* ======================= HOME =========================== */
 export default function Home() {
   const [query, setQuery] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const popular = useMemo(
-    () => LIBRARY.slice().sort((a, b) => (b.views || 0) - (a.views || 0)).slice(0, 8),
-    []
-  );
-  const latest = useMemo(() => {
-    const all = LIBRARY.flatMap((s) =>
-      s.chapters.map((c) => ({ series: s, chapter: c }))
-    );
-    return all
-      .sort(
-        (a, b) =>
-          +new Date(b.chapter.releaseDate) - +new Date(a.chapter.releaseDate)
-      )
-      .slice(0, 8);
+  // bibliothèque dynamique depuis localStorage
+  const [library, setLibrary] = useState<Series[]>(getLibraryFromStorage());
+
+  // rafraîchir quand on revient sur l’onglet
+  useEffect(() => {
+    const onFocus = () => setLibrary(getLibraryFromStorage());
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
   }, []);
 
-  const [qDebounced, setQDebounced] = useState(query);
-  useEffect(() => {
-    const t = setTimeout(() => setQDebounced(query), 200);
-    return () => clearTimeout(t);
-  }, [query]);
+  const popular = useMemo(
+    () => library.slice().sort((a, b) => (b.views || 0) - (a.views || 0)).slice(0, 8),
+    [library]
+  );
+
+  const latest = useMemo(() => {
+    const all = library.flatMap((s) => (s.chapters || []).map((c) => ({ series: s, chapter: c })));
+    return all
+      .sort((a, b) => +new Date(b.chapter.releaseDate) - +new Date(a.chapter.releaseDate))
+      .slice(0, 8);
+  }, [library]);
 
   const filtered = popular.filter((s) => {
-    const q = qDebounced.trim().toLowerCase();
+    const q = query.trim().toLowerCase();
     if (!q) return true;
     return (
       s.title.toLowerCase().includes(q) ||
-      s.tags.some((t) => t.toLowerCase().includes(q))
+      (s.tags || []).some((t) => t.toLowerCase().includes(q))
     );
   });
+
+  const totalChapters = library.reduce((n, s) => n + (s.chapters?.length || 0), 0);
 
   return (
     <div style={{ minHeight: "100vh", background: "var(--bg)", color: "inherit" }}>
       <DesktopHeader query={query} setQuery={setQuery} openMenu={() => setMenuOpen(true)} />
-      <MobileSheet
-        query={query}
-        setQuery={setQuery}
-        isOpen={menuOpen}
-        onClose={() => setMenuOpen(false)}
-      />
+      {menuOpen && <MobileSheet query={query} setQuery={setQuery} onClose={() => setMenuOpen(false)} />}
 
       <main className="container">
         {/* HERO */}
-        <div className="hero">
-          <div className="card-like hero-card">
+        <div className="hero" style={{ gap: 18 }}>
+          <div className="hero-card">
             <div className="hero-message">
-              <h1>Bienvenue</h1>
-              <p className="muted">
+              <h1 style={{ margin: "0 0 8px 0" }}>Bienvenue</h1>
+              <p style={{ margin: 0, color: "var(--muted)" }}>
                 Message d'accueil / accroche. Remplace par ton texte.
               </p>
             </div>
           </div>
 
-          <div className="hero-side">
-            <div className="card-like side-card">
-              <div className="side-title">Rejoindre</div>
-              <div className="muted" style={{ marginBottom: 10 }}>
+          <div style={{ display: "grid", gap: 12 }}>
+            <div className="side-card">
+              <div style={{ fontWeight: 800, marginBottom: 8 }}>Rejoindre</div>
+              <div style={{ color: "var(--muted)", marginBottom: 10 }}>
                 Lien discord / contact / bouton
               </div>
-              <a className="btn" href="#">
+              <a className="nav-btn" href="#" style={{ display: "inline-block" }}>
                 Ouvrir
               </a>
             </div>
-
-            <div className="card-like side-card">
-              <div className="side-title">Statistiques</div>
-              <div className="muted">
-                Séries: {LIBRARY.length} • Chapitres:{" "}
-                {LIBRARY.reduce((n, s) => n + s.chapters.length, 0)}
+            <div className="side-card">
+              <div style={{ fontWeight: 700, marginBottom: 6 }}>Statistiques</div>
+              <div style={{ color: "var(--muted)" }}>
+                Séries: {library.length} • Chapitres: {totalChapters}
               </div>
             </div>
           </div>
         </div>
 
         {/* POPULAIRE */}
-        <section className="section">
+        <section className="section" style={{ marginTop: 20 }}>
           <div className="section-header">
-            <div className="section-left">
-              <div style={{ fontSize: 18 }}>{ICON_TREND}</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <div style={{ fontSize: 18 }}>❤️‍🔥</div>
               <div className="section-title">Populaire aujourd'hui</div>
             </div>
-            <a className="pill" href="/tendances.html">
-              Tendances
-            </a>
+            <div style={{ marginLeft: "auto" }}>
+              <button className="nav-btn">Tendances</button>
+            </div>
           </div>
 
           {filtered.length === 0 ? (
-            <div className="grid-cards">
-              <div className="empty empty--full">
-                Aucune série ajoutée pour le moment.
-              </div>
-            </div>
+            <div className="empty-box">Aucune série ajoutée pour le moment.</div>
           ) : (
             <div className="grid-cards">
               {filtered.map((s) => (
@@ -363,26 +228,41 @@ export default function Home() {
           )}
         </section>
 
-        {/* DERNIERS CHAPITRES */}
-        <div className="bottom-grid">
+        {/* Derniers chapitres */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "3fr 1fr",
+            gap: 18,
+            marginTop: 20,
+          }}
+        >
           <div>
-            <div className="latest-title muted">Derniers chapitres postés</div>
+            <div
+              style={{
+                fontSize: 14,
+                color: "var(--muted)",
+                marginBottom: 10,
+                textTransform: "uppercase",
+                letterSpacing: 1,
+              }}
+            >
+              Derniers chapitres postés
+            </div>
 
             {latest.length === 0 ? (
-              <div className="empty" style={{ minHeight: 120 }}>
-                Aucun chapitre publié pour le moment.
-              </div>
+              <div className="empty-box">Aucun chapitre publié pour le moment.</div>
             ) : (
               <div className="latest-grid">
                 {latest.map(({ series, chapter }) => (
                   <div key={chapter.id} className="card">
                     <div className="cover">PAGE</div>
-                    <div className="card-body">
+                    <div style={{ padding: 12 }}>
                       <div style={{ fontWeight: 800 }}>{series.title}</div>
-                      <div className="muted" style={{ marginTop: 6 }}>
+                      <div style={{ color: "var(--muted)", marginTop: 6 }}>
                         Chapitre {chapter.number} — {chapter.name}
                       </div>
-                      <div className="muted" style={{ marginTop: 8 }}>
+                      <div style={{ marginTop: 8, color: "var(--muted)" }}>
                         {chapter.lang} • {chapter.releaseDate}
                       </div>
                     </div>
@@ -392,50 +272,41 @@ export default function Home() {
             )}
           </div>
 
-          <aside className="card-like stats">
-            <div style={{ fontWeight: 800, marginBottom: 6 }}>Statistiques</div>
-            <div className="muted">Visites totales (exemple)</div>
-            <div className="stats-grid">
-              <div className="row">
-                <span className="muted">Séries</span>
-                <strong>{LIBRARY.length}</strong>
-              </div>
-              <div className="row">
-                <span className="muted">Chapitres</span>
-                <strong>
-                  {LIBRARY.reduce((n, s) => n + s.chapters.length, 0)}
-                </strong>
-              </div>
-              <div className="row">
-                <span className="muted">Langue</span>
-                <strong>FR</strong>
+          <aside>
+            <div className="stats">
+              <div style={{ fontWeight: 800, marginBottom: 8 }}>Statistiques</div>
+              <div style={{ color: "var(--muted)" }}>Visites totales (exemple)</div>
+              <div style={{ marginTop: 12, display: "grid", gap: 10 }}>
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span style={{ color: "var(--muted)" }}>Séries</span>
+                  <strong>{library.length}</strong>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span style={{ color: "var(--muted)" }}>Chapitres</span>
+                  <strong>{totalChapters}</strong>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span style={{ color: "var(--muted)" }}>Langue</span>
+                  <strong>FR</strong>
+                </div>
               </div>
             </div>
           </aside>
         </div>
 
         <div className="footer">
-          © {new Date().getFullYear()} — Tous droits réservés
+          <div style={{ color: "var(--muted)" }}>
+            © {new Date().getFullYear()} — Tous droits réservés
+          </div>
         </div>
       </main>
 
+      {/* Barre d’onglets mobile */}
       <nav className="mobile-tabbar">
-        <a className="tab-item" href="/">
-          <span className="tab-emoji">🏠</span>
-          Accueil
-        </a>
-        <a className="tab-item" href="/recherche.html">
-          <span className="tab-emoji">🔍</span>
-          Recherche
-        </a>
-        <a className="tab-item" href="/tendances.html">
-          <span className="tab-emoji">{ICON_TREND}</span>
-          Tendances
-        </a>
-        <a className="tab-item" href="/admin.html">
-          <span className="tab-emoji">⚙️</span>
-          Admin
-        </a>
+        <a className="tab" href="/"><span>🏠</span><span>Accueil</span></a>
+        <a className="tab" href="/recherche.html"><span>🔍</span><span>Recherche</span></a>
+        <a className="tab" href="/tendances.html"><span>❤️‍🔥</span><span>Tendances</span></a>
+        <a className="tab" href="/admin.html"><span>⚙️</span><span>Admin</span></a>
       </nav>
     </div>
   );
