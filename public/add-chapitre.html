@@ -1,98 +1,127 @@
 <!doctype html>
 <html lang="fr">
 <head>
-  <meta charset="utf-8">
-  <title>Ajouter un chapitre • Kyy’s Letters</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <link href="/page.css" rel="stylesheet">
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Admin — Ajouter un chapitre</title>
+  <link rel="stylesheet" href="/styles/base.css"/>
+  <style>
+    .wrap{max-width:980px;margin:22px auto;padding:0 16px}
+    .f{display:grid;gap:10px}
+    .in{height:38px;border:1px solid var(--border);border-radius:10px;background:#101112;color:#eaecef;padding:0 12px}
+    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:8px}
+    .thumbs img{width:100%;height:90px;object-fit:cover;border:1px solid var(--border);border-radius:8px;background:#0f1012}
+  </style>
 </head>
 <body>
-  <div class="wrap">
-    <!-- Barre du haut -->
-    <div class="topbar">
-      <a class="pill k" href="/">K</a>
-      <a class="pill" href="/personnelle.html">Personnelle</a>
-      <a class="pill" href="/recrutement.html">Recrutement</a>
-      <a class="pill" href="/admin.html">Admin</a>
-      <a class="pill" href="/">Accueil</a>
-    </div>
-
-    <!-- Carte formulaire -->
-    <div class="card pad">
-      <h1>Ajouter un chapitre</h1>
-
-      <div class="row" style="margin-top:12px">
-        <select id="manga" class="select">
-          <option value="">(Aucun manga)</option>
-        </select>
-
-        <input id="number" class="input" placeholder="Numéro (ex: 1)">
-        <input id="name" class="input" placeholder="Nom du chapitre">
-        <input id="lang" class="input" placeholder="Langue (FR, EN...)">
-
-        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-          <input id="pages" class="file" type="file" accept="image/*" multiple>
-          <button id="save" class="btn">Enregistrer</button>
-          <a class="btn ghost" href="/admin.html">← Admin</a>
-        </div>
+  <div class="header">
+    <div class="bar">
+      <div class="brand">K</div>
+      <div class="badge">Admin</div>
+      <div class="right">
+        <a class="btn" href="/">Accueil</a>
+        <a class="btn" href="/admin.html">Panneau</a>
       </div>
-
-      <p id="status" style="margin-top:10px;color:var(--muted)"></p>
     </div>
   </div>
 
-<script>
-const get = (k, d) => { try{ return JSON.parse(localStorage.getItem(k)) ?? d }catch{ return d } }
-const set = (k, v) => localStorage.setItem(k, JSON.stringify(v));
+  <div class="wrap">
+    <div class="card">
+      <h2 style="margin:0 0 10px 0">Ajouter un chapitre</h2>
 
-/* ====== populate mangas ====== */
-const mangas = get('mangas', []);
-const select = document.getElementById('manga');
-mangas.forEach(m=>{
-  const opt = document.createElement('option');
-  opt.value = m.slug; opt.textContent = m.title;
-  select.appendChild(opt);
-});
+      <form id="form" class="f">
+        <select id="series" class="in" required></select>
 
-/* ====== Save chapter ====== */
-document.getElementById('save').addEventListener('click', async () => {
-  const slug = select.value;
-  const number = parseInt(document.getElementById('number').value,10);
-  const name   = document.getElementById('name').value.trim();
-  const lang   = document.getElementById('lang').value.trim();
-  const files  = [...document.getElementById('pages').files];
+        <div class="grid2">
+          <input id="number" class="in" placeholder="Numéro (ex: 1)" required />
+          <input id="lang" class="in" placeholder="Langue (FR, EN…)" />
+        </div>
 
-  if(!slug){ return msg("Choisis un manga."); }
-  if(!number || number<1){ return msg("Numéro de chapitre invalide."); }
-  if(!files.length){ return msg("Ajoute au moins 1 page."); }
+        <input id="name" class="in" placeholder="Nom du chapitre" />
 
-  const m = mangas.find(x=>x.slug===slug);
-  const pages = await Promise.all(files.map(toBase64));
+        <div class="row">
+          <input id="pages" class="in" type="file" multiple accept="image/*" style="flex:1"/>
+          <button class="btn acc" type="submit">Enregistrer</button>
+          <a class="btn" href="/admin.html">Annuler</a>
+        </div>
 
-  const chap = {
-    id: crypto.randomUUID(),
-    name, number, lang,
-    releaseDate: new Date().toISOString().slice(0,10),
-    pages
-  };
+        <div id="thumbs" class="thumbs"></div>
+      </form>
 
-  m.chapters = m.chapters || [];
-  m.chapters.push(chap);
-  // trie par numéro
-  m.chapters.sort((a,b)=> a.number - b.number);
+      <div id="msg" class="label" style="margin-top:8px"></div>
+    </div>
+  </div>
 
-  set('mangas', mangas);
-  msg("Chapitre enregistré ✅");
-  // location.href = "/admin.html";
-});
+  <footer>© 2025 — Admin Kyy’s Letters</footer>
 
-function msg(t){ document.getElementById('status').textContent = t; }
-function toBase64(file){
-  return new Promise((res,rej)=>{
-    const fr = new FileReader();
-    fr.onload=()=>res(fr.result); fr.onerror=rej; fr.readAsDataURL(file);
-  });
-}
-</script>
+  <script src="/js/storage.js"></script>
+  <script>
+    const { allSeries, saveSeries } = KyyStore;
+
+    const select = document.getElementById('series');
+    const thumbs = document.getElementById('thumbs');
+    const list = allSeries();
+    if(!list.length){ alert("Aucune série. Ajoute d’abord."); location.href="/add-manga.html"; }
+
+    // peupler le select
+    list.forEach(s=>{
+      const o=document.createElement('option');
+      o.value=s.id; o.textContent=s.title;
+      select.appendChild(o);
+    });
+
+    // preview pages
+    document.getElementById('pages').addEventListener('change', async (e)=>{
+      const files=[...(e.target.files||[])];
+      thumbs.innerHTML='';
+      for(const f of files){
+        const b64 = await toBase64(f);
+        const img = new Image();
+        img.src = b64;
+        thumbs.appendChild(img);
+      }
+    });
+
+    document.getElementById('form').addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      const seriesId = select.value;
+      const number = parseInt(document.getElementById('number').value,10);
+      const name = document.getElementById('name').value.trim();
+      const lang = document.getElementById('lang').value.trim();
+      const files = [...document.getElementById('pages').files];
+
+      if(!seriesId) return msg('Choisis une série.');
+      if(!number || number < 1) return msg('Numéro de chapitre invalide.');
+      if(!files.length) return msg('Ajoute au moins 1 page.');
+
+      const s = list.find(x=>x.id===seriesId);
+      const pages = await Promise.all(files.map(toBase64));
+
+      const chap = {
+        id: crypto.randomUUID(),
+        name, number, lang,
+        releaseDate: new Date().toISOString().slice(0,10),
+        pages
+      };
+
+      s.chapters = s.chapters || [];
+      s.chapters.push(chap);
+      s.chapters.sort((a,b)=> a.number - b.number);
+
+      saveSeries(list);
+      msg('Chapitre enregistré ✅');
+      // location.href='/admin.html';
+    });
+
+    function msg(t){ document.getElementById('msg').textContent=t; }
+    function toBase64(file){
+      return new Promise((res,rej)=>{
+        const r=new FileReader();
+        r.onload=()=>res(String(r.result)); r.onerror=rej; r.readAsDataURL(file);
+      });
+    }
+  </script>
 </body>
 </html>
