@@ -4,65 +4,110 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Admin — Ajouter un profil</title>
-  <link rel="stylesheet" href="/src/index.css" />
+  <link rel="stylesheet" href="/styles/base.css" />
   <style>
-    .wrap{max-width:800px;margin:30px auto;padding:0 16px}
+    .wrap{max-width:980px;margin:22px auto;padding:0 16px}
+    .grid-2{display:grid;grid-template-columns:1fr 320px;gap:18px}
     .f{display:grid;gap:10px}
     .in{height:38px;border:1px solid var(--border);border-radius:10px;background:#101112;color:#eaecef;padding:0 12px}
-    textarea.in{height:90px;padding:10px}
-    .row{display:flex;gap:10px}
-    .btn{display:inline-grid;place-items:center;height:40px;padding:0 14px;border-radius:10px;border:1px solid #275f41;background:#23724a;color:#fff}
+    textarea.in{height:110px;padding:10px}
+    .row{display:flex;gap:10px;align-items:center}
+    .preview{width:84px;height:84px;border:1px solid var(--border);border-radius:12px;overflow:hidden;display:grid;place-items:center;background:#0f1012;color:var(--muted)}
+    .preview img{width:100%;height:100%;object-fit:cover}
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="card-like">
-      <h2>Ajouter un profil</h2>
-      <div class="f">
-        <input id="name" class="in" placeholder="Nom" />
-        <input id="role" class="in" placeholder="Rôle" />
-        <textarea id="bio" class="in" placeholder="Bio courte"></textarea>
-        <input id="contact" class="in" placeholder="Email / contact" />
-        <div class="row">
-          <input id="photo" type="file" accept="image/*" class="in" />
-          <button class="btn" id="save">Enregistrer</button>
-        </div>
-        <a class="nav-btn" href="/personnelle.html">← Retour à l’équipe</a>
+  <!-- Header identique -->
+  <div class="header">
+    <div class="bar">
+      <div class="brand">K</div>
+      <div class="badge">Admin</div>
+      <div class="right">
+        <a class="btn" href="/">Accueil</a>
+        <a class="btn" href="/admin.html">Panneau</a>
+        <a class="btn" href="/personnelle.html">Équipe</a>
       </div>
     </div>
   </div>
 
-<script>
-const key = 'kl_members';
+  <div class="wrap">
+    <div class="grid-2">
+      <!-- Formulaire -->
+      <div class="card">
+        <h2 style="margin:0 0 10px 0">Ajouter un profil</h2>
+        <p class="label" style="margin:-6px 0 12px 0">Crée un membre. Les données sont locales pour l’instant.</p>
 
-function load(){ try{ return JSON.parse(localStorage.getItem(key)||'[]'); }catch{ return [] } }
-function save(arr){ localStorage.setItem(key, JSON.stringify(arr)); }
+        <form id="profilForm" class="f">
+          <input id="name" class="in" placeholder="Nom" required />
+          <input id="role" class="in" placeholder="Rôle" />
+          <textarea id="bio" class="in" placeholder="Bio courte"></textarea>
+          <input id="contact" class="in" placeholder="Email / contact" />
+          <div class="row">
+            <div class="preview" id="pv"><span>IMG</span></div>
+            <input id="photo" type="file" accept="image/*" class="in" style="flex:1" />
+            <button class="btn acc" type="submit">Enregistrer</button>
+          </div>
+        </form>
+      </div>
 
-async function toBase64(file){
-  return new Promise((res,rej)=>{
-    const r = new FileReader();
-    r.onload = () => res(r.result);
-    r.onerror = rej;
-    r.readAsDataURL(file);
-  });
-}
+      <!-- Infos / retour -->
+      <aside class="grid" style="gap:12px">
+        <div class="card">
+          <h3 style="margin:0 0 8px 0">Conseil</h3>
+          <div class="label">Utilise une image carrée pour l’avatar, ça évite les crops moches.</div>
+        </div>
+        <div class="card">
+          <a class="btn" href="/personnelle.html">← Retour à l’équipe</a>
+        </div>
+      </aside>
+    </div>
+  </div>
 
-document.getElementById('save').onclick = async ()=> {
-  const name = document.getElementById('name').value.trim();
-  const role = document.getElementById('role').value.trim();
-  const bio = document.getElementById('bio').value.trim();
-  const contact = document.getElementById('contact').value.trim();
-  const f = document.getElementById('photo').files[0];
-  const photo = f ? await toBase64(f) : '';
+  <footer>© 2025 — Admin Kyy’s Letters</footer>
 
-  const members = load();
-  const id = crypto.randomUUID();
-  members.push({ id, name, role, bio, contact, photo });
-  save(members);
+  <script>
+    // Store minimal
+    const key = 'kl_members';
+    const load = () => { try { return JSON.parse(localStorage.getItem(key) || '[]'); } catch { return [] } };
+    const save = (arr) => localStorage.setItem(key, JSON.stringify(arr));
 
-  alert('Profil ajouté.');
-  location.href = '/personnelle.html';
-};
-</script>
+    // Aperçu avatar
+    const pv = document.getElementById('pv');
+    const photoEl = document.getElementById('photo');
+    photoEl.addEventListener('change', async () => {
+      const f = photoEl.files?.[0];
+      if (!f) { pv.innerHTML = '<span>IMG</span>'; pv.style.backgroundImage=''; return; }
+      const b64 = await fileToBase64(f);
+      pv.innerHTML = '<img />';
+      pv.firstChild.src = b64;
+    });
+
+    function fileToBase64(file){
+      return new Promise((res, rej) => {
+        const r = new FileReader();
+        r.onload = () => res(String(r.result));
+        r.onerror = rej;
+        r.readAsDataURL(file);
+      });
+    }
+
+    // Submit
+    document.getElementById('profilForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = document.getElementById('name').value.trim();
+      const role = document.getElementById('role').value.trim();
+      const bio = document.getElementById('bio').value.trim();
+      const contact = document.getElementById('contact').value.trim();
+      const f = photoEl.files?.[0];
+      const photo = f ? await fileToBase64(f) : '';
+
+      const arr = load();
+      arr.push({ id: crypto.randomUUID(), name, role, bio, contact, photo });
+      save(arr);
+
+      alert('Profil ajouté.');
+      location.href = '/personnelle.html';
+    });
+  </script>
 </body>
 </html>
