@@ -21,17 +21,14 @@ type Series = {
   hot?: boolean;
 };
 
-// ====== Données placeholders ======
 const LIBRARY: Series[] = [];
 
-// Petite fonction utilitaire
 const fmtViews = (n?: number) => {
   if (!n) return "0 vues";
   if (n >= 1000) return `${(n / 1000).toFixed(1)}k vues`;
   return `${n} vues`;
 };
 
-/* ======================= HEADER =========================== */
 function DesktopHeader({
   query,
   setQuery,
@@ -48,7 +45,6 @@ function DesktopHeader({
   return (
     <div className="header">
       <div className="header-inner">
-        {/* Burger mobile */}
         <button
           className="hamburger"
           aria-label="Ouvrir le menu"
@@ -59,12 +55,10 @@ function DesktopHeader({
           <span />
         </button>
 
-        {/* Logo */}
         <a className="logoK" href="/" aria-label="Accueil">
           K
         </a>
 
-        {/* Barre de recherche */}
         <input
           className="search-input"
           value={query}
@@ -72,7 +66,6 @@ function DesktopHeader({
           placeholder="Rechercher une série, un tag, une langue..."
         />
 
-        {/* Boutons nav */}
         <nav className="desktop-nav">
           <button className="nav-btn" onClick={() => goTo("/personnelle.html")}>
             Personnelle
@@ -92,7 +85,6 @@ function DesktopHeader({
   );
 }
 
-/* ======================= MENU MOBILE =========================== */
 function MobileSheet({
   query,
   setQuery,
@@ -148,7 +140,6 @@ function MobileSheet({
   );
 }
 
-/* ======================= CARD =========================== */
 function Card({ s }: { s: Series }) {
   return (
     <a className="card-link" href={`/series/${s.slug}`}>
@@ -171,7 +162,6 @@ function Card({ s }: { s: Series }) {
   );
 }
 
-/* ======================= HOME =========================== */
 export default function Home() {
   const [query, setQuery] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
@@ -251,38 +241,31 @@ export default function Home() {
         </div>
 
         {/* POPULAIRE */}
-<section className="section">
-  <div className="section-header">
-    <div className="section-left">
-      <div style={{ fontSize: 18 }}>❤️‍🔥</div>
-      <div className="section-title">Populaire aujourd'hui</div>
-    </div>
-    <a className="pill" href="/tendances.html">Tendances</a>
-  </div>
+        <section className="section">
+          <div className="section-header">
+            <div className="section-left">
+              <div style={{ fontSize: 18 }}>❤️‍🔥</div>
+              <div className="section-title">Populaire aujourd'hui</div>
+            </div>
+            <a className="pill" href="/tendances.html">
+              Tendances
+            </a>
+          </div>
 
-  {filtered.length === 0 ? (
-    // ❗ Mettre la boîte vide DANS la grille, et la faire span toutes les colonnes
-    <div className="grid-cards">
-      <div
-        className="empty"
-        style={{
-          gridColumn: "1 / -1",
-          minHeight: 140,
-          display: "grid",
-          placeItems: "center"
-        }}
-      >
-        Aucune série ajoutée pour le moment.
-      </div>
-    </div>
-  ) : (
-    <div className="grid-cards">
-      {filtered.map((s) => (
-        <Card key={s.id} s={s} />
-      ))}
-    </div>
-  )}
-</section>
+          {filtered.length === 0 ? (
+            <div className="grid-cards">
+              <div className="empty empty--full">
+                Aucune série ajoutée pour le moment.
+              </div>
+            </div>
+          ) : (
+            <div className="grid-cards">
+              {filtered.map((s) => (
+                <Card key={s.id} s={s} />
+              ))}
+            </div>
+          )}
+        </section>
 
         {/* DERNIERS CHAPITRES */}
         <div className="bottom-grid">
@@ -342,7 +325,6 @@ export default function Home() {
         </div>
       </main>
 
-      {/* BARRE MOBILE */}
       <nav className="mobile-tabbar">
         <a className="tab-item" href="/">
           <span className="tab-emoji">🏠</span>
@@ -353,7 +335,7 @@ export default function Home() {
           Recherche
         </a>
         <a className="tab-item" href="/tendances.html">
-          <span className="tab-emoji">🔥</span>
+          <span className="tab-emoji">❤️‍🔥</span>
           Tendances
         </a>
         <a className="tab-item" href="/admin.html">
