@@ -49,8 +49,9 @@ a{ color:inherit; text-decoration:none }
 .desktop-nav{ display:flex; gap:8px }
 .nav-btn{
   display:inline-grid; place-items:center;
-  height:34px; padding:0 12px;
+  height:34px; padding:0 18px; /* + de padding horizontal */
   background:#101112; border:1px solid var(--border); border-radius:10px;
+  white-space: nowrap;          /* empêche le texte de passer à la ligne */
 }
 .nav-btn.active{ background:#162017; border-color:#1d3b2a }
 
