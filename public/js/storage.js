@@ -1,6 +1,7 @@
-<!-- /public/js/storage.js -->
-<script>
-/* Mini store unique pour Kyy's Letters (front only) */
+/* /public/js/storage.js
+   Mini store unique pour Kyy's Letters (front only)
+   — tout en localStorage, blindé contre JSON foireux.
+*/
 (function (global) {
   const LS_KEYS = {
     series: 'kl_series',
@@ -8,7 +9,6 @@
     members: 'kl_members',
   };
 
-  // Sécurité anti-null/JSON foireux
   function safeGet(key, fallback = []) {
     try {
       const raw = localStorage.getItem(key);
@@ -19,12 +19,12 @@
     localStorage.setItem(key, JSON.stringify(value));
   }
 
-  // Helpers
   const uid = () => Math.random().toString(36).slice(2, 10);
   const slugify = (s = '') =>
     s.toLowerCase()
      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-     .replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+     .replace(/[^a-z0-9]+/g, '-')
+     .replace(/(^-|-$)/g, '');
 
   // Séries
   const allSeries    = () => safeGet(LS_KEYS.series, []);
@@ -45,4 +45,3 @@
     allMembers, saveMembers,
   };
 })(window);
-</script>
