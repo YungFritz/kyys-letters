@@ -251,29 +251,38 @@ export default function Home() {
         </div>
 
         {/* POPULAIRE */}
-        <section className="section">
-          <div className="section-header">
-            <div className="section-left">
-              <div style={{ fontSize: 18 }}>🔥</div>
-              <div className="section-title">Populaire aujourd'hui</div>
-            </div>
-            <a className="pill" href="/tendances.html">
-              Tendances
-            </a>
-          </div>
+<section className="section">
+  <div className="section-header">
+    <div className="section-left">
+      <div style={{ fontSize: 18 }}>🔥</div>
+      <div className="section-title">Populaire aujourd'hui</div>
+    </div>
+    <a className="pill" href="/tendances.html">Tendances</a>
+  </div>
 
-          {filtered.length === 0 ? (
-            <div className="empty" style={{ minHeight: 120 }}>
-              Aucune série ajoutée pour le moment.
-            </div>
-          ) : (
-            <div className="grid-cards">
-              {filtered.map((s) => (
-                <Card key={s.id} s={s} />
-              ))}
-            </div>
-          )}
-        </section>
+  {filtered.length === 0 ? (
+    // ❗ Mettre la boîte vide DANS la grille, et la faire span toutes les colonnes
+    <div className="grid-cards">
+      <div
+        className="empty"
+        style={{
+          gridColumn: "1 / -1",
+          minHeight: 140,
+          display: "grid",
+          placeItems: "center"
+        }}
+      >
+        Aucune série ajoutée pour le moment.
+      </div>
+    </div>
+  ) : (
+    <div className="grid-cards">
+      {filtered.map((s) => (
+        <Card key={s.id} s={s} />
+      ))}
+    </div>
+  )}
+</section>
 
         {/* DERNIERS CHAPITRES */}
         <div className="bottom-grid">
