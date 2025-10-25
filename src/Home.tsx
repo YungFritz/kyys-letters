@@ -21,17 +21,17 @@ type Series = {
   hot?: boolean;
 };
 
-// ====== Données placeholders (laisse vide pour affichage "aucune série") ======
+// ====== Données placeholders ======
 const LIBRARY: Series[] = [];
 
-// Petites helpers
+// Petite fonction utilitaire
 const fmtViews = (n?: number) => {
   if (!n) return "0 vues";
   if (n >= 1000) return `${(n / 1000).toFixed(1)}k vues`;
   return `${n} vues`;
 };
 
-/* ======================= HEADER (desktop) =========================== */
+/* ======================= HEADER =========================== */
 function DesktopHeader({
   query,
   setQuery,
@@ -42,7 +42,6 @@ function DesktopHeader({
   openMenu: () => void;
 }) {
   const goTo = (path: string) => {
-    // Redirection pleine page, pas d’ancre # foireuse
     window.location.replace(path);
   };
 
@@ -65,7 +64,7 @@ function DesktopHeader({
           K
         </a>
 
-        {/* Recherche (desktop) */}
+        {/* Barre de recherche */}
         <input
           className="search-input"
           value={query}
@@ -73,7 +72,7 @@ function DesktopHeader({
           placeholder="Rechercher une série, un tag, une langue..."
         />
 
-        {/* Boutons nav Desktop — liens directs vers /public */}
+        {/* Boutons nav */}
         <nav className="desktop-nav">
           <button className="nav-btn" onClick={() => goTo("/personnelle.html")}>
             Personnelle
@@ -93,7 +92,7 @@ function DesktopHeader({
   );
 }
 
-/* ======================= MENU MOBILE (sheet) =========================== */
+/* ======================= MENU MOBILE =========================== */
 function MobileSheet({
   query,
   setQuery,
@@ -177,7 +176,6 @@ export default function Home() {
   const [query, setQuery] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
 
-  // Pas de séries -> affichages "Aucune série"
   const popular = useMemo(
     () => LIBRARY.slice().sort((a, b) => (b.views || 0) - (a.views || 0)).slice(0, 8),
     []
@@ -194,7 +192,6 @@ export default function Home() {
       .slice(0, 8);
   }, []);
 
-  // Filtre recherche
   const [qDebounced, setQDebounced] = useState(query);
   useEffect(() => {
     const t = setTimeout(() => setQDebounced(query), 200);
@@ -212,9 +209,7 @@ export default function Home() {
 
   return (
     <div style={{ minHeight: "100vh", background: "var(--bg)", color: "inherit" }}>
-      {/* header */}
       <DesktopHeader query={query} setQuery={setQuery} openMenu={() => setMenuOpen(true)} />
-      {/* menu mobile */}
       <MobileSheet
         query={query}
         setQuery={setQuery}
@@ -227,8 +222,8 @@ export default function Home() {
         <div className="hero">
           <div className="card-like hero-card">
             <div className="hero-message">
-              <h1 className="">{/* stylé par CSS */}Bienvenue</h1>
-              <p className="muted" style={{ margin: 0 }}>
+              <h1>Bienvenue</h1>
+              <p className="muted">
                 Message d'accueil / accroche. Remplace par ton texte.
               </p>
             </div>
@@ -240,10 +235,11 @@ export default function Home() {
               <div className="muted" style={{ marginBottom: 10 }}>
                 Lien discord / contact / bouton
               </div>
-              <a className="btn" href="#" style={{ display: "inline-grid" }}>
+              <a className="btn" href="#">
                 Ouvrir
               </a>
             </div>
+
             <div className="card-like side-card">
               <div className="side-title">Statistiques</div>
               <div className="muted">
@@ -254,27 +250,20 @@ export default function Home() {
           </div>
         </div>
 
-        {/* SECTION POPULAIRE */}
+        {/* POPULAIRE */}
         <section className="section">
           <div className="section-header">
             <div className="section-left">
               <div style={{ fontSize: 18 }}>🔥</div>
               <div className="section-title">Populaire aujourd'hui</div>
             </div>
-            <a className="pill" href="/tendances.html">Tendances</a>
+            <a className="pill" href="/tendances.html">
+              Tendances
+            </a>
           </div>
 
-          {/* IMPORTANT: on utilise la classe .empty de TON CSS */}
           {filtered.length === 0 ? (
-            <div
-              className="empty"
-              style={{
-                width: "100%",
-                minHeight: 120,            // élargie et haute, comme demandé
-                display: "grid",
-                placeItems: "center",
-              }}
-            >
+            <div className="empty" style={{ minHeight: 120 }}>
               Aucune série ajoutée pour le moment.
             </div>
           ) : (
@@ -286,15 +275,17 @@ export default function Home() {
           )}
         </section>
 
-        {/* Derniers chapitres + Stats */}
+        {/* DERNIERS CHAPITRES */}
         <div className="bottom-grid">
           <div>
-            <div className="latest-title muted" style={{ textTransform: "uppercase", letterSpacing: 1 }}>
+            <div className="latest-title muted">
               Derniers chapitres postés
             </div>
 
             {latest.length === 0 ? (
-              <div className="empty">Aucun chapitre publié pour le moment.</div>
+              <div className="empty" style={{ minHeight: 120 }}>
+                Aucun chapitre publié pour le moment.
+              </div>
             ) : (
               <div className="latest-grid">
                 {latest.map(({ series, chapter }) => (
@@ -325,7 +316,9 @@ export default function Home() {
               </div>
               <div className="row">
                 <span className="muted">Chapitres</span>
-                <strong>{LIBRARY.reduce((n, s) => n + s.chapters.length, 0)}</strong>
+                <strong>
+                  {LIBRARY.reduce((n, s) => n + s.chapters.length, 0)}
+                </strong>
               </div>
               <div className="row">
                 <span className="muted">Langue</span>
@@ -335,10 +328,12 @@ export default function Home() {
           </aside>
         </div>
 
-        <div className="footer">© {new Date().getFullYear()} — Tous droits réservés</div>
+        <div className="footer">
+          © {new Date().getFullYear()} — Tous droits réservés
+        </div>
       </main>
 
-      {/* Bottom tabbar (mobile) */}
+      {/* BARRE MOBILE */}
       <nav className="mobile-tabbar">
         <a className="tab-item" href="/">
           <span className="tab-emoji">🏠</span>
