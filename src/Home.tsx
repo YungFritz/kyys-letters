@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import "./index.css";
 
 type Chapter = {
@@ -6,9 +6,12 @@ type Chapter = {
   name: string;
   number: number;
   lang: string;
-  releaseDate: string;
+  date?: string;          // tolère "date" ou "releaseDate"
+  releaseDate?: string;   // compat
   pages: string[];
+  seriesId: string;
 };
+
 type Series = {
   id: string;
   title: string;
@@ -21,23 +24,62 @@ type Series = {
   hot?: boolean;
 };
 
-// ------- helpers UI -------
+function readJSON<T>(key: string, fallback: T): T {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? (JSON.parse(raw) as T) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+/** Construit la LIBRARY à partir des stores kl_series / kl_chapters */
+function loadLibrary(): Series[] {
+  const series = readJSON<any[]>("kl_series", []);
+  const chapters = readJSON<any[]>("kl_chapters", []);
+
+  // Indexer les chapitres par série
+  const bySerie: Record<string, Chapter[]> = {};
+  for (const ch of chapters) {
+    const c: Chapter = {
+      id: ch.id,
+      name: ch.title || ch.name || "",
+      number: Number(ch.number ?? 0),
+      lang: ch.lang || ch.language || "FR",
+      date: ch.date || ch.releaseDate,
+      releaseDate: ch.releaseDate || ch.date,
+      pages: ch.pages || [],
+      seriesId: ch.seriesId,
+    };
+    (bySerie[c.seriesId] ||= []).push(c);
+  }
+
+  const lib: Series[] = series.map((s) => {
+    const chs = (bySerie[s.id] || []).sort((a, b) => (a.number || 0) - (b.number || 0));
+    return {
+      id: s.id,
+      title: s.title || "Sans titre",
+      slug: s.slug,
+      tags: s.tags || [],
+      cover: s.cover || "",
+      description: s.description || "",
+      chapters: chs,
+      views: s.views || 0,
+      hot: !!s.hot,
+    };
+  });
+
+  return lib;
+}
+
+const LIBRARY: Series[] = loadLibrary();
+
+// Petites helpers
 const fmtViews = (n?: number) => {
   if (!n) return "0 vues";
   if (n >= 1000) return `${(n / 1000).toFixed(1)}k vues`;
   return `${n} vues`;
 };
-
-// ------- lecture localStorage -------
-function getLibraryFromStorage(): Series[] {
-  try {
-    const raw = localStorage.getItem("kl_series");
-    const arr = raw ? JSON.parse(raw) : [];
-    return Array.isArray(arr) ? arr : [];
-  } catch {
-    return [];
-  }
-}
 
 function DesktopHeader({
   query,
@@ -57,9 +99,7 @@ function DesktopHeader({
           <span />
         </button>
 
-        <a className="logo-badge" href="/" aria-label="Accueil">
-          K
-        </a>
+        <a className="logo-badge" href="/" aria-label="Accueil">K</a>
 
         <input
           className="search-input"
@@ -95,10 +135,12 @@ function MobileSheet({
           <div className="logo-badge">K</div>
           <button className="sheet-close" onClick={onClose} aria-label="Fermer">×</button>
         </div>
+
         <a className="sheet-link" href="/personnelle.html">Personnelle</a>
         <a className="sheet-link" href="/recrutement.html">Recrutement</a>
         <a className="sheet-link" href="/admin.html">Admin</a>
         <a className="sheet-link" href="/connexion.html">Connexion</a>
+
         <input
           className="search-input"
           value={query}
@@ -112,7 +154,7 @@ function MobileSheet({
 
 function Card({ s }: { s: Series }) {
   return (
-    <a style={{ textDecoration: "none", color: "inherit" }} href={`/series/${s.slug}`}>
+    <a style={{ textDecoration: "none", color: "inherit" }} href={`/manga/${s.slug}`}>
       <div className="card">
         <div className="cover">{s.cover ? <img src={s.cover} alt={s.title} style={{width:'100%',height:'100%',objectFit:'cover'}}/> : "COVER"}</div>
         <div className="card-body">
@@ -136,38 +178,31 @@ export default function Home() {
   const [query, setQuery] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
 
-  // bibliothèque dynamique depuis localStorage
-  const [library, setLibrary] = useState<Series[]>(getLibraryFromStorage());
-
-  // rafraîchir quand on revient sur l’onglet
-  useEffect(() => {
-    const onFocus = () => setLibrary(getLibraryFromStorage());
-    window.addEventListener("focus", onFocus);
-    return () => window.removeEventListener("focus", onFocus);
-  }, []);
-
   const popular = useMemo(
-    () => library.slice().sort((a, b) => (b.views || 0) - (a.views || 0)).slice(0, 8),
-    [library]
+    () => LIBRARY.slice().sort((a, b) => (b.views || 0) - (a.views || 0)).slice(0, 8),
+    []
   );
 
   const latest = useMemo(() => {
-    const all = library.flatMap((s) => (s.chapters || []).map((c) => ({ series: s, chapter: c })));
+    const all = LIBRARY.flatMap((s) =>
+      (s.chapters || []).map((c) => ({ series: s, chapter: c }))
+    );
     return all
-      .sort((a, b) => +new Date(b.chapter.releaseDate) - +new Date(a.chapter.releaseDate))
+      .sort((a, b) =>
+        +new Date(b.chapter.releaseDate || b.chapter.date || 0) -
+        +new Date(a.chapter.releaseDate || a.chapter.date || 0)
+      )
       .slice(0, 8);
-  }, [library]);
+  }, []);
 
   const filtered = popular.filter((s) => {
     const q = query.trim().toLowerCase();
     if (!q) return true;
     return (
       s.title.toLowerCase().includes(q) ||
-      (s.tags || []).some((t) => t.toLowerCase().includes(q))
+      s.tags.some((t) => t.toLowerCase().includes(q))
     );
   });
-
-  const totalChapters = library.reduce((n, s) => n + (s.chapters?.length || 0), 0);
 
   return (
     <div style={{ minHeight: "100vh", background: "var(--bg)", color: "inherit" }}>
@@ -175,7 +210,6 @@ export default function Home() {
       {menuOpen && <MobileSheet query={query} setQuery={setQuery} onClose={() => setMenuOpen(false)} />}
 
       <main className="container">
-        {/* HERO */}
         <div className="hero" style={{ gap: 18 }}>
           <div className="hero-card">
             <div className="hero-message">
@@ -192,24 +226,22 @@ export default function Home() {
               <div style={{ color: "var(--muted)", marginBottom: 10 }}>
                 Lien discord / contact / bouton
               </div>
-              <a className="nav-btn" href="#" style={{ display: "inline-block" }}>
-                Ouvrir
-              </a>
+              <a className="nav-btn" href="#" style={{ display: "inline-block" }}>Ouvrir</a>
             </div>
             <div className="side-card">
               <div style={{ fontWeight: 700, marginBottom: 6 }}>Statistiques</div>
               <div style={{ color: "var(--muted)" }}>
-                Séries: {library.length} • Chapitres: {totalChapters}
+                Séries: {LIBRARY.length} • Chapitres:{" "}
+                {LIBRARY.reduce((n, s) => n + (s.chapters?.length || 0), 0)}
               </div>
             </div>
           </div>
         </div>
 
-        {/* POPULAIRE */}
         <section className="section" style={{ marginTop: 20 }}>
           <div className="section-header">
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <div style={{ fontSize: 18 }}>❤️‍🔥</div>
+              <div style={{ fontSize: 18 }}>🔥</div>
               <div className="section-title">Populaire aujourd'hui</div>
             </div>
             <div style={{ marginLeft: "auto" }}>
@@ -228,7 +260,6 @@ export default function Home() {
           )}
         </section>
 
-        {/* Derniers chapitres */}
         <div
           style={{
             display: "grid",
@@ -255,7 +286,7 @@ export default function Home() {
             ) : (
               <div className="latest-grid">
                 {latest.map(({ series, chapter }) => (
-                  <div key={chapter.id} className="card">
+                  <a href={`/reader.html?id=${chapter.id}`} key={chapter.id} className="card" style={{ textDecoration:'none', color:'inherit' }}>
                     <div className="cover">PAGE</div>
                     <div style={{ padding: 12 }}>
                       <div style={{ fontWeight: 800 }}>{series.title}</div>
@@ -263,10 +294,10 @@ export default function Home() {
                         Chapitre {chapter.number} — {chapter.name}
                       </div>
                       <div style={{ marginTop: 8, color: "var(--muted)" }}>
-                        {chapter.lang} • {chapter.releaseDate}
+                        {chapter.lang} • {chapter.releaseDate || chapter.date || ""}
                       </div>
                     </div>
-                  </div>
+                  </a>
                 ))}
               </div>
             )}
@@ -279,11 +310,11 @@ export default function Home() {
               <div style={{ marginTop: 12, display: "grid", gap: 10 }}>
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
                   <span style={{ color: "var(--muted)" }}>Séries</span>
-                  <strong>{library.length}</strong>
+                  <strong>{LIBRARY.length}</strong>
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
                   <span style={{ color: "var(--muted)" }}>Chapitres</span>
-                  <strong>{totalChapters}</strong>
+                  <strong>{LIBRARY.reduce((n, s) => n + (s.chapters?.length || 0), 0)}</strong>
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
                   <span style={{ color: "var(--muted)" }}>Langue</span>
@@ -301,12 +332,23 @@ export default function Home() {
         </div>
       </main>
 
-      {/* Barre d’onglets mobile */}
       <nav className="mobile-tabbar">
-        <a className="tab" href="/"><span>🏠</span><span>Accueil</span></a>
-        <a className="tab" href="/recherche.html"><span>🔍</span><span>Recherche</span></a>
-        <a className="tab" href="/tendances.html"><span>❤️‍🔥</span><span>Tendances</span></a>
-        <a className="tab" href="/admin.html"><span>⚙️</span><span>Admin</span></a>
+        <a className="tab" href="/">
+          <span>🏠</span>
+          <span>Accueil</span>
+        </a>
+        <a className="tab" href="/recherche.html">
+          <span>🔍</span>
+          <span>Recherche</span>
+        </a>
+        <a className="tab" href="/tendances.html">
+          <span>🔥</span>
+          <span>Tendances</span>
+        </a>
+        <a className="tab" href="/admin.html">
+          <span>⚙️</span>
+          <span>Admin</span>
+        </a>
       </nav>
     </div>
   );
