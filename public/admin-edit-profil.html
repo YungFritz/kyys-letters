@@ -1,3 +1,4 @@
+<!-- version complète cohérente avec le store -->
 <!doctype html>
 <html lang="fr">
 <head>
@@ -18,57 +19,49 @@
   </style>
 </head>
 <body>
-  <!-- Header identique -->
   <div class="header">
     <div class="bar">
       <div class="brand">K</div>
       <div class="badge">Admin</div>
       <div class="right">
-        <a class="btn" href="/">Accueil</a>
         <a class="btn" href="/admin.html">Panneau</a>
         <a class="btn" href="/personnelle.html">Équipe</a>
       </div>
     </div>
   </div>
 
-  <div class="wrap">
-    <div class="cols">
-      <!-- Liste profils -->
-      <div class="card">
-        <h3 style="margin:0 0 10px 0">Profils</h3>
-        <div id="list" class="grid list" style="grid-template-columns:1fr; gap:8px"></div>
-        <div class="label" id="empty" style="display:none">Aucun profil. <a href="/admin-add-profil.html">Ajouter</a></div>
-      </div>
+  <div class="wrap cols">
+    <div class="card">
+      <h3 style="margin:0 0 10px 0">Profils</h3>
+      <div id="list" class="grid list" style="grid-template-columns:1fr; gap:8px"></div>
+      <div class="label" id="empty" style="display:none">Aucun profil. <a href="/admin-add-profil.html">Ajouter</a></div>
+    </div>
 
-      <!-- Edition -->
-      <div class="card">
-        <h2 style="margin:0 0 12px 0">Éditer le profil</h2>
-        <form id="editForm" class="f">
-          <input id="name" class="in" placeholder="Nom" required />
-          <input id="role" class="in" placeholder="Rôle" />
-          <textarea id="bio" class="in" placeholder="Bio courte"></textarea>
-          <input id="contact" class="in" placeholder="Email / contact" />
-          <div class="row">
-            <div class="preview" id="pv"><span>IMG</span></div>
-            <input id="photo" type="file" accept="image/*" class="in" style="flex:1" />
-          </div>
-          <div class="row">
-            <button class="btn acc" type="submit">Enregistrer</button>
-            <button class="btn danger" id="del" type="button">Supprimer</button>
-            <a class="btn" href="/personnelle.html">Annuler</a>
-          </div>
-        </form>
-      </div>
+    <div class="card">
+      <h2 style="margin:0 0 12px 0">Éditer le profil</h2>
+      <form id="editForm" class="f">
+        <input id="name" class="in" placeholder="Nom" required />
+        <input id="role" class="in" placeholder="Rôle" />
+        <textarea id="bio" class="in" placeholder="Bio courte"></textarea>
+        <input id="contact" class="in" placeholder="Email / contact" />
+        <div class="row">
+          <div class="preview" id="pv"><span>IMG</span></div>
+          <input id="photo" type="file" accept="image/*" class="in" style="flex:1" />
+        </div>
+        <div class="row">
+          <button class="btn acc" type="submit">Enregistrer</button>
+          <button class="btn danger" id="del" type="button">Supprimer</button>
+          <a class="btn" href="/personnelle.html">Annuler</a>
+        </div>
+      </form>
     </div>
   </div>
 
   <footer>© 2025 — Admin Kyy’s Letters</footer>
-  
+
   <script src="/js/storage.js"></script>
   <script>
-    const key = 'kl_members';
-    const load = () => { try { return JSON.parse(localStorage.getItem(key) || '[]'); } catch { return [] } };
-    const save = (arr) => localStorage.setItem(key, JSON.stringify(arr));
+    const { allMembers, saveMembers } = KyyStore;
 
     const $ = (s)=>document.querySelector(s);
     const listEl = $('#list');
@@ -77,8 +70,10 @@
     const pv = $('#pv');
     let currentId = null;
 
+    function loadMembers(){ return allMembers(); }
+
     function renderList() {
-      const arr = load();
+      const arr = loadMembers();
       listEl.innerHTML = '';
       emptyEl.style.display = arr.length ? 'none' : 'block';
       for (const p of arr) {
@@ -89,12 +84,11 @@
         b.onclick = () => loadForm(p.id);
         listEl.appendChild(b);
       }
-      // Autoload premier si id absent
       if (!currentId && arr[0]) loadForm(arr[0].id);
     }
 
     function loadForm(id) {
-      const p = load().find(x => x.id === id);
+      const p = loadMembers().find(x => x.id === id);
       if (!p) return;
       currentId = id;
       nameEl.value = p.name || '';
@@ -120,11 +114,10 @@
       pv.innerHTML = '<img />'; pv.firstChild.src = b64;
     });
 
-    // Save
     document.getElementById('editForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       if (!currentId) { alert('Choisis un profil à gauche.'); return; }
-      const arr = load();
+      const arr = loadMembers();
       const idx = arr.findIndex(x => x.id === currentId);
       if (idx < 0) return;
 
@@ -140,24 +133,22 @@
         contact: contactEl.value.trim(),
         photo
       };
-      save(arr);
+      saveMembers(arr);
       alert('Profil mis à jour.');
       renderList();
     });
 
-    // Delete
     document.getElementById('del').addEventListener('click', () => {
       if (!currentId) return;
       if (!confirm('Supprimer ce profil ?')) return;
-      const arr = load().filter(x => x.id !== currentId);
-      save(arr);
+      const arr = loadMembers().filter(x => x.id !== currentId);
+      saveMembers(arr);
       currentId = null;
       nameEl.value = roleEl.value = bioEl.value = contactEl.value = '';
       pv.innerHTML = '<span>IMG</span>';
       renderList();
     });
 
-    // init
     renderList();
   </script>
 </body>
