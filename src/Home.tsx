@@ -41,7 +41,6 @@ function DesktopHeader({
   openMenu: () => void;
 }) {
   const goTo = (path: string) => {
-    // force une redirection complète (contourne React)
     window.location.replace(path);
   };
 
@@ -206,6 +205,7 @@ export default function Home() {
       )}
 
       <main className="container">
+        {/* HERO */}
         <div className="hero" style={{ gap: 18 }}>
           <div className="hero-card">
             <div className="hero-message">
@@ -236,6 +236,7 @@ export default function Home() {
           </div>
         </div>
 
+        {/* POPULAIRE */}
         <section className="section" style={{ marginTop: 20 }}>
           <div className="section-header">
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -243,32 +244,33 @@ export default function Home() {
               <div className="section-title">Populaire aujourd'hui</div>
             </div>
             <div style={{ marginLeft: "auto" }}>
-              <button className="nav-btn">Tendances</button>
+              <a className="nav-btn" href="/tendances.html">Tendances</a>
             </div>
           </div>
 
-{filtered.length === 0 ? (
-  <div
-    className="empty-box"
-    style={{
-      width: "100%",
-      minHeight: "100px",
-      display: "flex",
-      justifyContent: "center",
-      alignItems: "center",
-    }}
-  >
-    Aucune série ajoutée pour le moment.
-  </div>
-) : (
-  <div className="grid-cards">
-    {filtered.map((s) => (
-      <Card key={s.id} s={s} />
-    ))}
-  </div>
-)}
+          {filtered.length === 0 ? (
+            <div
+              className="empty-box"
+              style={{
+                width: "100%",
+                minHeight: "100px",
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+              }}
+            >
+              Aucune série ajoutée pour le moment.
+            </div>
+          ) : (
+            <div className="grid-cards">
+              {filtered.map((s) => (
+                <Card key={s.id} s={s} />
+              ))}
+            </div>
+          )}
         </section>
 
+        {/* DERNIERS CHAPITRES */}
         <div
           style={{
             display: "grid",
@@ -323,7 +325,9 @@ export default function Home() {
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
                   <span style={{ color: "var(--muted)" }}>Chapitres</span>
-                  <strong>{LIBRARY.reduce((n, s) => n + s.chapters.length, 0)}</strong>
+                  <strong>
+                    {LIBRARY.reduce((n, s) => n + s.chapters.length, 0)}
+                  </strong>
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
                   <span style={{ color: "var(--muted)" }}>Langue</span>
