@@ -1,5 +1,3 @@
-npm install @vercel/blob
-
 {
   "name": "vite-react",
   "private": true,
