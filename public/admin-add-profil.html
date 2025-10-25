@@ -6,108 +6,82 @@
   <title>Admin — Ajouter un profil</title>
   <link rel="stylesheet" href="/styles/base.css" />
   <style>
-    .wrap{max-width:980px;margin:22px auto;padding:0 16px}
-    .grid-2{display:grid;grid-template-columns:1fr 320px;gap:18px}
+    .wrap{max-width:1060px;margin:22px auto;padding:0 16px}
+    .cols{display:grid;grid-template-columns:1fr 320px;gap:18px}
     .f{display:grid;gap:10px}
     .in{height:38px;border:1px solid var(--border);border-radius:10px;background:#101112;color:#eaecef;padding:0 12px}
     textarea.in{height:110px;padding:10px}
-    .row{display:flex;gap:10px;align-items:center}
-    .preview{width:84px;height:84px;border:1px solid var(--border);border-radius:12px;overflow:hidden;display:grid;place-items:center;background:#0f1012;color:var(--muted)}
+    .preview{width:120px;height:120px;border:1px solid var(--border);border-radius:12px;overflow:hidden;display:grid;place-items:center;background:#0f1012;color:var(--muted)}
     .preview img{width:100%;height:100%;object-fit:cover}
   </style>
 </head>
 <body>
-  <!-- Header identique -->
   <div class="header">
     <div class="bar">
       <div class="brand">K</div>
       <div class="badge">Admin</div>
       <div class="right">
-        <a class="btn" href="/">Accueil</a>
         <a class="btn" href="/admin.html">Panneau</a>
         <a class="btn" href="/personnelle.html">Équipe</a>
       </div>
     </div>
   </div>
 
-  <div class="wrap">
-    <div class="grid-2">
-      <!-- Formulaire -->
-      <div class="card">
-        <h2 style="margin:0 0 10px 0">Ajouter un profil</h2>
-        <p class="label" style="margin:-6px 0 12px 0">Crée un membre. Les données sont locales pour l’instant.</p>
-
-        <form id="profilForm" class="f">
-          <input id="name" class="in" placeholder="Nom" required />
-          <input id="role" class="in" placeholder="Rôle" />
-          <textarea id="bio" class="in" placeholder="Bio courte"></textarea>
-          <input id="contact" class="in" placeholder="Email / contact" />
-          <div class="row">
-            <div class="preview" id="pv"><span>IMG</span></div>
-            <input id="photo" type="file" accept="image/*" class="in" style="flex:1" />
-            <button class="btn acc" type="submit">Enregistrer</button>
-          </div>
-        </form>
+  <div class="wrap cols">
+    <form class="card f" id="form">
+      <h2 style="margin:0 0 10px 0">Ajouter un profil</h2>
+      <input id="name" class="in" placeholder="Nom" required />
+      <input id="role" class="in" placeholder="Rôle" />
+      <textarea id="bio" class="in" placeholder="Bio courte"></textarea>
+      <input id="contact" class="in" placeholder="Email / contact" />
+      <div style="display:flex;gap:10px;align-items:center">
+        <div class="preview" id="pv"><span>IMG</span></div>
+        <input id="photo" type="file" accept="image/*" class="in" style="flex:1" />
       </div>
+      <div style="display:flex;gap:10px">
+        <button class="btn acc" type="submit">Enregistrer</button>
+        <a class="btn" href="/personnelle.html">Annuler</a>
+      </div>
+      <div id="msg" class="label" style="margin-top:8px"></div>
+    </form>
 
-      <!-- Infos / retour -->
-      <aside class="grid" style="gap:12px">
-        <div class="card">
-          <h3 style="margin:0 0 8px 0">Conseil</h3>
-          <div class="label">Utilise une image carrée pour l’avatar, ça évite les crops moches.</div>
-        </div>
-        <div class="card">
-          <a class="btn" href="/personnelle.html">← Retour à l’équipe</a>
-        </div>
-      </aside>
-    </div>
+    <aside class="card">
+      <h3 style="margin:0 0 8px 0">Conseil</h3>
+      <div class="label">Utilise une image carrée pour l’avatar, ça évite les crops moches.</div>
+    </aside>
   </div>
 
   <footer>© 2025 — Admin Kyy’s Letters</footer>
-  
+
   <script src="/js/storage.js"></script>
   <script>
-    // Store minimal
-    const key = 'kl_members';
-    const load = () => { try { return JSON.parse(localStorage.getItem(key) || '[]'); } catch { return [] } };
-    const save = (arr) => localStorage.setItem(key, JSON.stringify(arr));
+    const { uid, allMembers, saveMembers } = KyyStore;
 
-    // Aperçu avatar
     const pv = document.getElementById('pv');
     const photoEl = document.getElementById('photo');
-    photoEl.addEventListener('change', async () => {
-      const f = photoEl.files?.[0];
-      if (!f) { pv.innerHTML = '<span>IMG</span>'; pv.style.backgroundImage=''; return; }
-      const b64 = await fileToBase64(f);
-      pv.innerHTML = '<img />';
-      pv.firstChild.src = b64;
+    let photoData = '';
+
+    photoEl.addEventListener('change', ()=>{
+      const f = photoEl.files?.[0]; if(!f) return;
+      const r = new FileReader();
+      r.onload = ()=>{ photoData = String(r.result||''); pv.innerHTML='<img />'; pv.firstChild.src = photoData; };
+      r.readAsDataURL(f);
     });
 
-    function fileToBase64(file){
-      return new Promise((res, rej) => {
-        const r = new FileReader();
-        r.onload = () => res(String(r.result));
-        r.onerror = rej;
-        r.readAsDataURL(file);
-      });
-    }
-
-    // Submit
-    document.getElementById('profilForm').addEventListener('submit', async (e) => {
+    document.getElementById('form').addEventListener('submit',(e)=>{
       e.preventDefault();
-      const name = document.getElementById('name').value.trim();
-      const role = document.getElementById('role').value.trim();
-      const bio = document.getElementById('bio').value.trim();
-      const contact = document.getElementById('contact').value.trim();
-      const f = photoEl.files?.[0];
-      const photo = f ? await fileToBase64(f) : '';
-
-      const arr = load();
-      arr.push({ id: crypto.randomUUID(), name, role, bio, contact, photo });
-      save(arr);
-
-      alert('Profil ajouté.');
-      location.href = '/personnelle.html';
+      const arr = allMembers();
+      arr.push({
+        id: uid(),
+        name: document.getElementById('name').value.trim(),
+        role: document.getElementById('role').value.trim(),
+        bio: document.getElementById('bio').value.trim(),
+        contact: document.getElementById('contact').value.trim(),
+        photo: photoData
+      });
+      saveMembers(arr);
+      document.getElementById('msg').textContent = 'Profil créé ✅';
+      setTimeout(()=>location.href='/personnelle.html', 500);
     });
   </script>
 </body>
