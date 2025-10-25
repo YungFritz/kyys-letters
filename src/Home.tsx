@@ -29,7 +29,6 @@ const fmtViews = (n?: number) => {
   return `${n} vues`;
 };
 
-// Icône de tendance
 const ICON_TREND = "❤️‍🔥";
 
 /* ======================= HEADER =========================== */
@@ -42,10 +41,6 @@ function DesktopHeader({
   setQuery: (v: string) => void;
   openMenu: () => void;
 }) {
-  const goTo = (path: string) => {
-    window.location.replace(path);
-  };
-
   return (
     <div className="header">
       <div className="header-inner">
@@ -71,18 +66,18 @@ function DesktopHeader({
         />
 
         <nav className="desktop-nav">
-          <button className="nav-btn" onClick={() => goTo("/personnelle.html")}>
+          <a className="nav-btn" href="/personnelle.html">
             Personnelle
-          </button>
-          <button className="nav-btn" onClick={() => goTo("/recrutement.html")}>
+          </a>
+          <a className="nav-btn" href="/recrutement.html">
             Recrutement
-          </button>
-          <button className="nav-btn" onClick={() => goTo("/admin.html")}>
+          </a>
+          <a className="nav-btn" href="/admin.html">
             Admin
-          </button>
-          <button className="nav-btn" onClick={() => goTo("/connexion.html")}>
+          </a>
+          <a className="nav-btn" href="/connexion.html">
             Connexion
-          </button>
+          </a>
         </nav>
       </div>
     </div>
@@ -101,11 +96,6 @@ function MobileSheet({
   isOpen: boolean;
   onClose: () => void;
 }) {
-  const goTo = (path: string) => {
-    onClose();
-    window.location.replace(path);
-  };
-
   return (
     <>
       <div className={`sheet-backdrop ${isOpen ? "show" : ""}`} onClick={onClose} />
@@ -118,16 +108,16 @@ function MobileSheet({
         </div>
 
         <div className="sheet-content">
-          <a className="sheet-item" onClick={() => goTo("/personnelle.html")}>
+          <a className="sheet-item" href="/personnelle.html">
             Personnelle
           </a>
-          <a className="sheet-item" onClick={() => goTo("/recrutement.html")}>
+          <a className="sheet-item" href="/recrutement.html">
             Recrutement
           </a>
-          <a className="sheet-item" onClick={() => goTo("/admin.html")}>
+          <a className="sheet-item" href="/admin.html">
             Admin
           </a>
-          <a className="sheet-item" onClick={() => goTo("/connexion.html")}>
+          <a className="sheet-item" href="/connexion.html">
             Connexion
           </a>
 
@@ -277,9 +267,7 @@ export default function Home() {
         {/* DERNIERS CHAPITRES */}
         <div className="bottom-grid">
           <div>
-            <div className="latest-title muted">
-              Derniers chapitres postés
-            </div>
+            <div className="latest-title muted">Derniers chapitres postés</div>
 
             {latest.length === 0 ? (
               <div className="empty" style={{ minHeight: 120 }}>
