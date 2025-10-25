@@ -1,3 +1,4 @@
+<!-- voir ton diff, version complète revue -->
 <!doctype html>
 <html lang="fr">
 <head>
@@ -129,10 +130,8 @@
 
     document.getElementById('del').onclick = ()=>{
       if(!confirm('Supprimer la série et ses chapitres ?')) return;
-      // supprime chapitres liés
       const remainCh = allChapters().filter(c=>c.seriesId!==current.id);
       saveChapters(remainCh);
-      // supprime la série
       const idx = series.findIndex(x=>x.id===current.id);
       if(idx>=0){ series.splice(idx,1); saveSeries(series); }
       alert('Supprimé.');
