@@ -1,77 +1,126 @@
 <!doctype html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Manga</title>
-  <link rel="stylesheet" href="/src/index.css" />
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Série — Kyy’s Letters</title>
+  <link rel="stylesheet" href="/styles/base.css"/>
   <style>
-    .wrap{max-width:1000px;margin:30px auto;padding:0 16px}
-    .head{display:grid;grid-template-columns:160px 1fr;gap:14px}
-    @media(max-width:860px){.head{grid-template-columns:1fr}}
-    .cover{width:100%;height:220px;background:#0f1012;border:1px solid var(--border);border-radius:10px;overflow:hidden;display:grid;place-items:center}
-    .grid{display:grid;gap:10px}
-    .item{display:flex;justify-content:space-between;align-items:center;border:1px solid var(--border);background:#101112;border-radius:10px;padding:10px}
-    .pill{height:30px;padding:0 10px;border:1px solid var(--border);border-radius:10px;background:#111213}
+    .wrap{max-width:1100px;margin:18px auto;padding:0 12px}
+    .head{display:grid;grid-template-columns:260px 1fr;gap:16px}
+    .cover{width:100%;aspect-ratio:3/4;border:1px solid var(--border);border-radius:12px;overflow:hidden;background:#0e0f10}
+    .cover img{width:100%;height:100%;object-fit:cover}
+    .title{font-size:28px;font-weight:800;margin:0 0 6px 0}
+    .tags{display:flex;gap:6px;flex-wrap:wrap}
+    .tag{padding:3px 8px;border:1px solid var(--border);border-radius:999px;background:#111214;font-size:12px}
+    .desc{color:var(--muted);white-space:pre-wrap;margin-top:8px}
+    .grid{margin-top:16px}
+    .table{width:100%}
+    .table td, .table th{padding:10px;border-bottom:1px solid var(--border)}
+    .actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+    .btn{display:inline-grid;place-items:center;height:36px;padding:0 12px;border:1px solid var(--border);border-radius:10px;background:#101112;color:#e9ebee}
   </style>
 </head>
 <body>
   <div class="wrap">
-    <a class="nav-btn" href="/">← Accueil</a>
-
-    <div class="card-like" id="manga">
-      <div class="head">
-        <div class="cover" id="img">COVER</div>
-        <div>
-          <h2 id="title" style="margin:0 0 6px 0">—</h2>
-          <div class="muted" id="tags"></div>
-          <p class="muted" id="desc"></p>
-        </div>
-      </div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+      <a class="btn" href="/">← Accueil</a>
+      <a class="btn" href="/admin.html">Admin</a>
     </div>
 
-    <div class="card-like" style="margin-top:12px">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
-        <h3 style="margin:0">Chapitres</h3>
+    <div id="notfound" class="empty" style="display:none">Série introuvable.</div>
+
+    <div id="serie" style="display:none">
+      <div class="head">
+        <div class="cover"><img id="coverImg" alt=""></div>
+        <div>
+          <h1 class="title" id="sTitle"></h1>
+          <div class="tags" id="sTags"></div>
+          <div class="desc" id="sDesc"></div>
+          <div class="actions">
+            <a id="readLast" class="btn" href="#">Lire le dernier chapitre</a>
+          </div>
+        </div>
       </div>
-      <div id="chapters" class="grid"></div>
+
+      <div class="grid">
+        <h3>Chapitres</h3>
+        <table class="table">
+          <thead>
+          <tr><th>#</th><th>Titre</th><th>Lang</th><th>Date</th><th></th></tr>
+          </thead>
+          <tbody id="chapBody"></tbody>
+        </table>
+      </div>
     </div>
   </div>
 
-<script>
-const MKEY='kl_mangas';
-function load(){try{return JSON.parse(localStorage.getItem(MKEY)||'[]')}catch{return[]}}
+  <script src="/js/storage.js"></script>
+  <script>
+    function readJSON(key, fallback) {
+      try {
+        const raw = localStorage.getItem(key);
+        return raw ? JSON.parse(raw) : fallback;
+      } catch { return fallback; }
+    }
+    function getSlug(){
+      // supporte /manga/<slug>?... via vercel rewrite -> /manga.html?slug=<slug>
+      const p = new URLSearchParams(location.search).get('slug');
+      if (p) return p;
+      // fallback basique si directement servi sans rewrite (ex: file://)
+      const parts = location.pathname.split('/').filter(Boolean);
+      return parts[parts.length-1] || '';
+    }
+    const slug = getSlug();
 
-function pathSlug(){
-  // /manga/<slug>
-  const parts = location.pathname.split('/').filter(Boolean);
-  return parts[1] || '';
-}
+    const series = readJSON('kl_series', []);
+    const chapters = readJSON('kl_chapters', []);
+    const s = series.find(x => x.slug === slug);
 
-const slug = pathSlug();
-const list = load();
-const m = list.find(x=>x.slug===slug);
-if(!m){ document.getElementById('manga').innerHTML = '<h2>Introuvable</h2>'; throw 'no manga'; }
+    const block = document.getElementById('serie');
+    const nf = document.getElementById('notfound');
 
-document.getElementById('title').textContent = m.title;
-document.getElementById('tags').textContent = (m.tags||[]).join(' • ');
-document.getElementById('desc').textContent = m.description||'';
-if(m.cover){
-  document.getElementById('img').innerHTML = `<img src="${m.cover}" style="width:100%;height:100%;object-fit:cover">`;
-}
+    if(!s){ nf.style.display = 'grid'; }
+    else {
+      block.style.display = 'block';
+      document.getElementById('sTitle').textContent = s.title || 'Sans titre';
+      document.getElementById('coverImg').src = s.cover || '';
+      const tags = s.tags || [];
+      document.getElementById('sTags').innerHTML = tags.map(t=>`<span class="tag">${t}</span>`).join(' ');
+      document.getElementById('sDesc').textContent = s.description || '';
 
-const chEl = document.getElementById('chapters');
-const chs = (m.chapters||[]).slice().sort((a,b)=>a.number-b.number);
-if(!chs.length){
-  chEl.innerHTML = '<div class="muted">Aucun chapitre.</div>';
-}else{
-  chEl.innerHTML = chs.map(c => `
-    <div class="item">
-      <div>#${c.number} — ${c.name||''} <span class="muted">(${c.lang})</span></div>
-      <a class="pill" href="/chapitre-${c.number}/${m.slug}">Lire</a>
-    </div>
-  `).join('');
-}
-</script>
+      const list = chapters
+        .filter(c => c.seriesId === s.id)
+        .map(c => ({
+          ...c,
+          number: Number(c.number ?? 0),
+          title: c.title || c.name || ''
+        }))
+        .sort((a,b)=> a.number-b.number);
+
+      const body = document.getElementById('chapBody');
+      body.innerHTML = list.length ? '' : `<tr><td colspan="5" class="label">Aucun chapitre.</td></tr>`;
+      for (const c of list) {
+        body.insertAdjacentHTML('beforeend', `
+          <tr>
+            <td>${c.number}</td>
+            <td>${c.title || '—'}</td>
+            <td>${c.lang || 'FR'}</td>
+            <td>${c.date || c.releaseDate || '—'}</td>
+            <td><a class="btn" href="/reader.html?id=${c.id}">Lire</a></td>
+          </tr>
+        `);
+      }
+
+      // bouton "lire dernier"
+      if (list.length) {
+        const last = list[list.length-1];
+        const a = document.getElementById('readLast');
+        a.href = `/reader.html?id=${last.id}`;
+      } else {
+        document.getElementById('readLast').style.display = 'none';
+      }
+    }
+  </script>
 </body>
 </html>
