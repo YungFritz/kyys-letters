@@ -11,7 +11,7 @@
     <!-- script principal React -->
     <script type="module" src="/src/main.tsx"></script>
 
-    <!-- Patch 1 : "Perso" -> "Personnelle" (au cas où) -->
+    <!-- Patch 1 : "Perso" -> "Personnelle" -->
     <script>
       window.addEventListener('DOMContentLoaded', function () {
         document
@@ -26,7 +26,6 @@
     <!-- Patch 2 : forcer la navigation pour <a> ET <button> -->
     <script>
       (function () {
-        // mapping libellé -> page
         const MAP = {
           'Perso': '/personnelle.html',
           'Personnelle': '/personnelle.html',
@@ -35,37 +34,29 @@
           'Connexion': '/connexion.html',
           'Accueil': '/'
         };
+        function labelOf(el) { return (el.textContent || '').trim(); }
 
-        function labelOf(el) {
-          return (el.textContent || '').trim();
-        }
-
-        // fixe les href pour <a>, et ajoute un data-target pour <button>
         function fixTargets(root) {
           root.querySelectorAll('a.nav-btn, a.sheet-item, a.tab-item, button.nav-btn, button.sheet-item')
             .forEach(function (el) {
               const lbl = labelOf(el);
               const target = MAP[lbl];
               if (!target) return;
-
               if (el.tagName === 'A') {
                 if (!el.getAttribute('href') || el.getAttribute('href') === '#') {
                   el.setAttribute('href', target);
                 }
               } else {
-                // button: on stocke la cible
                 el.setAttribute('data-target', target);
                 el.setAttribute('type', 'button');
               }
             });
         }
 
-        // 1) Au chargement
         window.addEventListener('DOMContentLoaded', function () {
           fixTargets(document);
         });
 
-        // 2) Si React modifie le DOM
         const obs = new MutationObserver(function (muts) {
           for (const m of muts) {
             m.addedNodes && m.addedNodes.forEach(function (n) {
@@ -75,14 +66,12 @@
         });
         obs.observe(document.documentElement, { childList: true, subtree: true });
 
-        // 3) Gestion des clics: <a> ET <button>
         document.addEventListener('click', function (e) {
           const targetEl = e.target && (e.target.closest
             ? e.target.closest('a.nav-btn, a.sheet-item, a.tab-item, button.nav-btn, button.sheet-item')
             : null);
           if (!targetEl) return;
 
-          // priorité au mapping par libellé, sinon data-target/href
           const lbl = labelOf(targetEl);
           const mapped = MAP[lbl];
           const attrHref = targetEl.getAttribute('href');
@@ -94,7 +83,6 @@
             return;
           }
 
-          // force la navigation et bloque tout preventDefault parasite
           e.preventDefault();
           window.location.href = dest;
         }, true);
