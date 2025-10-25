@@ -4,54 +4,51 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Recrutement — Kyy’s Letters</title>
-
-  <!-- Styles communs (même skin que l'accueil) -->
-  <link rel="stylesheet" href="/styles/common.css" />
+  <link rel="stylesheet" href="/styles/base.css" />
+  <style>
+    .wrap{max-width:920px;margin:22px auto;padding:0 16px}
+    ul{padding-left:20px;color:var(--muted)}
+    li{margin:6px 0}
+  </style>
 </head>
 <body>
-  <!-- Le shell (header/drawer/tabbar) est généré par shell.js -->
-  <main id="page-root" class="with-shell"></main>
+  <div class="header">
+    <div class="bar">
+      <div class="brand">K</div>
+      <div class="badge">Recrutement</div>
+      <div class="right">
+        <a class="btn" href="/">Accueil</a>
+        <a class="btn" href="https://discord.gg/" target="_blank">Discord</a>
+      </div>
+    </div>
+  </div>
 
-  <!-- JS commun -->
-  <script src="/js/shell.js"></script>
-  <script>
-    renderShell({
-      page: "recrutement",            // active l’onglet Recrutement
-      render: (root) => {
-        root.innerHTML = `
-          <div class="container">
+  <div class="wrap">
+    <div class="card">
+      <h1 style="margin:0 0 12px 0">Recrutement</h1>
+      <p class="muted">
+        Tu veux rejoindre l’équipe ? On recrute des <strong>éditeurs</strong>, <strong>traducteurs</strong>,
+        <strong>cleaners</strong> et <strong>devs</strong>. Peu importe ton niveau, du moment que t’es motivé 🔥
+      </p>
+      <div style="margin-top:14px">
+        <a class="btn acc" href="https://discord.gg/" target="_blank">Rejoindre le Discord</a>
+        <a class="btn" href="/">Retour à l’accueil</a>
+      </div>
+    </div>
 
-            <section class="card">
-              <h1 class="title-xl">Recrutement</h1>
-              <p class="muted">
-                On cherche des personnes <strong>motivées</strong> pour rejoindre l’équipe :
-                éditeurs, traducteurs, clean, typos, dev, QA… Si tu veux filer un coup de main,
-                on t’accueille 🔥
-              </p>
-              <div class="row gap-12 mt-14">
-                <a class="btn btn-primary" href="https://discord.gg/" target="_blank" rel="noreferrer">
-                  Rejoindre le Discord
-                </a>
-                <a class="btn" href="/">Retour à l’accueil</a>
-              </div>
-            </section>
+    <div class="card" style="margin-top:16px">
+      <h2>Ce qu’on attend</h2>
+      <ul>
+        <li>✅ Être dispo quelques heures par semaine</li>
+        <li>✅ Avoir un minimum de sérieux (même si on reste chill 😌)</li>
+        <li>✅ Communiquer clairement sur Discord</li>
+      </ul>
+      <p class="muted" style="margin-top:10px">
+        <em>Pas d’expérience ? Pas grave. On t’apprend sur le tas.</em>
+      </p>
+    </div>
+  </div>
 
-            <section class="card">
-              <h2 class="title-md">Ce qu’on attend</h2>
-              <ul class="muted">
-                <li>✅ Être dispo au moins 2–3h / semaine</li>
-                <li>✅ Être sérieux sur les deadlines (mais on reste cool 😌)</li>
-                <li>✅ Savoir communiquer proprement (Discord)</li>
-              </ul>
-              <p class="muted mt-10">
-                <em>Pas d’expérience ? Pas grave. On t’aide à démarrer.</em>
-              </p>
-            </section>
-
-          </div>
-        `;
-      }
-    });
-  </script>
+  <footer>© 2025 — Kyy’s Letters</footer>
 </body>
 </html>
