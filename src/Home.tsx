@@ -29,7 +29,7 @@ const fmtViews = (n?: number) => {
   return `${n} vues`;
 };
 
-// Icône de tendance (facile à changer si tu veux la flamme 🔥 à la place)
+// Icône de tendance
 const ICON_TREND = "❤️‍🔥";
 
 /* ======================= HEADER =========================== */
