@@ -11,20 +11,78 @@
     <!-- script principal React -->
     <script type="module" src="/src/main.tsx"></script>
 
-    <!-- Patch "Perso" → "Personnelle" -->
+    <!-- Patch 1 : "Perso" -> "Personnelle" (au cas où un header zombie traîne) -->
     <script>
       window.addEventListener('DOMContentLoaded', function () {
         document
-          .querySelectorAll(
-            '.nav-btn, .sheet-item, .desktop-nav a, .desktop-nav button'
-          )
+          .querySelectorAll('.nav-btn, .sheet-item, .desktop-nav a, .desktop-nav button')
           .forEach(function (el) {
             const txt = (el.textContent || '').trim();
-            if (txt === 'Perso' || txt === 'PERSO') {
-              el.textContent = 'Personnelle';
-            }
+            if (txt === 'Perso' || txt === 'PERSO') el.textContent = 'Personnelle';
           });
       });
+    </script>
+
+    <!-- Patch 2 : forcer la redirection des boutons/onglets coûte que coûte -->
+    <script>
+      (function () {
+        // mapping des libellés -> pages cibles
+        const MAP = {
+          'Personnelle': '/personnelle.html',
+          'Recrutement': '/recrutement.html',
+          'Admin': '/admin.html',
+          'Connexion': '/connexion.html',
+          'Accueil': '/'
+        };
+
+        // À l’affichage, corrige les href si besoin
+        function fixHrefs(root) {
+          root.querySelectorAll('a.nav-btn, a.sheet-item, a.tab-item').forEach(function (a) {
+            const label = (a.textContent || '').trim();
+            if (MAP[label]) a.setAttribute('href', MAP[label]);
+          });
+        }
+
+        // 1) Corrige au chargement initial
+        window.addEventListener('DOMContentLoaded', function () {
+          fixHrefs(document);
+        });
+
+        // 2) Et si React remonte du contenu plus tard, on surveille et on recolle les href
+        const obs = new MutationObserver(function (muts) {
+          for (const m of muts) {
+            m.addedNodes && m.addedNodes.forEach(function (n) {
+              if (n.nodeType === 1) fixHrefs(n);
+            });
+          }
+        });
+        obs.observe(document.documentElement, { childList: true, subtree: true });
+
+        // 3) Click handler global : on empêche # et on force la navigation
+        document.addEventListener('click', function (e) {
+          const a = e.target && (e.target.closest
+              ? e.target.closest('a.nav-btn, a.sheet-item, a.tab-item')
+              : null);
+          if (!a) return;
+
+          const label = (a.textContent || '').trim();
+          const target = a.getAttribute('href') || MAP[label] || MAP[a.getAttribute('data-label') || ''] || '';
+
+          if (!target || target === '#') {
+            e.preventDefault();
+            if (MAP[label]) {
+              window.location.href = MAP[label];
+            }
+            return;
+          }
+
+          // si un script tente de bloquer, on reprend la main
+          if (target.startsWith('/')) {
+            e.preventDefault();
+            window.location.href = target;
+          }
+        }, true); // capture = true pour passer avant d’éventuels preventDefault
+      })();
     </script>
   </body>
 </html>
