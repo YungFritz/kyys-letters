@@ -240,7 +240,7 @@ function MobileSheet({
 
           <div className="sheet-stats">
             <div className="muted">
-              Séries: {LIBRARY.length} • Chapitres: {" "}
+              Séries: {LIBRARY.length} • Chapitres:{" "}
               {LIBRARY.reduce(
                 (n, s) => n + (s.chapters?.length || 0),
                 0
@@ -338,20 +338,20 @@ export default function App() {
       <main className="container">
         {/* HERO / encadrement */}
         <div className="hero">
-          <div className="hero-card card-like">
-            <div className="hero-message">
-              <h1>Bienvenue</h1>
-              <p className="muted">
-                Message d'accueil / accroche. Remplace par ton texte.
-              </p>
-            </div>
-          </div>
-
+          {/* Utilise une grille 2×2 : chaque ligne associe un texte et une image. */}
           <div
-            className="hero-side"
+            className="hero-grid"
             style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}
           >
-            {/* Case pour la première image d'accueil */}
+            {/* Ligne 1 : message de bienvenue et première image */}
+            <div className="hero-card card-like">
+              <div className="hero-message">
+                <h1>Bienvenue</h1>
+                <p className="muted">
+                  Message d'accueil / accroche. Remplace par ton texte.
+                </p>
+              </div>
+            </div>
             <div className="side-card card-like">
               {homeImg1 ? (
                 <img
@@ -364,7 +364,14 @@ export default function App() {
               )}
             </div>
 
-            {/* Case pour la deuxième image d'accueil */}
+            {/* Ligne 2 : carte "Rejoindre" et deuxième image */}
+            <div className="side-card card-like">
+              <div className="side-title">Rejoindre</div>
+              <div className="muted">Lien discord / contact / bouton</div>
+              <a className="btn" href="#" style={{ marginTop: 10 }}>
+                Ouvrir
+              </a>
+            </div>
             <div className="side-card card-like">
               {homeImg2 ? (
                 <img
@@ -375,24 +382,6 @@ export default function App() {
               ) : (
                 <div className="muted">Image 2</div>
               )}
-            </div>
-
-            {/* Carte Rejoindre */}
-            <div className="side-card card-like">
-              <div className="side-title">Rejoindre</div>
-              <div className="muted">Lien discord / contact / bouton</div>
-              <a className="btn" href="#" style={{ marginTop: 10 }}>
-                Ouvrir
-              </a>
-            </div>
-
-            {/* Carte Statistiques */}
-            <div className="side-card card-like">
-              <div className="side-title">Statistiques</div>
-              <div className="muted">
-                Séries: {LIBRARY.length} • Chapitres: {" "}
-                {LIBRARY.reduce((n, s) => n + (s.chapters?.length || 0), 0)}
-              </div>
             </div>
           </div>
         </div>
