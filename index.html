@@ -1,28 +1,139 @@
 <!doctype html>
 <html lang="fr">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Kyy’s Letters — Accueil</title>
-    <link rel="stylesheet" href="/styles/base.css" />
-  </head>
-  <body>
-    <div id="root"></div>
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Kyy’s letters — Accueil</title>
+  <link rel="stylesheet" href="/styles/base.css"/>
+</head>
+<body>
+  <!-- Header -->
+  <div class="header">
+    <div class="header-inner">
+      <a class="logoK" href="/">K</a>
 
-    <!-- Stockage -->
-    <script src="/js/db.js"></script>
-    <script src="/js/storage.js"></script>
+      <!-- Boutons qui MARCHENT -->
+      <nav class="desktop-nav">
+        <a class="nav-btn" href="/personnelle.html">Perso</a>
+        <a class="nav-btn" href="/recrutement.html">Recrutement</a>
+        <a class="nav-btn" href="/admin.html">Admin</a>
+        <a class="nav-btn" href="/connexion.html">Connexion</a>
+      </nav>
 
-    <!-- Construire window.__LIBRARY pour Home -->
-    <script>
-      (async () => {
-        const lib = await KyyStore.buildLibraryForHome();
-        window.__LIBRARY = lib;
-        document.dispatchEvent(new Event('kyy:library-ready'));
-      })();
-    </script>
+      <input class="search-input" id="q" placeholder="Rechercher une série, un tag, une langue..."/>
+    </div>
+  </div>
 
-    <!-- Ton app React (Vite) -->
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+  <div class="container">
+    <!-- Hero -->
+    <div class="hero">
+      <div class="card-like hero-card">
+        <h1>Bienvenue</h1>
+        <div class="muted">Message d'accueil / accroche. Remplace par ton texte.</div>
+      </div>
+      <aside class="card-like hero-side">
+        <div class="side-card">
+          <div class="side-title">Rejoindre</div>
+          <div class="muted">Lien discord / contact / bouton</div>
+          <a class="btn" href="#">Ouvrir</a>
+        </div>
+        <div class="side-card">
+          <div class="side-title">Statistiques</div>
+          <div id="stats" class="muted">Séries: 0 • Chapitres: 0</div>
+        </div>
+      </aside>
+    </div>
+
+    <!-- Populaire -->
+    <section class="section">
+      <div class="section-header">
+        <div class="section-left">
+          <span>🔥</span><div class="section-title">Populaire aujourd'hui</div>
+        </div>
+        <button class="pill">Tendances</button>
+      </div>
+      <div class="card-like">
+        <div id="popular" class="empty">Aucune série ajoutée pour le moment.</div>
+      </div>
+    </section>
+
+    <!-- Derniers chapitres -->
+    <div class="bottom-grid">
+      <div class="card-like">
+        <div class="latest-title">DERNIERS CHAPITRES POSTÉS</div>
+        <div id="latest" class="empty">Aucun chapitre publié pour le moment.</div>
+      </div>
+
+      <aside class="card-like stats">
+        <div class="side-title">Statistiques</div>
+        <div class="stats-grid">
+          <div class="row"><span>Visites totales (exemple)</span><b>0</b></div>
+          <div class="row"><span>Séries</span><b id="countSeries">0</b></div>
+          <div class="row"><span>Chapitres</span><b id="countChapters">0</b></div>
+          <div class="row"><span>Langue</span><b>FR</b></div>
+        </div>
+      </aside>
+    </div>
+
+    <div class="footer">© 2025 — Tous droits réservés</div>
+  </div>
+
+  <script src="/js/storage.js"></script>
+  <script>
+    // hydrater l'accueil depuis KyyStore
+    const { allSeries, allChapters } = window.KyyStore;
+
+    function renderHome(){
+      const series = allSeries();
+      const chapters = allChapters();
+
+      // stats
+      document.getElementById("countSeries").textContent = series.length;
+      document.getElementById("countChapters").textContent = chapters.length;
+      document.getElementById("stats").textContent = `Séries: ${series.length} • Chapitres: ${chapters.length}`;
+
+      // populaire = 5 dernières séries
+      const pop = document.getElementById("popular");
+      if (!series.length){
+        pop.className = "empty"; pop.textContent = "Aucune série ajoutée pour le moment.";
+      } else {
+        pop.className = "";
+        pop.innerHTML = `
+          <div class="grid-cards">
+            ${series.slice(-5).reverse().map(s=>`
+              <a class="card-link" href="/manga.html?slug=${encodeURIComponent(s.slug)}">
+                <div class="card">
+                  <div class="cover">${s.cover ? `<img src="${s.cover}" alt="">` : "—"}</div>
+                  <div class="card-body">
+                    <div class="card-title">${s.title}</div>
+                    <div class="card-meta">
+                      <div class="meta-left">${(s.tags||[]).slice(0,3).map(t=>`<span class="badge">${t}</span>`).join("")}</div>
+                    </div>
+                  </div>
+                </div>
+              </a>
+            `).join("")}
+          </div>
+        `;
+      }
+
+      // derniers chapitres = 10 derniers
+      const latest = document.getElementById("latest");
+      if (!chapters.length){
+        latest.className = "empty"; latest.textContent = "Aucun chapitre publié pour le moment.";
+      } else {
+        latest.className = "";
+        const rows = chapters.slice().sort((a,b)=>b.createdAt - a.createdAt).slice(0,10).map(ch=>{
+          const s = series.find(x=>x.id===ch.seriesId);
+          return `<div style="padding:10px;border-bottom:1px solid var(--border)">
+                    <b>${s? s.title : "—"}</b> • Chapitre <b>${ch.number||"—"}</b> • ${ch.lang||"?"}
+                  </div>`;
+        }).join("");
+        latest.innerHTML = rows;
+      }
+    }
+
+    renderHome();
+  </script>
+</body>
 </html>
