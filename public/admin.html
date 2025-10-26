@@ -3,132 +3,104 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Panneau Admin — Kyy’s Letters</title>
+  <title>Admin — Kyy’s Letters</title>
   <link rel="stylesheet" href="/styles/base.css"/>
 </head>
 <body>
   <div class="header">
-    <div class="bar">
-      <div class="brand">K</div>
-      <div class="badge">Admin</div>
-      <div class="right">
-        <a class="btn" href="/">Accueil</a>
-        <a class="btn" href="/add-manga.html">+ Série</a>
-        <a class="btn" href="/add-chapitre.html">+ Chapitre</a>
-        <a class="btn" href="/edit-manga.html">Éditer série</a>
-        <a class="btn" href="/admin-add-profil.html">+ Profil</a>
+    <div class="header-inner">
+      <a class="logoK" href="/">K</a>
+      <nav class="desktop-nav">
+        <a class="nav-btn" href="/index.html">Accueil</a>
+        <a class="nav-btn" href="/add-manga.html">+ Série</a>
+        <a class="nav-btn" href="/add-chapitre.html">+ Chapitre</a>
+        <a class="nav-btn" href="/admin-edit-profil.html">Éditer profil</a>
+      </nav>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="card-like">
+      <h2>Panneau Admin</h2>
+      <div class="muted">Tout est stocké en localStorage. L’accueil lit ces données.</div>
+      <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+        <a class="btn" href="/add-manga.html">Ajouter une série</a>
+        <a class="btn" href="/add-chapitre.html">Ajouter un chapitre</a>
         <a class="btn" href="/admin-edit-profil.html">Éditer profil</a>
       </div>
     </div>
-  </div>
 
-  <div class="container" style="display:grid;grid-template-columns:1fr 340px;gap:18px;margin-top:18px">
-    <div class="grid" style="grid-template-columns:1fr;">
-      <div class="card">
-        <h2 style="margin:0 0 10px 0">Panneau Admin</h2>
-        <p class="label">Tout est stocké en localStorage. L’accueil lit ces données.</p>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
-          <a class="btn acc" href="/add-manga.html">Ajouter une série</a>
-          <a class="btn" href="/add-chapitre.html">Ajouter un chapitre</a>
-          <a class="btn" href="/edit-manga.html">Modifier / supprimer série</a>
-          <a class="btn" href="/admin-add-profil.html">Ajouter un profil</a>
-          <a class="btn" href="/admin-edit-profil.html">Éditer un profil</a>
-        </div>
-      </div>
-
-      <div class="card">
-        <h3 style="margin:0 0 8px 0">Séries existantes</h3>
-        <table class="table">
+    <div class="bottom-grid">
+      <div class="card-like">
+        <div class="latest-title">Séries existantes</div>
+        <table class="table" id="seriesTable">
           <thead><tr><th>Titre</th><th>Slug</th><th>Tags</th><th>Chapitres</th></tr></thead>
-          <tbody id="seriesBody"></tbody>
+          <tbody></tbody>
         </table>
       </div>
 
-      <div class="card">
-        <h3 style="margin:0 0 8px 0">Derniers chapitres</h3>
-        <table class="table">
-          <thead><tr><th>Série</th><th>Titre</th><th>#</th><th>Lang</th><th>Date</th></tr></thead>
-          <tbody id="chapBody"></tbody>
-        </table>
-      </div>
+      <aside class="card-like">
+        <div class="side-title">Actions rapides</div>
+        <div class="grid">
+          <a class="btn" href="/add-manga.html">+ Série</a>
+          <a class="btn" href="/add-chapitre.html">+ Chapitre</a>
+          <button class="btn danger" id="wipe">Vider la base locale</button>
+        </div>
+      </aside>
     </div>
 
-    <aside class="grid">
-      <div class="card">
-        <h3 style="margin:0 0 8px 0">Actions rapides</h3>
-        <div class="grid">
-          <a class="btn acc" href="/add-manga.html">+ Série</a>
-          <a class="btn" href="/add-chapitre.html">+ Chapitre</a>
-          <a class="btn" href="/edit-manga.html">Éditer série</a>
-          <a class="btn" href="/admin-add-profil.html">+ Profil</a>
-          <a class="btn" href="/admin-edit-profil.html">Éditer profil</a>
+    <div class="card-like">
+      <div class="latest-title">Derniers chapitres</div>
+      <table class="table" id="chapTable">
+        <thead><tr><th>Série</th><th>Titre</th><th>#</th><th>Lang</th><th>Date</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
 
-          <!-- Export / Import -->
-          <button id="kl-exp" class="btn">Exporter la base</button>
-          <button id="kl-imp-open" class="btn">Importer une base</button>
-          <input id="kl-imp" type="file" accept="application/json" hidden>
-
-          <button id="reset" class="btn danger">Vider la base locale</button>
-        </div>
-      </div>
-      <div class="card">
-        <h3 style="margin:0 8px 12px 0">Infos</h3>
-        <div class="label">Les données sont locales (navigateur). Sur un vrai back, on branchera une API.</div>
-      </div>
-    </aside>
+    <div class="footer">© 2025 — Admin Kyy’s Letters</div>
   </div>
 
-  <footer>© 2025 — Admin Kyy’s Letters</footer>
-
   <script src="/js/storage.js"></script>
-  <script src="/js/backup.js"></script>
   <script>
-    const { allSeries, allChapters, saveSeries, saveChapters } = KyyStore;
+    const { allSeries, allChapters, saveSeries, saveChapters } = window.KyyStore;
 
-    function render() {
-      const s = allSeries();
-      const c = allChapters();
-
-      const sBody = document.getElementById("seriesBody");
-      const cBody = document.getElementById("chapBody");
+    function render(){
+      const s = allSeries(), c = allChapters();
+      const sBody = document.querySelector("#seriesTable tbody");
+      const cBody = document.querySelector("#chapTable tbody");
       sBody.innerHTML = s.length ? "" : `<tr><td colspan="4" class="label">Aucune série.</td></tr>`;
       cBody.innerHTML = c.length ? "" : `<tr><td colspan="5" class="label">Aucun chapitre.</td></tr>`;
 
-      for (const serie of s) {
-        const count = c.filter(x => x.seriesId === serie.id).length;
-        sBody.insertAdjacentHTML(
-          "beforeend",
+      s.forEach(serie=>{
+        const count = c.filter(x=>x.seriesId===serie.id).length;
+        sBody.insertAdjacentHTML("beforeend",
           `<tr>
-            <td>${serie.title || "—"}</td>
-            <td><span class="badge">${serie.slug || "—"}</span></td>
-            <td>${(serie.tags || []).map(t => `<span class="badge">${t}</span>`).join(" ")}</td>
+            <td>${serie.title}</td>
+            <td><span class="badge">${serie.slug}</span></td>
+            <td>${(serie.tags||[]).map(t=>`<span class="badge">${t}</span>`).join(" ")}</td>
             <td>${count}</td>
-          </tr>`
-        );
-      }
+          </tr>`);
+      });
 
-      c.slice().sort((a,b)=>+new Date(b.date)-+new Date(a.date))
-       .slice(0,10).forEach(ch=>{
-         const serie = s.find(x=>x.id===ch.seriesId);
-         sBody && cBody.insertAdjacentHTML("beforeend",
-           `<tr>
-             <td>${serie ? serie.title : "—"}</td>
-             <td>${ch.title || "—"}</td>
-             <td>${ch.number ?? "—"}</td>
-             <td>${ch.lang || "—"}</td>
-             <td>${ch.date || "—"}</td>
-           </tr>`
-         );
-       });
+      c.slice().sort((a,b)=>b.createdAt-a.createdAt).slice(0,10).forEach(ch=>{
+        const serie = s.find(x=>x.id===ch.seriesId);
+        cBody.insertAdjacentHTML("beforeend",
+          `<tr>
+            <td>${serie?serie.title:"—"}</td>
+            <td>${ch.name||"—"}</td>
+            <td>${ch.number||"—"}</td>
+            <td>${ch.lang||"—"}</td>
+            <td>${new Date(ch.createdAt).toLocaleDateString()}</td>
+          </tr>`);
+      });
     }
+    render();
 
-    document.getElementById("reset").onclick = () => {
+    document.getElementById("wipe").onclick = ()=>{
       if (confirm("Tout effacer du navigateur ?")) {
         saveSeries([]); saveChapters([]); render();
       }
     };
-
-    render();
   </script>
 </body>
 </html>
