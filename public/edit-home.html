@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Admin — Éditer l’accueil</title>
+  <link rel="stylesheet" href="/styles/base.css">
+  <style>
+    .container{ max-width:1100px; margin:22px auto; padding:0 16px }
+    .grid2{ display:grid; grid-template-columns:1fr 1fr; gap:18px }
+    .preview{
+      border:1px solid var(--border);
+      border-radius:12px;
+      background:#0f1012;
+      display:grid;
+      place-items:center;
+      color:var(--muted);
+      min-height:220px;
+    }
+    .preview img{ max-width:100%; border-radius:12px }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="bar">
+      <div class="brand">K</div>
+      <div class="badge">Admin</div>
+      <div class="right"><a class="btn" href="/admin.html">Panneau</a></div>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="card">
+      <h2 style="margin:0 0 12px 0">Éditer l’accueil</h2>
+      <div class="grid2">
+        <div>
+          <div class="label">Image #1</div>
+          <div id="preview1" class="preview">—</div>
+          <input id="img1" type="file" accept="image/*">
+        </div>
+        <div>
+          <div class="label">Image #2</div>
+          <div id="preview2" class="preview">—</div>
+          <input id="img2" type="file" accept="image/*">
+        </div>
+      </div>
+      <div style="margin-top:16px">
+        <button class="btn acc" id="save">Sauvegarder</button>
+        <button class="btn danger" id="clear" style="margin-left:8px">Effacer les images</button>
+      </div>
+      <div id="msg" class="label" style="margin-top:8px"></div>
+    </div>
+  </div>
+
+  <footer>© 2025 — Kyy’s Letters</footer>
+
+  <script>
+    const img1Key = 'home_img1';
+    const img2Key = 'home_img2';
+
+    let img1Data = localStorage.getItem(img1Key) || '';
+    let img2Data = localStorage.getItem(img2Key) || '';
+
+    const preview1 = document.getElementById('preview1');
+    const preview2 = document.getElementById('preview2');
+    const msg = document.getElementById('msg');
+
+    function updatePreviews(){
+      preview1.innerHTML = img1Data
+        ? '<img src="'+img1Data+'" style="max-width:100%;border-radius:12px;">'
+        : '—';
+      preview2.innerHTML = img2Data
+        ? '<img src="'+img2Data+'" style="max-width:100%;border-radius:12px;">'
+        : '—';
+    }
+    updatePreviews();
+
+    document.getElementById('img1').onchange = e=>{
+      const f=e.target.files[0]; if(!f) return;
+      const r=new FileReader();
+      r.onload=()=>{ img1Data = String(r.result||''); updatePreviews(); };
+      r.readAsDataURL(f);
+    };
+
+    document.getElementById('img2').onchange = e=>{
+      const f=e.target.files[0]; if(!f) return;
+      const r=new FileReader();
+      r.onload=()=>{ img2Data = String(r.result||''); updatePreviews(); };
+      r.readAsDataURL(f);
+    };
+
+    document.getElementById('save').onclick = ()=>{
+      localStorage.setItem(img1Key, img1Data);
+      localStorage.setItem(img2Key, img2Data);
+      msg.textContent = 'Images enregistrées ✅';
+    };
+
+    document.getElementById('clear').onclick = ()=>{
+      img1Data = ''; img2Data = '';
+      localStorage.removeItem(img1Key);
+      localStorage.removeItem(img2Key);
+      updatePreviews();
+      msg.textContent = 'Images supprimées.';
+    };
+  </script>
+</body>
+</html>
