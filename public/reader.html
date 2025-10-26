@@ -32,7 +32,6 @@
   (async () => {
     const params = new URLSearchParams(location.search);
     const id = params.get('id');
-
     const chaps = KyyStore.allChapters();
     const chap = chaps.find(c => c.id === id);
     const root = document.getElementById('root');
@@ -42,11 +41,22 @@
     }
 
     root.innerHTML = '';
-    for (const ref of chap.pagesRef || []) {
-      const url = await KyyStore.pageURL(ref);
+    // Utilise pagesRef si présent, sinon fallback sur pages (ancienne structure)
+    const pages = chap.pagesRef || chap.pages || [];
+    for (const ref of pages) {
+      let url = null;
+      if (chap.pagesRef) {
+        // pagesRef -> IndexedDB
+        url = await KyyStore.pageURL(ref);
+      } else {
+        // pages -> data URLs déjà présentes
+        url = ref;
+      }
       const div = document.createElement('div');
       div.className = 'page';
-      div.innerHTML = url ? `<img loading="lazy" src="${url}" alt="">` : `<div class="label">Image manquante</div>`;
+      div.innerHTML = url
+        ? `<img loading="lazy" src="${url}" alt="">`
+        : `<div class="label">Image manquante</div>`;
       root.appendChild(div);
     }
   })();
