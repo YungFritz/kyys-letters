@@ -1,105 +1,107 @@
 <!doctype html>
 <html lang="fr">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Admin — Ajouter une série</title>
-  <link rel="stylesheet" href="/styles/base.css"/>
-  <style>
-    .wrap{max-width:1100px;margin:22px auto;padding:0 16px}
-    .grid2{display:grid;grid-template-columns:1fr 320px;gap:18px}
-    .in{height:38px;border:1px solid var(--border);border-radius:10px;background:#101112;color:#eaecef;padding:0 12px}
-    textarea.in{height:120px;padding:10px}
-    .preview{border:1px solid var(--border);border-radius:12px;background:#0f1012;display:grid;place-items:center;color:var(--muted);min-height:220px}
-    .preview img{max-width:100%}
-    .row{display:flex;gap:10px;align-items:center}
-  </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Ajouter une série — Admin</title>
+  <link rel="stylesheet" href="/styles/base.css" />
 </head>
 <body>
   <div class="header">
     <div class="bar">
       <div class="brand">K</div>
       <div class="badge">Admin</div>
-      <div class="right"><a class="btn" href="/admin.html">Panneau</a></div>
+      <div class="right">
+        <a class="btn" href="/admin.html">Panneau</a>
+      </div>
     </div>
   </div>
 
-  <div class="wrap grid2">
-    <form class="card" id="form">
-      <h2 style="margin:0 0 12px 0">Ajouter une série</h2>
+  <main class="container">
+    <div class="grid" style="grid-template-columns: 1.4fr .9fr; gap:18px">
+      <div class="card">
+        <h2 style="margin:0 0 10px">Ajouter une série</h2>
+        <form id="mangaForm" class="grid" style="grid-template-columns:1fr">
+          <label class="label">Titre</label>
+          <input id="title" class="in" placeholder="Titre" required />
 
-      <div class="label">Titre</div>
-      <input id="title" class="in" required />
+          <label class="label">Tags (séparés par virgules)</label>
+          <input id="tags" class="in" placeholder="action, fantasy" />
 
-      <div class="row" style="margin-top:8px">
-        <div style="flex:1">
-          <div class="label">Tags (séparés par virgules)</div>
-          <input id="tags" class="in" placeholder="action, aventure" />
-        </div>
-        <div style="width:210px">
-          <div class="label">Statut</div>
+          <label class="label">Statut</label>
           <select id="status" class="in">
-            <option value="en-cours">En cours</option>
-            <option value="termine">Terminé</option>
-            <option value="drop">Drop</option>
+            <option value="En cours">En cours</option>
+            <option value="Terminé">Terminé</option>
+            <option value="Pause">Pause</option>
           </select>
-        </div>
+
+          <label class="label">Description</label>
+          <textarea id="desc" class="in" rows="6" placeholder="Synopsis..."></textarea>
+
+          <label class="label">Cover</label>
+          <input id="cover" type="file" accept="image/*" />
+
+          <div style="margin-top:12px; display:flex; gap:10px">
+            <button class="btn acc" type="submit">Enregistrer</button>
+            <a class="btn" href="/admin.html">Annuler</a>
+          </div>
+        </form>
       </div>
 
-      <div class="label" style="margin-top:6px">Description</div>
-      <textarea id="desc" class="in" placeholder="Pitch rapide"></textarea>
-
-      <div class="label" style="margin-top:6px">Cover</div>
-      <input id="cover" type="file" accept="image/*" />
-
-      <div class="row" style="margin-top:12px">
-        <button class="btn acc" type="submit">Enregistrer</button>
-        <a class="btn" href="/admin.html">Annuler</a>
-      </div>
-      <div id="msg" class="label" style="margin-top:8px"></div>
-    </form>
-
-    <div class="card">
-      <h3 style="margin:0 0 8px 0">Aperçu cover</h3>
-      <div id="preview" class="preview">—</div>
+      <aside class="card">
+        <h3 style="margin:0 0 8px">Aperçu cover</h3>
+        <div id="preview" class="cover" style="height:360px; display:grid; place-items:center; color:#aaa;">Aucun fichier</div>
+      </aside>
     </div>
-  </div>
+  </main>
 
-  <footer>© 2025 — Kyy’s Letters</footer>
+  <footer>© 2025 — Admin Kyy’s Letters</footer>
 
+  <script src="/js/db.js"></script>
   <script src="/js/storage.js"></script>
   <script>
-    const { uid, slugify, allSeries, saveSeries } = KyyStore;
+    const { uid, allSeries, saveSeries, storeCover } = KyyStore;
 
-    let coverData = "";
-    document.getElementById('cover').onchange = e=>{
-      const f = e.target.files?.[0]; if(!f) return;
-      const r = new FileReader();
-      r.onload = () => { coverData = String(r.result||''); document.getElementById('preview').innerHTML = `<img src="${coverData}" />`; };
-      r.readAsDataURL(f);
-    };
+    const form = document.getElementById('mangaForm');
+    const coverInput = document.getElementById('cover');
+    const pv = document.getElementById('preview');
 
-    document.getElementById('form').onsubmit = e=>{
+    coverInput.addEventListener('change', () => {
+      const f = coverInput.files && coverInput.files[0];
+      if (!f) { pv.textContent = 'Aucun fichier'; return; }
+      const url = URL.createObjectURL(f);
+      pv.innerHTML = `<img src="${url}" style="width:100%;height:100%;object-fit:cover" />`;
+    });
+
+    form.onsubmit = async (e) => {
       e.preventDefault();
-      const series = allSeries();
-      const title = document.getElementById('title').value.trim();
-      if(!title){ alert('Titre requis'); return; }
 
-      const s = {
-        id: uid(),
-        title,
-        slug: slugify(title),
-        tags: document.getElementById('tags').value.split(',').map(s=>s.trim()).filter(Boolean),
-        status: document.getElementById('status').value,
-        description: document.getElementById('desc').value.trim(),
-        cover: coverData,
+      const title = document.getElementById('title').value.trim();
+      const tags  = document.getElementById('tags').value.split(',').map(s=>s.trim()).filter(Boolean);
+      const status= document.getElementById('status').value.trim();
+      const desc  = document.getElementById('desc').value.trim();
+
+      const slug = title
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g,'-')
+        .replace(/(^-|-$)/g,'');
+
+      let coverRef = null;
+      const file = coverInput.files && coverInput.files[0];
+      if (file) coverRef = await storeCover(file);
+
+      const s = allSeries();
+      s.push({
+        id: uid('serie'),
+        title, slug, tags, status,
+        description: desc,
+        coverRef,
         views: 0,
-        chapters: [] // logique côté accueil peut lire via allChapters()
-      };
-      series.push(s);
-      saveSeries(series);
-      document.getElementById('msg').textContent = 'Série enregistrée ✅';
-      setTimeout(()=>location.href='/admin.html', 500);
+        hot: false,
+      });
+      saveSeries(s);
+
+      location.href = '/admin.html';
     };
   </script>
 </body>
