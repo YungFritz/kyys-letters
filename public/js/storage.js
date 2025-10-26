@@ -1,65 +1,87 @@
-/* /public/js/storage.js
-   Storage simple pour Kyy's Letters (localStorage).
-   Fournit window.KyyStore : { allSeries, saveSeries, allChapters, saveChapters, mergeChaptersIntoSeries, slugify }
+/* public/js/storage.js
+   Store minimal unifié pour Kyy’s Letters (LocalStorage).
 */
-(function (w) {
-  const SERIES_KEY = 'kl_series';
-  const CHAPS_KEY  = 'kl_chapters';
+(function (global) {
+  const KEYS = {
+    series: "kl_series",
+    chapters: "kl_chapters",
+    members: "kl_members",
+    history: "kl_history",
+    fav: "kl_fav",
+  };
 
-  function safeParse(str, fallback) {
-    try { return JSON.parse(str); } catch { return fallback; }
+  const safeParse = (txt, def) => {
+    try { return JSON.parse(txt ?? "") ?? def; } catch { return def; }
+  };
+  const get = (k, def=[]) => safeParse(localStorage.getItem(k), def);
+  const set = (k, v) => localStorage.setItem(k, JSON.stringify(v));
+
+  // --------- Séries ---------
+  function allSeries() { return get(KEYS.series); }
+  function saveSeries(arr) { set(KEYS.series, arr); }
+  function upsertSeries(serie) {
+    const list = allSeries();
+    const i = list.findIndex(s => s.id === serie.id);
+    if (i >= 0) list[i] = serie; else list.push(serie);
+    saveSeries(list);
+  }
+  function deleteSeries(id) {
+    saveSeries(allSeries().filter(s => s.id !== id));
+    // supprime aussi les chapitres liés
+    saveChapters(allChapters().filter(c => c.seriesId !== id));
   }
 
-  function slugify(txt) {
-    return String(txt || '')
-      .toLowerCase()
-      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/(^-|-$)/g, '') || 'item';
+  // --------- Chapitres ---------
+  function allChapters() { return get(KEYS.chapters); }
+  function saveChapters(arr) { set(KEYS.chapters, arr); }
+  function addChapter(ch) { saveChapters([...allChapters(), ch]); }
+  function deleteChapter(id) { saveChapters(allChapters().filter(c => c.id !== id)); }
+
+  // --------- Membres (profils) ---------
+  function allMembers() { return get(KEYS.members); }
+  function saveMembers(arr) { set(KEYS.members, arr); }
+  function upsertMember(m) {
+    const list = allMembers();
+    const i = list.findIndex(x => x.id === m.id);
+    if (i >= 0) list[i] = m; else list.push(m);
+    saveMembers(list);
+  }
+  function deleteMember(id) { saveMembers(allMembers().filter(m => m.id !== id)); }
+
+  // --------- Divers ---------
+  function uid(prefix="id") { return `${prefix}_${Math.random().toString(36).slice(2,10)}`; }
+  function slugify(s) {
+    return (s || "").toString().toLowerCase()
+      .normalize("NFD").replace(/[\u0300-\u036f]/g,"")
+      .replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"").slice(0,80);
   }
 
-  // Séries
-  function allSeries() {
-    return safeParse(localStorage.getItem(SERIES_KEY), []);
+  // Historique / fav basiques si tu veux t’en servir plus tard
+  function getHistory() { return get(KEYS.history); }
+  function pushHistory(entry) {
+    const arr = getHistory().filter(e => e.key !== entry.key);
+    arr.unshift(entry);
+    set(KEYS.history, arr.slice(0,200));
   }
-  function saveSeries(arr) {
-    localStorage.setItem(SERIES_KEY, JSON.stringify(arr || []));
-  }
-
-  // Chapitres (optionnel si tu veux stocker séparément)
-  function allChapters() {
-    return safeParse(localStorage.getItem(CHAPS_KEY), []);
-  }
-  function saveChapters(arr) {
-    localStorage.setItem(CHAPS_KEY, JSON.stringify(arr || []));
-  }
-
-  // Merge chapitres isolés -> series[].chapters (au cas où)
-  function mergeChaptersIntoSeries() {
-    const series = allSeries();
-    const chaps = allChapters();
-    if (!series.length || !chaps.length) return series;
-
-    const bySerie = new Map(series.map(s => [s.id, s]));
-    for (const c of chaps) {
-      const s = bySerie.get(c.seriesId);
-      if (!s) continue;
-      s.chapters = s.chapters || [];
-      if (!s.chapters.find(x => x.id === c.id)) s.chapters.push(c);
-    }
-    for (const s of series) {
-      if (s.chapters) s.chapters.sort((a, b) => a.number - b.number);
-    }
-    saveSeries(series);
-    return series;
+  function getFav() { return get(KEYS.fav); }
+  function toggleFav(key) {
+    let arr = getFav();
+    arr = arr.includes(key) ? arr.filter(x=>x!==key) : [...arr, key];
+    set(KEYS.fav, arr);
+    return arr.includes(key);
   }
 
-  w.KyyStore = {
-    allSeries,
-    saveSeries,
-    allChapters,
-    saveChapters,
-    mergeChaptersIntoSeries,
-    slugify,
+  global.KyyStore = {
+    KEYS,
+    // séries
+    allSeries, saveSeries, upsertSeries, deleteSeries,
+    // chapitres
+    allChapters, saveChapters, addChapter, deleteChapter,
+    // profils
+    allMembers, saveMembers, upsertMember, deleteMember,
+    // util
+    uid, slugify,
+    // bonus
+    getHistory, pushHistory, getFav, toggleFav,
   };
 })(window);
