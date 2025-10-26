@@ -1,80 +1,28 @@
 <!doctype html>
 <html lang="fr">
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Kyy's letters — Accueil</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Kyy’s Letters — Accueil</title>
+    <link rel="stylesheet" href="/styles/base.css" />
   </head>
   <body>
     <div id="root"></div>
 
-    <!-- 1) Ton store minimal (déjà présent dans /public/js/storage.js) -->
+    <!-- Stockage -->
+    <script src="/js/db.js"></script>
     <script src="/js/storage.js"></script>
 
-    <!-- 2) Pont : on prépare window.__LIBRARY pour Home.tsx -->
+    <!-- Construire window.__LIBRARY pour Home -->
     <script>
-      (function () {
-        if (!window.KyyStore) { window.__LIBRARY = []; return; }
-        const { allSeries, allChapters } = KyyStore;
-
-        const series = allSeries();
-        const chaps  = allChapters();
-
-        // On insère les chapitres dans leur série, au format attendu par ton Home
-        window.__LIBRARY = series.map(s => {
-          const cs = chaps
-            .filter(c => c.seriesId === s.id)
-            .sort((a,b) => (+a.number||0) - (+b.number||0))
-            .map(c => ({
-              id: c.id,
-              name: c.title || "",
-              number: +c.number || 0,
-              lang: c.lang || "FR",
-              releaseDate: c.date || "",
-              pages: c.pages || []
-            }));
-          return {
-            id: s.id,
-            title: s.title,
-            slug: s.slug,
-            tags: s.tags || [],
-            cover: s.cover || "",
-            description: s.description || "",
-            chapters: cs,
-            views: s.views || 0,
-            hot: !!s.hot
-          };
-        });
+      (async () => {
+        const lib = await KyyStore.buildLibraryForHome();
+        window.__LIBRARY = lib;
+        document.dispatchEvent(new Event('kyy:library-ready'));
       })();
     </script>
 
-    <!-- 3) Démarrage de ton app React -->
+    <!-- Ton app React (Vite) -->
     <script type="module" src="/src/main.tsx"></script>
-
-    <!-- Patch libellés Perso → Personnelle et liens menu -->
-    <script>
-      window.addEventListener('DOMContentLoaded', function () {
-        document
-          .querySelectorAll('.nav-btn, .sheet-item, .desktop-nav a, .desktop-nav button')
-          .forEach(function (el) {
-            const t = (el.textContent||"").trim();
-            if (t === "Perso" || t === "PERSO") el.textContent = "Personnelle";
-          });
-
-        const MAP = {
-          'Personnelle': '/personnelle.html',
-          'Recrutement': '/recrutement.html',
-          'Admin': '/admin.html',
-          'Connexion': '/connexion.html',
-          'Accueil': '/'
-        };
-        document.addEventListener('click', function(e){
-          const a = e.target.closest?.('a.nav-btn, a.sheet-item, a.tab-item, button.nav-btn, button.sheet-item');
-          if(!a) return;
-          const t = (a.textContent||'').trim();
-          if(MAP[t]) { e.preventDefault(); location.href = MAP[t]; }
-        }, true);
-      });
-    </script>
   </body>
 </html>
