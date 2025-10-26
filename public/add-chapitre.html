@@ -45,6 +45,7 @@
       <input id="name" class="in" />
 
       <div class="label" style="margin-top:6px">Pages - (images)</div>
+      <!-- accepte JPG, PNG, WebP… -->
       <input id="pages" class="in" type="file" multiple accept="image/*" />
 
       <div id="thumbs" class="thumbs" style="margin-top:10px"></div>
@@ -63,6 +64,12 @@
   <script src="/js/db.js"></script>
   <script src="/js/storage.js"></script>
   <script>
+    // Tri naturel des fichiers (nombres et lettres)
+    const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
+    function sortFilesNaturally(files) {
+      return files.sort((a, b) => collator.compare(a.name, b.name));
+    }
+
     (async () => {
       const { uid, allSeries, saveSeries, allChapters, saveChapters, addPageBlob } = KyyStore;
 
@@ -83,10 +90,11 @@
         select.appendChild(o);
       });
 
-      // Prévisualisation des miniatures
+      // Prévisualisation des miniatures triées
       document.getElementById('pages').addEventListener('change', (e)=>{
         thumbs.innerHTML = '';
-        const files = Array.from(e.target.files||[]);
+        let files = Array.from(e.target.files||[]);
+        files = sortFilesNaturally(files);
         files.forEach(f=>{
           const r = new FileReader();
           r.onload = () => thumbs.insertAdjacentHTML('beforeend', `<img src="${String(r.result||'')}" />`);
@@ -96,11 +104,14 @@
 
       document.getElementById('form').addEventListener('submit', async (e)=>{
         e.preventDefault();
-        const files = Array.from(document.getElementById('pages').files||[]);
+        let files = Array.from(document.getElementById('pages').files||[]);
         if(!files.length){
           alert('Ajoute au moins une page.');
           return;
         }
+
+        // Tri naturel avant enregistrement
+        files = sortFilesNaturally(files);
 
         // Enregistrer chaque image dans IndexedDB et collecter l’ID
         const pagesRef = [];
