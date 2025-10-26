@@ -1,121 +1,103 @@
 <!doctype html>
 <html lang="fr">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Admin — Ajouter un chapitre</title>
-  <link rel="stylesheet" href="/styles/base.css"/>
-  <style>
-    .wrap{max-width:1100px;margin:22px auto;padding:0 16px}
-    .grid2{display:grid;grid-template-columns:1fr;gap:18px}
-    .in{height:38px;border:1px solid var(--border);border-radius:10px;background:#101112;color:#eaecef;padding:0 12px}
-    .row{display:flex;gap:10px}
-    .thumbs{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
-    .thumbs img{width:100%;height:90px;object-fit:cover;border-radius:8px;border:1px solid var(--border)}
-  </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Ajouter un chapitre — Admin</title>
+  <link rel="stylesheet" href="/styles/base.css" />
 </head>
 <body>
   <div class="header">
     <div class="bar">
       <div class="brand">K</div>
       <div class="badge">Admin</div>
-      <div class="right"><a class="btn" href="/admin.html">Panneau</a></div>
+      <div class="right">
+        <a class="btn" href="/admin.html">Panneau</a>
+      </div>
     </div>
   </div>
 
-  <div class="wrap grid2">
-    <form class="card" id="form">
-      <h2 style="margin:0 0 12px 0">Ajouter un chapitre</h2>
-
-      <div class="label">Série</div>
-      <select id="series" class="in"></select>
-
-      <div class="row" style="margin-top:8px">
-        <div style="flex:1">
-          <div class="label">Numéro</div>
-          <input id="number" class="in" type="number" min="0" step="1" />
+  <main class="container">
+    <div class="card">
+      <h2 style="margin:0 0 10px">Ajouter un chapitre</h2>
+      <form id="chapForm" class="grid" style="grid-template-columns:1fr 1fr; gap:12px">
+        <div>
+          <label class="label">Série</label>
+          <select id="series" class="in"></select>
         </div>
-        <div style="flex:1">
-          <div class="label">Langue</div>
-          <input id="lang" class="in" placeholder="FR, EN…" />
+        <div>
+          <label class="label">Langue</label>
+          <input id="lang" class="in" value="FR" />
         </div>
-      </div>
 
-      <div class="label" style="margin-top:6px">Nom du chapitre</div>
-      <input id="name" class="in" />
+        <div>
+          <label class="label">Numéro</label>
+          <input id="number" class="in" type="number" value="1" />
+        </div>
+        <div>
+          <label class="label">Nom du chapitre</label>
+          <input id="name" class="in" placeholder="Nom" />
+        </div>
 
-      <div class="label" style="margin-top:6px">Pages (images)</div>
-      <input id="pages" class="in" type="file" multiple accept="image/*" />
+        <div style="grid-column: 1 / -1;">
+          <label class="label">Pages (images)</label>
+          <input id="pages" class="in" type="file" multiple accept="image/*" />
+        </div>
 
-      <div id="thumbs" class="thumbs" style="margin-top:10px"></div>
+        <div style="grid-column: 1 / -1; display:flex; gap:10px; margin-top:10px">
+          <button class="btn acc" type="submit">Enregistrer</button>
+          <a class="btn" href="/admin.html">Annuler</a>
+        </div>
+      </form>
+    </div>
+  </main>
 
-      <div class="row" style="margin-top:12px">
-        <button class="btn acc" type="submit">Enregistrer</button>
-        <a class="btn" href="/admin.html">Annuler</a>
-      </div>
-      <div id="msg" class="label" style="margin-top:8px"></div>
-    </form>
-  </div>
+  <footer>© 2025 — Admin Kyy’s Letters</footer>
 
-  <footer>© 2025 — Kyy’s Letters</footer>
-
+  <script src="/js/db.js"></script>
   <script src="/js/storage.js"></script>
   <script>
-    const { uid, allSeries, saveSeries, allChapters, saveChapters } = KyyStore;
+    const { uid, allSeries, allChapters, saveChapters, storePages } = KyyStore;
 
-    const select = document.getElementById('series');
-    const thumbs = document.getElementById('thumbs');
-    const list = allSeries();
-    if(!list.length){ alert("Aucune série. Ajoute d’abord."); location.href="/add-manga.html"; }
-
-    // peupler select
-    list.forEach(s=>{
-      const o=document.createElement('option');
-      o.value=s.id; o.textContent=s.title; select.appendChild(o);
-    });
-
-    // preview pages
-    document.getElementById('pages').addEventListener('change', async (e)=>{
-      thumbs.innerHTML = '';
-      const files = Array.from(e.target.files||[]);
-      for (const f of files) {
-        const r = new FileReader();
-        r.onload = ()=> thumbs.insertAdjacentHTML('beforeend', `<img src="${String(r.result||'')}" />`);
-        r.readAsDataURL(f);
+    // remplir le select série
+    (function fillSeries() {
+      const select = document.getElementById('series');
+      const list = allSeries();
+      if (!list.length) {
+        alert("Aucune série. Ajoute d’abord une série.");
+        location.href = '/add-manga.html';
+        return;
       }
-    });
+      select.innerHTML = list.map(s => `<option value="${s.id}">${s.title}</option>`).join('');
+    })();
 
-    document.getElementById('form').addEventListener('submit', async (e)=>{
+    const form = document.getElementById('chapForm');
+    const pagesInput = document.getElementById('pages');
+
+    form.onsubmit = async (e) => {
       e.preventDefault();
-      const files = Array.from(document.getElementById('pages').files||[]);
-      if(!files.length){ alert('Ajoute au moins une page.'); return; }
+      const seriesId = document.getElementById('series').value;
+      const number   = Number(document.getElementById('number').value);
+      const name     = document.getElementById('name').value.trim();
+      const lang     = document.getElementById('lang').value.trim();
 
-      // encodage pages -> base64
-      const pages = await Promise.all(files.map(f=>new Promise(res=>{
-        const r=new FileReader(); r.onload=()=>res(String(r.result||'')); r.readAsDataURL(f);
-      })));
+      const files = pagesInput.files ? Array.from(pagesInput.files) : [];
+      const pagesRef = await storePages(files);
 
-      const ch = {
-        id: uid(),
-        seriesId: select.value,
-        number: Number(document.getElementById('number').value || 0),
-        name: document.getElementById('name').value.trim(),
-        lang: document.getElementById('lang').value.trim() || 'FR',
-        date: new Date().toISOString().slice(0,10),
-        pages
-      };
+      const c = allChapters();
+      c.push({
+        id: uid('chap'),
+        seriesId,
+        number,
+        name,
+        lang,
+        pagesRef,
+        date: new Date().toISOString(),
+      });
+      saveChapters(c);
 
-      // sauver
-      const chapters = allChapters(); chapters.push(ch); saveChapters(chapters);
-
-      // optionnel: compter côté série (si tu le veux)
-      const series = allSeries();
-      const s = series.find(x=>x.id===select.value);
-      if(s){ s.chapters = (s.chapters||[]); if(!s.chapters.includes(ch.id)) s.chapters.push(ch.id); saveSeries(series); }
-
-      document.getElementById('msg').textContent = 'Chapitre enregistré ✅';
-      setTimeout(()=>location.href='/admin.html', 500);
-    });
+      location.href = '/admin.html';
+    };
   </script>
 </body>
 </html>
