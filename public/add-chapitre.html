@@ -1,26 +1,30 @@
 <!doctype html>
 <html lang="fr">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Ajouter un chapitre — Admin</title>
-  <link rel="stylesheet" href="/styles/base.css" />
+  <link rel="stylesheet" href="/styles/base.css"/>
+  <style>
+    .thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px;margin-top:10px}
+    .thumb{height:110px;border:1px solid var(--border);background:#0e0f10;border-radius:8px;overflow:hidden;display:grid;place-items:center}
+    .thumb img{width:100%;height:100%;object-fit:cover}
+  </style>
 </head>
 <body>
   <div class="header">
     <div class="bar">
-      <div class="brand">K</div>
-      <div class="badge">Admin</div>
-      <div class="right">
-        <a class="btn" href="/admin.html">Panneau</a>
-      </div>
+      <a class="brand" href="/">K</a>
+      <span class="badge">Admin</span>
+      <div class="right"><a class="btn" href="/admin.html">Panneau</a></div>
     </div>
   </div>
 
-  <main class="container">
-    <div class="card">
-      <h2 style="margin:0 0 10px">Ajouter un chapitre</h2>
-      <form id="chapForm" class="grid" style="grid-template-columns:1fr 1fr; gap:12px">
+  <div class="container card">
+    <h2 style="margin:0 0 12px 0">Ajouter un chapitre</h2>
+
+    <form id="form">
+      <div class="grid" style="grid-template-columns:1fr 1fr; gap:10px">
         <div>
           <label class="label">Série</label>
           <select id="series" class="in"></select>
@@ -32,72 +36,106 @@
 
         <div>
           <label class="label">Numéro</label>
-          <input id="number" class="in" type="number" value="1" />
+          <input id="number" class="in" type="number" min="0" step="1" value="1" />
         </div>
         <div>
           <label class="label">Nom du chapitre</label>
           <input id="name" class="in" placeholder="Nom" />
         </div>
+      </div>
 
-        <div style="grid-column: 1 / -1;">
-          <label class="label">Pages (images)</label>
-          <input id="pages" class="in" type="file" multiple accept="image/*" />
-        </div>
+      <label class="label" style="margin-top:10px">Pages (images)</label>
+      <input id="pages" type="file" class="in" accept="image/*" multiple />
+      <div id="thumbs" class="thumbs"></div>
 
-        <div style="grid-column: 1 / -1; display:flex; gap:10px; margin-top:10px">
-          <button class="btn acc" type="submit">Enregistrer</button>
-          <a class="btn" href="/admin.html">Annuler</a>
-        </div>
-      </form>
-    </div>
-  </main>
+      <div style="margin-top:14px; display:flex; gap:10px">
+        <button class="btn acc" type="submit">Enregistrer</button>
+        <a class="btn" href="/admin.html">Annuler</a>
+      </div>
+    </form>
+  </div>
 
   <footer>© 2025 — Admin Kyy’s Letters</footer>
 
-  <script src="/js/db.js"></script>
   <script src="/js/storage.js"></script>
   <script>
-    const { uid, allSeries, allChapters, saveChapters, storePages } = KyyStore;
+    const { allSeries, saveSeries, allChapters, saveChapters, putImage } = KyyStore;
 
-    // remplir le select série
-    (function fillSeries() {
-      const select = document.getElementById('series');
-      const list = allSeries();
-      if (!list.length) {
-        alert("Aucune série. Ajoute d’abord une série.");
-        location.href = '/add-manga.html';
-        return;
-      }
-      select.innerHTML = list.map(s => `<option value="${s.id}">${s.title}</option>`).join('');
-    })();
+    const select   = document.getElementById("series");
+    const thumbs   = document.getElementById("thumbs");
+    const pagesEl  = document.getElementById("pages");
+    const numberEl = document.getElementById("number");
+    const nameEl   = document.getElementById("name");
+    const langEl   = document.getElementById("lang");
 
-    const form = document.getElementById('chapForm');
-    const pagesInput = document.getElementById('pages');
+    const seriesList = allSeries();
+    if (!seriesList.length) { alert("Aucune série. Ajoute d’abord une série."); location.href="/add-manga.html"; }
 
-    form.onsubmit = async (e) => {
-      e.preventDefault();
-      const seriesId = document.getElementById('series').value;
-      const number   = Number(document.getElementById('number').value);
-      const name     = document.getElementById('name').value.trim();
-      const lang     = document.getElementById('lang').value.trim();
+    // Remplir la liste
+    seriesList.forEach(s=>{
+      const opt=document.createElement("option");
+      opt.value=s.id; opt.textContent=s.title; select.appendChild(opt);
+    });
 
-      const files = pagesInput.files ? Array.from(pagesInput.files) : [];
-      const pagesRef = await storePages(files);
-
-      const c = allChapters();
-      c.push({
-        id: uid('chap'),
-        seriesId,
-        number,
-        name,
-        lang,
-        pagesRef,
-        date: new Date().toISOString(),
+    // Aperçus
+    pagesEl.addEventListener("change", ()=>{
+      thumbs.innerHTML="";
+      const files = Array.from(pagesEl.files||[]);
+      if(!files.length){ return; }
+      files.forEach(f=>{
+        const url = URL.createObjectURL(f);
+        const div = document.createElement("div"); div.className="thumb";
+        const img = new Image(); img.src=url;
+        div.appendChild(img); thumbs.appendChild(div);
       });
-      saveChapters(c);
+    });
 
-      location.href = '/admin.html';
-    };
+    document.getElementById("form").addEventListener("submit", async (e)=>{
+      e.preventDefault();
+
+      const sid = select.value;
+      const serie = seriesList.find(s=>s.id===sid);
+      if(!serie){ alert("Série invalide."); return; }
+
+      const num   = parseInt(numberEl.value||"0",10);
+      const title = nameEl.value||"";
+      const lang  = (langEl.value||"FR").toUpperCase();
+
+      const files = Array.from(pagesEl.files||[]);
+      if(!files.length){ alert("Ajoute au moins une image."); return; }
+
+      // Sauver chaque page en IndexedDB
+      const pageKeys = [];
+      for (let i=0;i<files.length;i++){
+        const key = `page:${sid}:${num}:${i}`;
+        await putImage(key, files[i]);
+        pageKeys.push(key);
+      }
+
+      // Metas
+      const chapterId = crypto.randomUUID();
+      const chapterMeta = {
+        id: chapterId,
+        seriesId: sid,
+        number: num,
+        name: title,
+        lang,
+        releaseDate: new Date().toISOString().slice(0,10),
+        pages: pageKeys
+      };
+
+      // Màj série + base chapitres
+      serie.chapters = serie.chapters || [];
+      serie.chapters.push({ id: chapterId });
+      saveSeries(seriesList);
+
+      const chAll = allChapters();
+      chAll.push(chapterMeta);
+      saveChapters(chAll);
+
+      alert("Chapitre enregistré.");
+      location.href = "/admin.html";
+    });
   </script>
 </body>
 </html>
