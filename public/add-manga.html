@@ -7,12 +7,9 @@
   <link rel="stylesheet" href="/styles/base.css"/>
   <style>
     .wrap{max-width:1100px;margin:22px auto;padding:0 16px}
-    .grid2{display:grid;grid-template-columns:1fr 320px;gap:18px}
-    .in{height:38px;border:1px solid var(--border);border-radius:10px;background:#101112;color:#eaecef;padding:0 12px}
-    textarea.in{height:120px;padding:10px}
-    .preview{border:1px solid var(--border);border-radius:12px;background:#0f1012;display:grid;place-items:center;color:var(--muted);min-height:220px}
-    .preview img{max-width:100%}
-    .row{display:flex;gap:10px;align-items:center}
+    .in{height:38px;border:1px solid var(--border);border-radius:10px;background:#101112;color:#eaecef;padding:0 12px;width:100%;}
+    .row{display:flex;gap:10px}
+    textarea.in{height:100px;resize:vertical}
   </style>
 </head>
 <body>
@@ -23,84 +20,84 @@
       <div class="right"><a class="btn" href="/admin.html">Panneau</a></div>
     </div>
   </div>
-
-  <div class="wrap grid2">
+  <div class="wrap">
     <form class="card" id="form">
       <h2 style="margin:0 0 12px 0">Ajouter une série</h2>
-
       <div class="label">Titre</div>
-      <input id="title" class="in" required />
-
-      <div class="row" style="margin-top:8px">
+      <input id="title" class="in" placeholder="Titre de la série"/>
+      <div class="label" style="margin-top:6px">Slug (auto)</div>
+      <input id="slug" class="in" readonly style="opacity:.6"/>
+      <div class="label" style="margin-top:6px">Tags (séparés par des virgules)</div>
+      <input id="tags" class="in" placeholder="action, aventure, ..."/>
+      <div class="row" style="margin-top:6px">
         <div style="flex:1">
-          <div class="label">Tags (séparés par virgules)</div>
-          <input id="tags" class="in" placeholder="action, aventure" />
-        </div>
-        <div style="width:210px">
           <div class="label">Statut</div>
           <select id="status" class="in">
-            <option value="en-cours">En cours</option>
-            <option value="termine">Terminé</option>
-            <option value="drop">Drop</option>
+            <option value="ongoing">En cours</option>
+            <option value="completed">Terminé</option>
           </select>
         </div>
+        <div style="flex:1">
+          <div class="label">Couverture</div>
+          <input id="cover" class="in" type="file" accept="image/*" />
+        </div>
       </div>
-
       <div class="label" style="margin-top:6px">Description</div>
-      <textarea id="desc" class="in" placeholder="Pitch rapide"></textarea>
-
-      <div class="label" style="margin-top:6px">Cover</div>
-      <input id="cover" type="file" accept="image/*" />
-
+      <textarea id="description" class="in" placeholder="Synopsis..."></textarea>
       <div class="row" style="margin-top:12px">
         <button class="btn acc" type="submit">Enregistrer</button>
         <a class="btn" href="/admin.html">Annuler</a>
       </div>
       <div id="msg" class="label" style="margin-top:8px"></div>
     </form>
-
-    <div class="card">
-      <h3 style="margin:0 0 8px 0">Aperçu cover</h3>
-      <div id="preview" class="preview">—</div>
-    </div>
   </div>
-
   <footer>© 2025 — Kyy’s Letters</footer>
-
   <script src="/js/storage.js"></script>
   <script>
-    const { uid, slugify, allSeries, saveSeries } = KyyStore;
-
-    let coverData = "";
-    document.getElementById('cover').onchange = e=>{
-      const f = e.target.files?.[0]; if(!f) return;
-      const r = new FileReader();
-      r.onload = () => { coverData = String(r.result||''); document.getElementById('preview').innerHTML = `<img src="${coverData}" />`; };
-      r.readAsDataURL(f);
-    };
-
-    document.getElementById('form').onsubmit = e=>{
+    // Redirection si non connecté
+    if (!KyyStore.isLogged()) {
+      location.href = '/';
+    }
+    const { allSeries, saveSeries, uid, slugify } = KyyStore;
+    const titleEl = document.getElementById('title');
+    const slugEl = document.getElementById('slug');
+    titleEl.addEventListener('input', () => {
+      slugEl.value = slugify(titleEl.value.trim());
+    });
+    document.getElementById('form').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const series = allSeries();
-      const title = document.getElementById('title').value.trim();
-      if(!title){ alert('Titre requis'); return; }
-
-      const s = {
-        id: uid(),
+      const title = titleEl.value.trim();
+      const slug = slugEl.value.trim();
+      const tagsStr = document.getElementById('tags').value.trim();
+      const status = document.getElementById('status').value;
+      const description = document.getElementById('description').value.trim();
+      if (!title) { alert('Veuillez saisir un titre.'); return; }
+      let coverData = '';
+      const file = document.getElementById('cover').files[0];
+      if (file) {
+        // Convertir en DataURL pour l'aperçu de la couverture; on peut aussi utiliser addPageBlob mais ce n'est pas nécessaire ici.
+        const reader = new FileReader();
+        coverData = await new Promise(resolve => {
+          reader.onload = () => resolve(String(reader.result || ''));
+          reader.readAsDataURL(file);
+        });
+      }
+      const serie = {
+        id: uid('serie'),
         title,
-        slug: slugify(title),
-        tags: document.getElementById('tags').value.split(',').map(s=>s.trim()).filter(Boolean),
-        status: document.getElementById('status').value,
-        description: document.getElementById('desc').value.trim(),
+        slug,
+        tags: tagsStr ? tagsStr.split(/\s*,\s*/).filter(x=>x) : [],
+        status,
+        description,
         cover: coverData,
-        views: 0,
-        chapters: [] // logique côté accueil peut lire via allChapters()
+        chapters: []
       };
-      series.push(s);
-      saveSeries(series);
+      const list = allSeries();
+      list.push(serie);
+      saveSeries(list);
       document.getElementById('msg').textContent = 'Série enregistrée ✅';
-      setTimeout(()=>location.href='/admin.html', 500);
-    };
+      setTimeout(() => location.href = '/admin.html', 500);
+    });
   </script>
 </body>
 </html>
