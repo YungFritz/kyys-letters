@@ -58,7 +58,8 @@ function loadLibrary(): Series[] {
     const chs = (bySerie[s.id] || []).sort((a, b) => (a.number || 0) - (b.number || 0));
     return {
       id: s.id,
-      title: s.title || "Sans titre",
+      // utilise s.title ou s.name si title est manquant, sinon "Sans titre"
+      title: s.title || s.name || "Sans titre",
       slug: s.slug,
       tags: s.tags || [],
       cover: s.cover || "",
@@ -154,9 +155,16 @@ function MobileSheet({
 
 function Card({ s }: { s: Series }) {
   return (
-    <a style={{ textDecoration: "none", color: "inherit" }} href={`/manga/${s.slug}`}>
+    // Correction : lien vers la page série passe par manga.html?slug=...
+    <a style={{ textDecoration: "none", color: "inherit" }} href={`/manga.html?slug=${s.slug}`}>
       <div className="card">
-        <div className="cover">{s.cover ? <img src={s.cover} alt={s.title} style={{width:'100%',height:'100%',objectFit:'cover'}}/> : "COVER"}</div>
+        <div className="cover">
+          {s.cover ? (
+            <img src={s.cover} alt={s.title} style={{ width:'100%', height:'100%', objectFit:'cover' }} />
+          ) : (
+            "COVER"
+          )}
+        </div>
         <div className="card-body">
           <div className="card-title">{s.title}</div>
           <div className="card-meta">
@@ -286,7 +294,12 @@ export default function Home() {
             ) : (
               <div className="latest-grid">
                 {latest.map(({ series, chapter }) => (
-                  <a href={`/reader.html?id=${chapter.id}`} key={chapter.id} className="card" style={{ textDecoration:'none', color:'inherit' }}>
+                  <a
+                    href={`/reader.html?id=${chapter.id}`}
+                    key={chapter.id}
+                    className="card"
+                    style={{ textDecoration: 'none', color: 'inherit' }}
+                  >
                     <div className="cover">PAGE</div>
                     <div style={{ padding: 12 }}>
                       <div style={{ fontWeight: 800 }}>{series.title}</div>
