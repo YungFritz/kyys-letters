@@ -1,134 +1,55 @@
 <!doctype html>
 <html lang="fr">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Lecteur — Kyy’s Letters</title>
-  <link rel="stylesheet" href="/styles/base.css"/>
+  <link rel="stylesheet" href="/styles/base.css">
   <style>
-    body{background:#0f1011;color:#e9ebee}
-    .wrap{max-width:980px;margin:18px auto;padding:0 12px}
-    .topbar{display:flex;align-items:center;gap:10px;margin-bottom:10px}
-    .topbar .brand{width:34px;height:34px;border-radius:10px;border:1px solid var(--border);display:grid;place-items:center;background:#121315}
-    .navline{display:flex;gap:8px;flex-wrap:wrap;margin-left:auto}
-    .page{display:block;margin:0 auto 16px auto;width:100%;max-width:980px;border-radius:12px;border:1px solid var(--border);background:#0e0f10}
-    .muted{color:var(--muted)}
-    .controls{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0}
-    .btn{display:inline-grid;place-items:center;height:36px;padding:0 12px;border:1px solid var(--border);border-radius:10px;background:#101112;color:#e9ebee}
-    .empty{display:grid;place-items:center;border:1px dashed var(--border);border-radius:12px;padding:22px;color:var(--muted);background:#101213}
-    .footer{margin:20px 0 60px;text-align:center;color:var(--muted)}
+    body{background:#0f1011;color:#e9ebee;margin:0}
+    .wrap{max-width:980px;margin:0 auto;padding:10px}
+    .page{width:100%;margin:0 0 14px 0;border-radius:8px;overflow:hidden;background:#111}
+    .page img{width:100%;display:block}
+    .topbar{position:sticky;top:0;background:rgba(10,10,10,.85);backdrop-filter:blur(6px);border-bottom:1px solid rgba(255,255,255,.06);padding:10px}
+    a.btn{display:inline-grid;place-items:center;height:34px;padding:0 12px;background:#101112;border:1px solid rgba(255,255,255,.06);border-radius:10px;text-decoration:none;color:#e9ebee}
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="topbar">
-      <div class="brand">K</div>
-      <div id="title" style="font-weight:800">Lecteur</div>
-      <div class="navline">
-        <a class="btn" href="/">Accueil</a>
-        <a class="btn" href="/admin.html">Admin</a>
-      </div>
+  <div class="topbar">
+    <div class="wrap">
+      <a class="btn" href="/">Accueil</a>
+      <a class="btn" href="/admin.html" style="margin-left:8px">Admin</a>
     </div>
-
-    <div id="meta" class="muted" style="margin-bottom:10px"></div>
-
-    <div class="controls">
-      <button class="btn" id="prevChap">← Chapitre précédent</button>
-      <button class="btn" id="nextChap">Chapitre suivant →</button>
-      <button class="btn" id="fs">Plein écran (F)</button>
-    </div>
-
-    <div id="pages"></div>
-
-    <div id="empty" class="empty" style="display:none">
-      Chapitre introuvable. Vérifie l’URL: <code>?id=&lt;chapterId&gt;</code>
-    </div>
-
-    <div class="footer">© 2025 — Kyy’s Letters</div>
   </div>
 
+  <div class="wrap" id="root">
+    <div class="label">Chargement…</div>
+  </div>
+
+  <script src="/js/db.js"></script>
   <script src="/js/storage.js"></script>
   <script>
-    // util URL
+  (async () => {
     const params = new URLSearchParams(location.search);
-    const chapId = params.get('id');
+    const id = params.get('id');
 
-    const { allSeries, allChapters } = KyyStore;
-    const pagesEl = document.getElementById('pages');
-    const emptyEl = document.getElementById('empty');
-    const titleEl = document.getElementById('title');
-    const metaEl = document.getElementById('meta');
-
-    const chapters = allChapters();
-    const chapter = chapters.find(c => c.id === chapId);
-
-    if(!chapter){
-      emptyEl.style.display = 'grid';
-    } else {
-      const series = allSeries();
-      const serie = series.find(s => s.id === chapter.seriesId);
-
-      titleEl.textContent = `${serie ? serie.title : '—'} — Chapitre ${chapter.number}${chapter.name ? ' : '+chapter.name : ''}`;
-      metaEl.textContent = `${chapter.lang || '—'} • ${chapter.date || '—'} • ${chapter.pages?.length || 0} page(s)`;
-
-      // pages
-      pagesEl.innerHTML = '';
-      (chapter.pages || []).forEach((src, idx) => {
-        const img = new Image();
-        img.loading = 'lazy';
-        img.alt = `Page ${idx+1}`;
-        img.className = 'page';
-        img.src = src;
-        pagesEl.appendChild(img);
-      });
-
-      // nav chapitres
-      const serieChaps = chapters
-        .filter(c => c.seriesId === chapter.seriesId)
-        .sort((a,b)=> (a.number||0) - (b.number||0));
-
-      const i = serieChaps.findIndex(c => c.id === chapter.id);
-      const prev = i > 0 ? serieChaps[i-1] : null;
-      const next = i >= 0 && i < serieChaps.length-1 ? serieChaps[i+1] : null;
-
-      document.getElementById('prevChap').onclick = ()=> prev && (location.href = `/reader.html?id=${prev.id}`);
-      document.getElementById('nextChap').onclick = ()=> next && (location.href = `/reader.html?id=${next.id}`);
-
-      // Raccourcis clavier
-      window.nextPage = function(){
-        // scroll à la prochaine image
-        const imgs = [...document.querySelectorAll('.page')];
-        const y = window.scrollY;
-        const nextImg = imgs.find(img => img.getBoundingClientRect().top + window.scrollY > y + 10);
-        if(nextImg) nextImg.scrollIntoView({behavior:'smooth', block:'start'});
-        else {
-          // fin de chapitre -> suivant si existe
-          if (next) location.href = `/reader.html?id=${next.id}`;
-        }
-      };
-      window.prevPage = function(){
-        const imgs = [...document.querySelectorAll('.page')];
-        const y = window.scrollY;
-        const prevImg = [...imgs].reverse().find(img => img.getBoundingClientRect().top + window.scrollY < y - 10);
-        if(prevImg) prevImg.scrollIntoView({behavior:'smooth', block:'start'});
-        else {
-          // début -> aller au précédent si existe
-          if (prev) location.href = `/reader.html?id=${prev.id}`;
-        }
-      };
-      window.toggleFullscreen = function(){
-        if (!document.fullscreenElement) document.documentElement.requestFullscreen?.();
-        else document.exitFullscreen?.();
-      };
-      document.getElementById('fs').onclick = () => window.toggleFullscreen();
-
-      document.addEventListener('keydown', e=>{
-        const k = e.key.toLowerCase();
-        if(k === 'arrowright'){ e.preventDefault(); window.nextPage(); }
-        if(k === 'arrowleft'){ e.preventDefault(); window.prevPage(); }
-        if(k === 'f'){ e.preventDefault(); window.toggleFullscreen(); }
-      });
+    const chaps = KyyStore.allChapters();
+    const chap = chaps.find(c => c.id === id);
+    const root = document.getElementById('root');
+    if (!chap) {
+      root.innerHTML = '<div class="label">Chapitre introuvable.</div>';
+      return;
     }
+
+    root.innerHTML = '';
+    for (const ref of chap.pagesRef || []) {
+      const url = await KyyStore.pageURL(ref);
+      const div = document.createElement('div');
+      div.className = 'page';
+      div.innerHTML = url ? `<img loading="lazy" src="${url}" alt="">` : `<div class="label">Image manquante</div>`;
+      root.appendChild(div);
+    }
+  })();
   </script>
 </body>
 </html>
