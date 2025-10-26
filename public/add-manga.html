@@ -1,108 +1,120 @@
 <!doctype html>
 <html lang="fr">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Ajouter une série — Admin</title>
-  <link rel="stylesheet" href="/styles/base.css" />
+  <link rel="stylesheet" href="/styles/base.css"/>
 </head>
 <body>
   <div class="header">
     <div class="bar">
-      <div class="brand">K</div>
-      <div class="badge">Admin</div>
-      <div class="right">
-        <a class="btn" href="/admin.html">Panneau</a>
-      </div>
+      <a class="brand" href="/">K</a>
+      <span class="badge">Admin</span>
+      <div class="right"><a class="btn" href="/admin.html">Panneau</a></div>
     </div>
   </div>
 
-  <main class="container">
-    <div class="grid" style="grid-template-columns: 1.4fr .9fr; gap:18px">
-      <div class="card">
-        <h2 style="margin:0 0 10px">Ajouter une série</h2>
-        <form id="mangaForm" class="grid" style="grid-template-columns:1fr">
-          <label class="label">Titre</label>
-          <input id="title" class="in" placeholder="Titre" required />
+  <div class="container grid" style="grid-template-columns:2fr 1fr; gap:18px">
+    <form id="form" class="card">
+      <h2 style="margin:0 0 12px 0">Ajouter une série</h2>
 
-          <label class="label">Tags (séparés par virgules)</label>
-          <input id="tags" class="in" placeholder="action, fantasy" />
+      <label class="label">Titre</label>
+      <input id="title" class="in" placeholder="Titre" required />
 
-          <label class="label">Statut</label>
-          <select id="status" class="in">
-            <option value="En cours">En cours</option>
-            <option value="Terminé">Terminé</option>
-            <option value="Pause">Pause</option>
-          </select>
+      <label class="label">Tags (séparés par virgules)</label>
+      <input id="tags" class="in" placeholder="action, fantasy" />
 
-          <label class="label">Description</label>
-          <textarea id="desc" class="in" rows="6" placeholder="Synopsis..."></textarea>
+      <label class="label">Statut</label>
+      <select id="status" class="in">
+        <option>En cours</option>
+        <option>Terminé</option>
+        <option>Pause</option>
+      </select>
 
-          <label class="label">Cover</label>
-          <input id="cover" type="file" accept="image/*" />
+      <label class="label">Description</label>
+      <textarea id="desc" class="in" rows="8" placeholder="Synopsis..."></textarea>
 
-          <div style="margin-top:12px; display:flex; gap:10px">
-            <button class="btn acc" type="submit">Enregistrer</button>
-            <a class="btn" href="/admin.html">Annuler</a>
-          </div>
-        </form>
+      <label class="label">Cover</label>
+      <input id="cover" type="file" accept="image/*" class="in" />
+
+      <div style="margin-top:14px; display:flex; gap:10px">
+        <button class="btn acc" type="submit">Enregistrer</button>
+        <a class="btn" href="/admin.html">Annuler</a>
       </div>
+    </form>
 
-      <aside class="card">
-        <h3 style="margin:0 0 8px">Aperçu cover</h3>
-        <div id="preview" class="cover" style="height:360px; display:grid; place-items:center; color:#aaa;">Aucun fichier</div>
-      </aside>
-    </div>
-  </main>
+    <aside class="card" id="previewCard" style="min-height:260px; display:grid; place-items:center">
+      <div id="pv" class="label">Aucun fichier</div>
+    </aside>
+  </div>
 
   <footer>© 2025 — Admin Kyy’s Letters</footer>
 
-  <script src="/js/db.js"></script>
   <script src="/js/storage.js"></script>
   <script>
-    const { uid, allSeries, saveSeries, storeCover } = KyyStore;
+    const { allSeries, saveSeries, putImage } = KyyStore;
 
-    const form = document.getElementById('mangaForm');
-    const coverInput = document.getElementById('cover');
-    const pv = document.getElementById('preview');
+    const titleEl = document.getElementById("title");
+    const tagsEl  = document.getElementById("tags");
+    const statusEl= document.getElementById("status");
+    const descEl  = document.getElementById("desc");
+    const coverEl = document.getElementById("cover");
+    const pvEl    = document.getElementById("pv");
 
-    coverInput.addEventListener('change', () => {
-      const f = coverInput.files && coverInput.files[0];
-      if (!f) { pv.textContent = 'Aucun fichier'; return; }
+    // Aperçu cover
+    coverEl.addEventListener("change", () => {
+      pvEl.innerHTML = "";
+      const f = coverEl.files?.[0];
+      if (!f) { pvEl.textContent = "Aucun fichier"; return; }
       const url = URL.createObjectURL(f);
-      pv.innerHTML = `<img src="${url}" style="width:100%;height:100%;object-fit:cover" />`;
+      const img = new Image();
+      img.src = url;
+      img.style.maxWidth = "100%";
+      img.style.borderRadius = "10px";
+      pvEl.appendChild(img);
     });
 
-    form.onsubmit = async (e) => {
+    function slugify(str){
+      return str.toLowerCase()
+        .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+        .replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
+    }
+
+    document.getElementById("form").addEventListener("submit", async (e) => {
       e.preventDefault();
 
-      const title = document.getElementById('title').value.trim();
-      const tags  = document.getElementById('tags').value.split(',').map(s=>s.trim()).filter(Boolean);
-      const status= document.getElementById('status').value.trim();
-      const desc  = document.getElementById('desc').value.trim();
+      const title = titleEl.value.trim();
+      if (!title) { alert("Titre requis."); return; }
 
-      const slug = title
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g,'-')
-        .replace(/(^-|-$)/g,'');
+      const list = allSeries();
+      const id   = crypto.randomUUID();
+      const slug = slugify(title);
+      const tags = tagsEl.value.split(",").map(t=>t.trim()).filter(Boolean);
 
-      let coverRef = null;
-      const file = coverInput.files && coverInput.files[0];
-      if (file) coverRef = await storeCover(file);
+      const serie = {
+        id, title, slug, tags,
+        description: descEl.value || "",
+        status: statusEl.value || "En cours",
+        coverKey: null,
+        views: 0, hot: false,
+        chapters: []
+      };
 
-      const s = allSeries();
-      s.push({
-        id: uid('serie'),
-        title, slug, tags, status,
-        description: desc,
-        coverRef,
-        views: 0,
-        hot: false,
-      });
-      saveSeries(s);
+      // cover -> IndexedDB
+      const f = coverEl.files?.[0];
+      if (f) {
+        const key = `cover:${id}`;
+        await putImage(key, f);
+        serie.coverKey = key;
+      }
 
-      location.href = '/admin.html';
-    };
+      list.push(serie);
+      saveSeries(list);
+
+      alert("Série ajoutée.");
+      location.href = "/admin.html";
+    });
   </script>
 </body>
 </html>
