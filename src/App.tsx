@@ -166,16 +166,7 @@ function Card({ s }: { s: Series }) {
             "COVER"
           )}
         </div>
-        <div
-          className="card-body"
-          style={{
-            background: "linear-gradient(180deg,var(--panel),var(--panel-2))",
-            border: "1px solid var(--border)",
-            borderTop: "none",
-            borderRadius: "0 0 12px 12px",
-            padding: "10px",
-          }}
-        >
+        <div className="card-body">
           <div className="card-title">{s.title}</div>
           <div className="card-meta">
             <div className="meta-left">
@@ -384,9 +375,9 @@ export default function App() {
                   <div className="muted">
                     Lien discord / contact / bouton
                   </div>
-                  <a className="btn" href="#" style={{ marginTop: 10 }}>
-                    Ouvrir
-                  </a>
+                    <a className="btn" href="#" style={{ marginTop: 10 }}>
+                      Ouvrir
+                    </a>
                 </div>
                 <div>
                   {homeImg2 ? (
@@ -452,17 +443,7 @@ export default function App() {
                 {latest.map(({ series, chapter }) => (
                   <div key={chapter.id} className="card">
                     <div className="cover">PAGE</div>
-                    <div
-                      className="card-body"
-                      style={{
-                        background:
-                          "linear-gradient(180deg,var(--panel),var(--panel-2))",
-                        border: "1px solid var(--border)",
-                        borderTop: "none",
-                        borderRadius: "0 0 12px 12px",
-                        padding: "10px",
-                      }}
-                    >
+                    <div className="card-body">
                       <div className="card-title">
                         {series.title}
                       </div>
