@@ -2,17 +2,16 @@
 <html lang="fr">
 <head>
   <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Admin — Ajouter un chapitre</title>
   <link rel="stylesheet" href="/styles/base.css"/>
   <style>
-    .wrap{max-width:980px;margin:22px auto;padding:0 16px}
-    .f{display:grid;gap:10px}
+    .wrap{max-width:1100px;margin:22px auto;padding:0 16px}
+    .grid2{display:grid;grid-template-columns:1fr;gap:18px}
     .in{height:38px;border:1px solid var(--border);border-radius:10px;background:#101112;color:#eaecef;padding:0 12px}
-    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-    .thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:8px}
-    .thumbs img{width:100%;height:90px;object-fit:cover;border:1px solid var(--border);border-radius:8px;background:#0f1012}
+    .row{display:flex;gap:10px}
+    .thumbs{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
+    .thumbs img{width:100%;height:90px;object-fit:cover;border-radius:8px;border:1px solid var(--border)}
   </style>
 </head>
 <body>
@@ -20,108 +19,103 @@
     <div class="bar">
       <div class="brand">K</div>
       <div class="badge">Admin</div>
-      <div class="right">
-        <a class="btn" href="/">Accueil</a>
-        <a class="btn" href="/admin.html">Panneau</a>
+      <div class="right"><a class="btn" href="/admin.html">Panneau</a></div>
+    </div>
+  </div>
+
+  <div class="wrap grid2">
+    <form class="card" id="form">
+      <h2 style="margin:0 0 12px 0">Ajouter un chapitre</h2>
+
+      <div class="label">Série</div>
+      <select id="series" class="in"></select>
+
+      <div class="row" style="margin-top:8px">
+        <div style="flex:1">
+          <div class="label">Numéro</div>
+          <input id="number" class="in" type="number" min="0" step="1" />
+        </div>
+        <div style="flex:1">
+          <div class="label">Langue</div>
+          <input id="lang" class="in" placeholder="FR, EN…" />
+        </div>
       </div>
-    </div>
-  </div>
 
-  <div class="wrap">
-    <div class="card">
-      <h2 style="margin:0 0 10px 0">Ajouter un chapitre</h2>
+      <div class="label" style="margin-top:6px">Nom du chapitre</div>
+      <input id="name" class="in" />
 
-      <form id="form" class="f">
-        <select id="series" class="in" required></select>
+      <div class="label" style="margin-top:6px">Pages (images)</div>
+      <input id="pages" class="in" type="file" multiple accept="image/*" />
 
-        <div class="grid2">
-          <input id="number" class="in" placeholder="Numéro (ex: 1)" required />
-          <input id="lang" class="in" placeholder="Langue (FR, EN…)" />
-        </div>
+      <div id="thumbs" class="thumbs" style="margin-top:10px"></div>
 
-        <input id="name" class="in" placeholder="Nom du chapitre" />
-
-        <div class="row">
-          <input id="pages" class="in" type="file" multiple accept="image/*" style="flex:1"/>
-          <button class="btn acc" type="submit">Enregistrer</button>
-          <a class="btn" href="/admin.html">Annuler</a>
-        </div>
-
-        <div id="thumbs" class="thumbs"></div>
-      </form>
-
+      <div class="row" style="margin-top:12px">
+        <button class="btn acc" type="submit">Enregistrer</button>
+        <a class="btn" href="/admin.html">Annuler</a>
+      </div>
       <div id="msg" class="label" style="margin-top:8px"></div>
-    </div>
+    </form>
   </div>
 
-  <footer>© 2025 — Admin Kyy’s Letters</footer>
+  <footer>© 2025 — Kyy’s Letters</footer>
 
   <script src="/js/storage.js"></script>
   <script>
-    const { allSeries, saveSeries } = KyyStore;
+    const { uid, allSeries, saveSeries, allChapters, saveChapters } = KyyStore;
 
     const select = document.getElementById('series');
     const thumbs = document.getElementById('thumbs');
     const list = allSeries();
     if(!list.length){ alert("Aucune série. Ajoute d’abord."); location.href="/add-manga.html"; }
 
-    // peupler le select
+    // peupler select
     list.forEach(s=>{
       const o=document.createElement('option');
-      o.value=s.id; o.textContent=s.title;
-      select.appendChild(o);
+      o.value=s.id; o.textContent=s.title; select.appendChild(o);
     });
 
     // preview pages
     document.getElementById('pages').addEventListener('change', async (e)=>{
-      const files=[...(e.target.files||[])];
-      thumbs.innerHTML='';
-      for(const f of files){
-        const b64 = await toBase64(f);
-        const img = new Image();
-        img.src = b64;
-        thumbs.appendChild(img);
+      thumbs.innerHTML = '';
+      const files = Array.from(e.target.files||[]);
+      for (const f of files) {
+        const r = new FileReader();
+        r.onload = ()=> thumbs.insertAdjacentHTML('beforeend', `<img src="${String(r.result||'')}" />`);
+        r.readAsDataURL(f);
       }
     });
 
     document.getElementById('form').addEventListener('submit', async (e)=>{
       e.preventDefault();
-      const seriesId = select.value;
-      const number = parseInt(document.getElementById('number').value,10);
-      const name = document.getElementById('name').value.trim();
-      const lang = document.getElementById('lang').value.trim();
-      const files = [...document.getElementById('pages').files];
+      const files = Array.from(document.getElementById('pages').files||[]);
+      if(!files.length){ alert('Ajoute au moins une page.'); return; }
 
-      if(!seriesId) return msg('Choisis une série.');
-      if(!number || number < 1) return msg('Numéro de chapitre invalide.');
-      if(!files.length) return msg('Ajoute au moins 1 page.');
+      // encodage pages -> base64
+      const pages = await Promise.all(files.map(f=>new Promise(res=>{
+        const r=new FileReader(); r.onload=()=>res(String(r.result||'')); r.readAsDataURL(f);
+      })));
 
-      const s = list.find(x=>x.id===seriesId);
-      const pages = await Promise.all(files.map(toBase64));
-
-      const chap = {
-        id: crypto.randomUUID(),
-        name, number, lang,
-        releaseDate: new Date().toISOString().slice(0,10),
+      const ch = {
+        id: uid(),
+        seriesId: select.value,
+        number: Number(document.getElementById('number').value || 0),
+        name: document.getElementById('name').value.trim(),
+        lang: document.getElementById('lang').value.trim() || 'FR',
+        date: new Date().toISOString().slice(0,10),
         pages
       };
 
-      s.chapters = s.chapters || [];
-      s.chapters.push(chap);
-      s.chapters.sort((a,b)=> a.number - b.number);
+      // sauver
+      const chapters = allChapters(); chapters.push(ch); saveChapters(chapters);
 
-      saveSeries(list);
-      msg('Chapitre enregistré ✅');
-      // location.href='/admin.html';
+      // optionnel: compter côté série (si tu le veux)
+      const series = allSeries();
+      const s = series.find(x=>x.id===select.value);
+      if(s){ s.chapters = (s.chapters||[]); if(!s.chapters.includes(ch.id)) s.chapters.push(ch.id); saveSeries(series); }
+
+      document.getElementById('msg').textContent = 'Chapitre enregistré ✅';
+      setTimeout(()=>location.href='/admin.html', 500);
     });
-
-    function msg(t){ document.getElementById('msg').textContent=t; }
-    function toBase64(file){
-      return new Promise((res,rej)=>{
-        const r=new FileReader();
-        r.onload=()=>res(String(r.result)); r.onerror=rej; r.readAsDataURL(file);
-      });
-    }
   </script>
 </body>
 </html>
