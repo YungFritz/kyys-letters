@@ -1,72 +1,85 @@
-// /public/js/storage.js
-(function () {
-  const keySeries = 'kl_series';
-  const keyChaps  = 'kl_chapters';
+<!-- /public/js/storage.js -->
+<script>
+/* ===========================
+   KyyStore v2 (localStorage + IndexedDB)
+   - Métadonnées (séries/chapitres) : localStorage
+   - Blobs (covers/pages)           : IndexedDB (kl_db/images)
+   =========================== */
 
-  const load = (k) => {
-    try { return JSON.parse(localStorage.getItem(k) || '[]'); }
-    catch { return []; }
+window.KyyStore = (function () {
+  const LS_SERIES   = "kl_series";
+  const LS_CHAPTERS = "kl_chapters";
+
+  // ---------- LocalStorage minimal ----------
+  const loadJSON = (k, fallback) => {
+    try { return JSON.parse(localStorage.getItem(k) || "null") ?? fallback; }
+    catch { return fallback; }
   };
-  const save = (k, v) => localStorage.setItem(k, JSON.stringify(v));
+  const saveJSON = (k, v) => localStorage.setItem(k, JSON.stringify(v));
 
-  function uid(prefix='id') {
-    return `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2,8)}`;
+  const allSeries    = () => loadJSON(LS_SERIES,   []);
+  const allChapters  = () => loadJSON(LS_CHAPTERS, []);
+  const saveSeries   = (arr) => saveJSON(LS_SERIES,   arr);
+  const saveChapters = (arr) => saveJSON(LS_CHAPTERS, arr);
+
+  // ---------- IndexedDB (images/blobs) ----------
+  let dbPromise = null;
+  function openDB () {
+    if (dbPromise) return dbPromise;
+    dbPromise = new Promise((resolve, reject) => {
+      const req = indexedDB.open("kl_db", 1);
+      req.onupgradeneeded = () => {
+        const db = req.result;
+        if (!db.objectStoreNames.contains("images")) {
+          const store = db.createObjectStore("images", { keyPath: "id" });
+          store.createIndex("id", "id", { unique: true });
+        }
+      };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror   = () => reject(req.error);
+    });
+    return dbPromise;
   }
 
-  // Séries (ne pas mettre d’images ici)
-  function allSeries() { return load(keySeries); }
-  function saveSeries(arr) { save(keySeries, arr); }
-
-  // Chapitres (ne pas mettre d’images ici)
-  function allChapters() { return load(keyChaps); }
-  function saveChapters(arr) { save(keyChaps, arr); }
-
-  // Images dans IndexedDB
-  async function storeCover(file) {
-    const id = uid('cover');
-    await KyyDB.putBlob(id, file);
-    return id; // coverRef
-  }
-  async function storePages(files) {
-    const out = [];
-    for (const f of files) {
-      const id = uid('page');
-      await KyyDB.putBlob(id, f);
-      out.push(id);
-    }
-    return out; // pagesRef
+  async function putImage(id, blob) {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction("images", "readwrite");
+      tx.objectStore("images").put({ id, blob });
+      tx.oncomplete = () => resolve();
+      tx.onerror    = () => reject(tx.error);
+    });
   }
 
-  async function coverURL(coverRef) {
-    if (!coverRef) return null;
-    return KyyDB.blobURL(coverRef);
-  }
-  async function pageURL(pageRef) {
-    if (!pageRef) return null;
-    return KyyDB.blobURL(pageRef);
-  }
-
-  // LIBRARY pour la Home (résout seulement les covers)
-  async function buildLibraryForHome() {
-    const series = allSeries();
-    const chaps  = allChapters();
-    const grouped = series.map(s => ({ ...s, chapters: [] }));
-    for (const c of chaps) {
-      const idx = grouped.findIndex(s => s.id === c.seriesId);
-      if (idx >= 0) grouped[idx].chapters.push(c);
-    }
-    for (const s of grouped) {
-      s.cover = s.coverRef ? await coverURL(s.coverRef) : undefined;
-    }
-    return grouped;
+  async function getImageURL(id) {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+      const tx  = db.transaction("images", "readonly");
+      const req = tx.objectStore("images").get(id);
+      req.onsuccess = () => {
+        const rec = req.result;
+        if (!rec) return resolve(null);
+        resolve(URL.createObjectURL(rec.blob));
+      };
+      req.onerror = () => reject(req.error);
+    });
   }
 
-  window.KyyStore = {
-    uid,
-    allSeries, saveSeries,
-    allChapters, saveChapters,
-    storeCover, storePages,
-    coverURL, pageURL,
-    buildLibraryForHome,
+  async function deleteImage(id) {
+    const db = await openDB();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction("images", "readwrite");
+      tx.objectStore("images").delete(id);
+      tx.oncomplete = () => resolve();
+      tx.onerror    = () => reject(tx.error);
+    });
+  }
+
+  return {
+    // data
+    allSeries, allChapters, saveSeries, saveChapters,
+    // blobs
+    putImage, getImageURL, deleteImage,
   };
 })();
+</script>
