@@ -1,18 +1,15 @@
 <!doctype html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Admin — Ajouter un profil</title>
-  <link rel="stylesheet" href="/styles/base.css" />
+  <link rel="stylesheet" href="/styles/base.css"/>
   <style>
-    .wrap{max-width:1060px;margin:22px auto;padding:0 16px}
-    .cols{display:grid;grid-template-columns:1fr 320px;gap:18px}
-    .f{display:grid;gap:10px}
-    .in{height:38px;border:1px solid var(--border);border-radius:10px;background:#101112;color:#eaecef;padding:0 12px}
-    textarea.in{height:110px;padding:10px}
-    .preview{width:120px;height:120px;border:1px solid var(--border);border-radius:12px;overflow:hidden;display:grid;place-items:center;background:#0f1012;color:var(--muted)}
-    .preview img{width:100%;height:100%;object-fit:cover}
+    .wrap{max-width:1100px;margin:22px auto;padding:0 16px}
+    .in{height:38px;border:1px solid var(--border);border-radius:10px;background:#101112;color:#eaecef;padding:0 12px;width:100%;}
+    .row{display:flex;gap:10px}
+    textarea.in{height:100px;resize:vertical}
   </style>
 </head>
 <body>
@@ -20,68 +17,61 @@
     <div class="bar">
       <div class="brand">K</div>
       <div class="badge">Admin</div>
-      <div class="right">
-        <a class="btn" href="/admin.html">Panneau</a>
-        <a class="btn" href="/personnelle.html">Équipe</a>
-      </div>
+      <div class="right"><a class="btn" href="/admin.html">Panneau</a></div>
     </div>
   </div>
-
-  <div class="wrap cols">
-    <form class="card f" id="form">
-      <h2 style="margin:0 0 10px 0">Ajouter un profil</h2>
-      <input id="name" class="in" placeholder="Nom" required />
-      <input id="role" class="in" placeholder="Rôle" />
-      <textarea id="bio" class="in" placeholder="Bio courte"></textarea>
-      <input id="contact" class="in" placeholder="Email / contact" />
-      <div style="display:flex;gap:10px;align-items:center">
-        <div class="preview" id="pv"><span>IMG</span></div>
-        <input id="photo" type="file" accept="image/*" class="in" style="flex:1" />
-      </div>
-      <div style="display:flex;gap:10px">
+  <div class="wrap">
+    <form class="card" id="form">
+      <h2 style="margin:0 0 12px 0">Ajouter un profil</h2>
+      <div class="label">Nom</div>
+      <input id="name" class="in" placeholder="Nom du membre"/>
+      <div class="label" style="margin-top:6px">Rôle</div>
+      <input id="role" class="in" placeholder="Éditeur, traducteur, ..."/>
+      <div class="label" style="margin-top:6px">Bio</div>
+      <textarea id="bio" class="in" placeholder="Quelques mots sur le membre..."></textarea>
+      <div class="label" style="margin-top:6px">Contact (facultatif)</div>
+      <input id="contact" class="in" placeholder="Pseudo Discord ou autre"/>
+      <div class="label" style="margin-top:6px">Photo</div>
+      <input id="photo" class="in" type="file" accept="image/*" />
+      <div class="row" style="margin-top:12px">
         <button class="btn acc" type="submit">Enregistrer</button>
-        <a class="btn" href="/personnelle.html">Annuler</a>
+        <a class="btn" href="/admin.html">Annuler</a>
       </div>
       <div id="msg" class="label" style="margin-top:8px"></div>
     </form>
-
-    <aside class="card">
-      <h3 style="margin:0 0 8px 0">Conseil</h3>
-      <div class="label">Utilise une image carrée pour l’avatar, ça évite les crops moches.</div>
-    </aside>
   </div>
-
-  <footer>© 2025 — Admin Kyy’s Letters</footer>
-
+  <footer>© 2025 — Kyy’s Letters</footer>
   <script src="/js/storage.js"></script>
   <script>
-    const { uid, allMembers, saveMembers } = KyyStore;
-
-    const pv = document.getElementById('pv');
-    const photoEl = document.getElementById('photo');
-    let photoData = '';
-
-    photoEl.addEventListener('change', ()=>{
-      const f = photoEl.files?.[0]; if(!f) return;
-      const r = new FileReader();
-      r.onload = ()=>{ photoData = String(r.result||''); pv.innerHTML='<img />'; pv.firstChild.src = photoData; };
-      r.readAsDataURL(f);
-    });
-
-    document.getElementById('form').addEventListener('submit',(e)=>{
+    // Redirection si non connecté
+    if (!KyyStore.isLogged()) {
+      location.href = '/';
+    }
+    const { allMembers, saveMembers, uid } = KyyStore;
+    document.getElementById('form').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const arr = allMembers();
-      arr.push({
-        id: uid(),
-        name: document.getElementById('name').value.trim(),
-        role: document.getElementById('role').value.trim(),
-        bio: document.getElementById('bio').value.trim(),
-        contact: document.getElementById('contact').value.trim(),
-        photo: photoData
-      });
-      saveMembers(arr);
-      document.getElementById('msg').textContent = 'Profil créé ✅';
-      setTimeout(()=>location.href='/personnelle.html', 500);
+      const name = document.getElementById('name').value.trim();
+      const role = document.getElementById('role').value.trim();
+      const bio = document.getElementById('bio').value.trim();
+      const contact = document.getElementById('contact').value.trim();
+      if (!name || !role) {
+        alert('Veuillez saisir un nom et un rôle.');
+        return;
+      }
+      let photoData = '';
+      const file = document.getElementById('photo').files[0];
+      if (file) {
+        const reader = new FileReader();
+        photoData = await new Promise(resolve => {
+          reader.onload = () => resolve(String(reader.result || ''));
+          reader.readAsDataURL(file);
+        });
+      }
+      const members = allMembers();
+      members.push({ id: uid('mbr'), name, role, bio, contact, photo: photoData });
+      saveMembers(members);
+      document.getElementById('msg').textContent = 'Profil ajouté ✅';
+      setTimeout(() => location.href = '/admin.html', 500);
     });
   </script>
 </body>
