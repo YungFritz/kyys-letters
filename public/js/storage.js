@@ -1,101 +1,65 @@
-<script>
-/* KyyStore — baseline fiable (localStorage + compression images)
-   Séries = meta + cover compressée
-   Chapitres = meta + pages compressées (JPEG), safe contre QuotaExceeded
+/* /public/js/storage.js
+   Storage simple pour Kyy's Letters (localStorage).
+   Fournit window.KyyStore : { allSeries, saveSeries, allChapters, saveChapters, mergeChaptersIntoSeries, slugify }
 */
-(function(){
-  const KEY_SERIES   = "kl_series";
-  const KEY_CHAPTERS = "kl_chapters";
+(function (w) {
+  const SERIES_KEY = 'kl_series';
+  const CHAPS_KEY  = 'kl_chapters';
 
-  const read = (k, fallback=[]) => {
-    try { return JSON.parse(localStorage.getItem(k)||"[]") } catch { return fallback }
-  };
-  const write = (k, v) => {
-    try {
-      localStorage.setItem(k, JSON.stringify(v));
-      return true;
-    } catch(e){
-      console.warn("Stockage plein:", e);
-      alert("Stockage local saturé. Les images seront gardées plus légères ou ignorées.");
-      return false;
-    }
-  };
-
-  // ---------- outils ----------
-  function slugify(s){
-    return (s||"").toLowerCase()
-      .normalize("NFD").replace(/[\u0300-\u036f]/g,"")
-      .replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"");
+  function safeParse(str, fallback) {
+    try { return JSON.parse(str); } catch { return fallback; }
   }
 
-  // compression image vers dataURL (JPEG)
-  async function compressImage(file, maxW, maxH, quality=0.72){
-    const bitmap = await createImageBitmap(file);
-    let {width:w, height:h} = bitmap;
-    const ratio = Math.min(maxW/w, maxH/h, 1);
-    const nw = Math.round(w*ratio), nh = Math.round(h*ratio);
-
-    const canvas = document.createElement("canvas");
-    canvas.width = nw; canvas.height = nh;
-    const ctx = canvas.getContext("2d");
-    ctx.drawImage(bitmap, 0, 0, nw, nh);
-    return canvas.toDataURL("image/jpeg", quality);
+  function slugify(txt) {
+    return String(txt || '')
+      .toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '') || 'item';
   }
 
-  // ---------- public API ----------
-  const KyyStore = {
-    // séries
-    allSeries(){ return read(KEY_SERIES) },
-    saveSeries(arr){ return write(KEY_SERIES, arr) },
-    addSeries: async ({title, tags, status, description, coverFile})=>{
-      const series = read(KEY_SERIES);
-      const id = crypto.randomUUID();
-      const slug = slugify(title);
+  // Séries
+  function allSeries() {
+    return safeParse(localStorage.getItem(SERIES_KEY), []);
+  }
+  function saveSeries(arr) {
+    localStorage.setItem(SERIES_KEY, JSON.stringify(arr || []));
+  }
 
-      let cover = null;
-      if (coverFile) {
-        try { cover = await compressImage(coverFile, 520, 740, 0.78) } catch{}
-      }
+  // Chapitres (optionnel si tu veux stocker séparément)
+  function allChapters() {
+    return safeParse(localStorage.getItem(CHAPS_KEY), []);
+  }
+  function saveChapters(arr) {
+    localStorage.setItem(CHAPS_KEY, JSON.stringify(arr || []));
+  }
 
-      series.push({ id, title, slug, tags, status, description, cover, createdAt: Date.now() });
-      write(KEY_SERIES, series);
-      return { id, slug };
-    },
+  // Merge chapitres isolés -> series[].chapters (au cas où)
+  function mergeChaptersIntoSeries() {
+    const series = allSeries();
+    const chaps = allChapters();
+    if (!series.length || !chaps.length) return series;
 
-    // chapitres
-    allChapters(){ return read(KEY_CHAPTERS) },
-    saveChapters(arr){ return write(KEY_CHAPTERS, arr) },
-    addChapter: async ({seriesId, number, name, lang, pageFiles})=>{
-      const chapters = read(KEY_CHAPTERS);
-      const id = crypto.randomUUID();
-
-      // compresser chaque page; si quota tombe, on arrête et garde ce qu’on a
-      const pages = [];
-      for (const f of pageFiles||[]) {
-        try {
-          const data = await compressImage(f, 1080, 2000, 0.72);
-          pages.push({ name: f.name, data });
-        } catch (e) {
-          console.warn("Compression page échouée:", e);
-        }
-        // tester quota périodiquement
-        if (pages.length % 10 === 0) {
-          const test = chapters.concat([{id:"__test__", pages:[{data:"x"}]}]);
-          if (!write(KEY_CHAPTERS, test)) break;
-          chapters.pop();
-        }
-      }
-
-      chapters.push({
-        id, seriesId, number, name, lang,
-        pages, createdAt: Date.now()
-      });
-      write(KEY_CHAPTERS, chapters);
-      return id;
+    const bySerie = new Map(series.map(s => [s.id, s]));
+    for (const c of chaps) {
+      const s = bySerie.get(c.seriesId);
+      if (!s) continue;
+      s.chapters = s.chapters || [];
+      if (!s.chapters.find(x => x.id === c.id)) s.chapters.push(c);
     }
-  };
+    for (const s of series) {
+      if (s.chapters) s.chapters.sort((a, b) => a.number - b.number);
+    }
+    saveSeries(series);
+    return series;
+  }
 
-  // exposer global
-  window.KyyStore = KyyStore;
-})();
-</script>
+  w.KyyStore = {
+    allSeries,
+    saveSeries,
+    allChapters,
+    saveChapters,
+    mergeChaptersIntoSeries,
+    slugify,
+  };
+})(window);
