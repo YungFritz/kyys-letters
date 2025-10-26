@@ -1,4 +1,3 @@
-// src/main.tsx
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
@@ -21,10 +20,5 @@ function mount() {
   );
 }
 
-// Si le pont (window.__LIBRARY) est déjà prêt, on monte direct.
-// Sinon on attend l'évènement déclenché par index.html.
-if (window.__LIBRARY) {
-  mount();
-} else {
-  document.addEventListener("kyy:library-ready", mount, { once: true });
-}
+// Monte l'application immédiatement (chargement localStorage synchrone)
+mount();
