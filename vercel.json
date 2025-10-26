@@ -4,7 +4,7 @@
     { "source": "/recrutement",  "destination": "/recrutement.html" },
     { "source": "/personnelle",  "destination": "/personnelle.html" },
     { "source": "/connexion",    "destination": "/connexion.html" },
-    { "source": "/manga/:slug",  "destination": "/manga.html?slug=:slug" },
-    { "source": "/reader/:id",   "destination": "/reader.html?id=:id" }
+    { "source": "/manga/:slug", "destination": "/manga.html?slug=:slug" },
+    { "source": "/reader/:id",  "destination": "/reader.html?id=:id"  }
   ]
 }
