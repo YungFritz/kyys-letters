@@ -1,5 +1,5 @@
 /* public/js/storage.js
-   Store minimal unifié pour Kyy’s Letters (LocalStorage).
+   Store minimal unifié pour Kyy’s Letters (LocalStorage + IndexedDB pour les pages).
 */
 (function (global) {
   const KEYS = {
@@ -71,6 +71,19 @@
     return arr.includes(key);
   }
 
+  // --------- Pages (images) ---------
+  // Stocke un fichier image dans IndexedDB via KyyDB et retourne son ID.
+  async function addPageBlob(file) {
+    const id = uid("page");
+    await KyyDB.putBlob(id, file);
+    return id;
+  }
+
+  // Transforme un ID de page en URL utilisable dans <img src="">
+  async function pageURL(id) {
+    return KyyDB.blobURL(id);
+  }
+
   global.KyyStore = {
     KEYS,
     // séries
@@ -79,9 +92,12 @@
     allChapters, saveChapters, addChapter, deleteChapter,
     // profils
     allMembers, saveMembers, upsertMember, deleteMember,
-    // util
+    // utilitaires
     uid, slugify,
     // bonus
     getHistory, pushHistory, getFav, toggleFav,
+    // pages (IndexedDB)
+    addPageBlob,
+    pageURL,
   };
 })(window);
