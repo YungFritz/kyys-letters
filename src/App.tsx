@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import "./index.css";
 
 /* ----------------------------------------------------------------
@@ -98,10 +98,12 @@ function HeaderDesktop({
   query,
   setQuery,
   onOpenMobile,
+  logged,
 }: {
   query: string;
   setQuery: (v: string) => void;
   onOpenMobile: () => void;
+  logged: boolean;
 }) {
   return (
     <div className="header">
@@ -128,12 +130,16 @@ function HeaderDesktop({
           <a className="nav-btn" href="/recrutement.html">
             Recrutement
           </a>
-          <a className="nav-btn" href="/admin.html">
-            Admin
-          </a>
-          <a className="nav-btn" href="/connexion.html">
-            Connexion
-          </a>
+          {logged && (
+            <a className="nav-btn" href="/admin.html">
+              Admin
+            </a>
+          )}
+          {!logged && (
+            <a className="nav-btn" href="/connexion.html">
+              Connexion
+            </a>
+          )}
         </nav>
 
         {/* Recherche (visible desktop) */}
@@ -189,9 +195,11 @@ function Card({ s }: { s: Series }) {
 function MobileSheet({
   open,
   onClose,
+  logged,
 }: {
   open: boolean;
   onClose: () => void;
+  logged: boolean;
 }) {
   return (
     <>
@@ -214,12 +222,16 @@ function MobileSheet({
           <a className="sheet-item" href="/recrutement.html">
             Recrutement
           </a>
-          <a className="sheet-item" href="/admin.html">
-            Admin
-          </a>
-          <a className="sheet-item" href="/connexion.html">
-            Connexion
-          </a>
+          {logged && (
+            <a className="sheet-item" href="/admin.html">
+              Admin
+            </a>
+          )}
+          {!logged && (
+            <a className="sheet-item" href="/connexion.html">
+              Connexion
+            </a>
+          )}
 
           <div className="sheet-divider" />
           <input
@@ -231,7 +243,7 @@ function MobileSheet({
 
           <div className="sheet-stats">
             <div className="muted">
-              Séries: {LIBRARY.length} • Chapitres:{" "}
+              Séries: {LIBRARY.length} • Chapitres: {" "}
               {LIBRARY.reduce(
                 (n, s) => n + (s.chapters?.length || 0),
                 0
@@ -247,7 +259,7 @@ function MobileSheet({
 /* ----------------------------------------------------------------
    Barre d’onglets bas (mobile)
 ----------------------------------------------------------------- */
-function MobileTabBar() {
+function MobileTabBar({ logged }: { logged: boolean }) {
   return (
     <nav className="mobile-tabbar">
       <a href="/" className="tab-item">
@@ -262,10 +274,18 @@ function MobileTabBar() {
         <span className="tab-emoji">🔥</span>
         <span>Tendances</span>
       </a>
-      <a href="/admin.html" className="tab-item">
-        <span className="tab-emoji">⚙️</span>
-        <span>Admin</span>
-      </a>
+      {logged && (
+        <a href="/admin.html" className="tab-item">
+          <span className="tab-emoji">⚙️</span>
+          <span>Admin</span>
+        </a>
+      )}
+      {!logged && (
+        <a href="/connexion.html" className="tab-item">
+          <span className="tab-emoji">🔑</span>
+          <span>Connexion</span>
+        </a>
+      )}
     </nav>
   );
 }
@@ -281,6 +301,25 @@ export default function App() {
 
   const [query, setQuery] = useState("");
   const [sheetOpen, setSheetOpen] = useState(false);
+  // État pour savoir si un utilisateur est connecté
+  const [logged, setLogged] = useState<boolean>(false);
+
+  // À l'initialisation, on vérifie l'état de connexion
+  useEffect(() => {
+    const checkLogged = () => {
+      try {
+        // KyyStore est exposé sur window par storage.js
+        // Utiliser Boolean pour éviter une valeur non booléenne
+        setLogged(Boolean((window as any).KyyStore?.isLogged?.()));
+      } catch {
+        setLogged(false);
+      }
+    };
+    checkLogged();
+    // Mettre à jour à chaque changement de localStorage (session)
+    window.addEventListener('storage', checkLogged);
+    return () => window.removeEventListener('storage', checkLogged);
+  }, []);
 
   // populaires par vues
   const popular = useMemo(
@@ -321,10 +360,11 @@ export default function App() {
         query={query}
         setQuery={setQuery}
         onOpenMobile={() => setSheetOpen(true)}
+        logged={logged}
       />
 
       {/* ---- MENU MOBILE ---- */}
-      <MobileSheet open={sheetOpen} onClose={() => setSheetOpen(false)} />
+      <MobileSheet open={sheetOpen} onClose={() => setSheetOpen(false)} logged={logged} />
 
       <main className="container">
         {/* HERO / encadrement */}
@@ -375,9 +415,9 @@ export default function App() {
                   <div className="muted">
                     Lien discord / contact / bouton
                   </div>
-                    <a className="btn" href="#" style={{ marginTop: 10 }}>
-                      Ouvrir
-                    </a>
+                  <a className="btn" href="#" style={{ marginTop: 10 }}>
+                    Ouvrir
+                  </a>
                 </div>
                 <div>
                   {homeImg2 ? (
@@ -396,7 +436,7 @@ export default function App() {
             <div className="side-card card-like">
               <div className="side-title">Statistiques</div>
               <div className="muted">
-                Séries: {LIBRARY.length} • Chapitres:{" "}
+                Séries: {LIBRARY.length} • Chapitres: {" "}
                 {LIBRARY.reduce(
                   (n, s) => n + (s.chapters?.length || 0),
                   0
@@ -496,7 +536,7 @@ export default function App() {
       </main>
 
       {/* ---- TABBAR MOBILE (seulement <860px) ---- */}
-      <MobileTabBar />
+      <MobileTabBar logged={logged} />
     </div>
   );
 }
