@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Admin — Éditer un chapitre</title>
+  <link rel="stylesheet" href="/styles/base.css"/>
+  <style>
+    .container{max-width:1100px;margin:22px auto;padding:0 16px}
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+    .in{height:38px;border:1px solid var(--border);border-radius:10px;background:#101112;color:#eaecef;padding:0 12px}
+    textarea.in{height:120px;padding:10px}
+    .row{display:flex;gap:10px}
+    /* Liste des chapitres */
+    #chaptersList{display:flex;flex-direction:column;gap:8px}
+    .chap-item{padding:8px 12px;background:linear-gradient(180deg,var(--panel),var(--panel-2));border:1px solid var(--border);border-radius:12px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+    .chap-info{flex:1;display:flex;flex-direction:column}
+    .chap-actions{display:flex;gap:8px}
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="bar">
+      <div class="brand">K</div>
+      <div class="badge">Admin</div>
+      <div class="right"><a class="btn" href="/admin.html">Panneau</a></div>
+    </div>
+  </div>
+
+  <div class="container grid2">
+    <!-- Choix de la série -->
+    <div class="card">
+      <div class="label">Choisir une série</div>
+      <select id="pickSeries" class="in"></select>
+    </div>
+    <!-- Liste des chapitres -->
+    <div class="card">
+      <h3 style="margin:0 0 8px 0">Chapitres</h3>
+      <div id="chaptersList">—</div>
+    </div>
+    <!-- Formulaire de modification de chapitre -->
+    <form class="card" id="form" style="grid-column:1 / span 2;display:none">
+      <h2 style="margin:0 0 12px 0" id="formTitle">Modifier un chapitre</h2>
+      <div class="row">
+        <div style="flex:1">
+          <div class="label">Numéro</div>
+          <input class="in" id="cNumber" type="number" min="0" step="1"/>
+        </div>
+        <div style="flex:1">
+          <div class="label">Langue</div>
+          <input class="in" id="cLang" placeholder="FR, EN…"/>
+        </div>
+      </div>
+      <div class="label" style="margin-top:6px">Nom du chapitre</div>
+      <input class="in" id="cName"/>
+      <div class="row" style="margin-top:14px">
+        <button class="btn acc" type="submit">Sauvegarder</button>
+        <button class="btn danger" id="delChap" type="button">Supprimer</button>
+      </div>
+      <div id="msg" class="label" style="margin-top:8px"></div>
+    </form>
+  </div>
+
+  <footer>© 2025 — Kyy’s Letters</footer>
+
+  <script src="/js/storage.js"></script>
+  <script>
+    const { allSeries, saveSeries, allChapters, saveChapters } = KyyStore;
+
+    const pickSeries = document.getElementById('pickSeries');
+    const chaptersList = document.getElementById('chaptersList');
+    const form = document.getElementById('form');
+    const msgEl = document.getElementById('msg');
+    let currentSeries = null;
+    let currentChap = null;
+    const series = allSeries();
+    if(!series.length){ alert("Aucune série. Ajoute d’abord."); location.href="/add-manga.html"; }
+    // Remplir la liste des séries
+    series.forEach(s=>{
+      const o = document.createElement('option');
+      o.value = s.id;
+      o.textContent = s.title;
+      pickSeries.appendChild(o);
+    });
+
+    // Charger les chapitres pour la série choisie
+    function loadSeries(id){
+      currentSeries = series.find(x=>x.id === id);
+      form.style.display = 'none';
+      currentChap = null;
+      msg('');
+      // Nettoyer la liste
+      chaptersList.innerHTML = '';
+      if(!currentSeries){ chaptersList.textContent = '—'; return; }
+      // Récupérer les chapitres de la série
+      const chList = [];
+      const chapters = allChapters();
+      if(Array.isArray(currentSeries.chapters) && currentSeries.chapters.length){
+        currentSeries.chapters.forEach(idCh => {
+          const c = chapters.find(x=>x.id===idCh);
+          if(c) chList.push(c);
+        });
+      } else {
+        // fallback : filtrer par seriesId
+        chapters.forEach(c=>{ if(c.seriesId === currentSeries.id) chList.push(c); });
+      }
+      if(!chList.length){ chaptersList.textContent = 'Aucun chapitre.'; return; }
+      // Afficher les chapitres
+      chList.forEach(ch => {
+        const item = document.createElement('div');
+        item.className = 'chap-item';
+        const info = document.createElement('div');
+        info.className = 'chap-info';
+        info.innerHTML = `<strong>Chapitre ${ch.number}</strong> — ${ch.name || ''} <span style="color:var(--muted);font-size:12px">(${ch.lang || 'FR'})</span>`;
+        const actions = document.createElement('div');
+        actions.className = 'chap-actions';
+        const editBtn = document.createElement('button');
+        editBtn.className = 'btn';
+        editBtn.textContent = 'Modifier';
+        editBtn.onclick = () => loadChap(ch.id);
+        const delBtn = document.createElement('button');
+        delBtn.className = 'btn danger';
+        delBtn.textContent = 'Supprimer';
+        delBtn.onclick = () => deleteChap(ch.id);
+        actions.appendChild(editBtn);
+        actions.appendChild(delBtn);
+        item.appendChild(info);
+        item.appendChild(actions);
+        chaptersList.appendChild(item);
+      });
+    }
+
+    // Charger un chapitre dans le formulaire
+    function loadChap(id){
+      const chapters = allChapters();
+      currentChap = chapters.find(c=>c.id === id);
+      if(!currentChap){ form.style.display = 'none'; return; }
+      form.style.display = 'block';
+      document.getElementById('formTitle').textContent = `Modifier — Chapitre ${currentChap.number}`;
+      document.getElementById('cNumber').value = currentChap.number || 0;
+      document.getElementById('cName').value = currentChap.name || '';
+      document.getElementById('cLang').value = currentChap.lang || '';
+      msg('');
+    }
+
+    // Supprimer un chapitre
+    function deleteChap(id){
+      if(!confirm('Supprimer ce chapitre ?')) return;
+      // Retire le chapitre de la liste globale
+      let chapters = allChapters();
+      chapters = chapters.filter(c=>c.id !== id);
+      saveChapters(chapters);
+      // Retire l'ID de la série
+      if(currentSeries && Array.isArray(currentSeries.chapters)){
+        currentSeries.chapters = currentSeries.chapters.filter(cid=>cid !== id);
+        saveSeries(series);
+      }
+      // Actualise l'affichage
+      loadSeries(pickSeries.value);
+      msg('Chapitre supprimé ✅');
+    }
+
+    // Mise à jour du chapitre via le formulaire
+    form.onsubmit = (e) => {
+      e.preventDefault();
+      if(!currentChap) return;
+      const chapters = allChapters();
+      const idx = chapters.findIndex(c=>c.id === currentChap.id);
+      if(idx < 0) return;
+      const number = Number(document.getElementById('cNumber').value || currentChap.number);
+      const name = document.getElementById('cName').value.trim();
+      const lang = document.getElementById('cLang').value.trim() || 'FR';
+      // Met à jour le chapitre
+      chapters[idx] = { ...chapters[idx], number, name, lang };
+      saveChapters(chapters);
+      // Mise à jour de l'ordre des chapitres dans la série, trié par numéro
+      if(currentSeries && Array.isArray(currentSeries.chapters)){
+        // Assure que la liste contient tous les chapitres présents
+        currentSeries.chapters = currentSeries.chapters.filter(id=>chapters.some(c=>c.id===id));
+        // Trie par numéro croissant
+        currentSeries.chapters.sort((aId, bId) => {
+          const a = chapters.find(c=>c.id===aId);
+          const b = chapters.find(c=>c.id===bId);
+          return (a?.number||0) - (b?.number||0);
+        });
+        saveSeries(series);
+      }
+      msg('Chapitre mis à jour ✅');
+      loadSeries(pickSeries.value);
+      // Reselect current chapter with updated number
+      // Optionally hide form
+      form.style.display = 'none';
+    };
+
+    function msg(t){ msgEl.textContent = t; }
+
+    // Initial load
+    loadSeries(pickSeries.value = series[0].id);
+    pickSeries.onchange = () => loadSeries(pickSeries.value);
+    // Deletion via form
+    document.getElementById('delChap').onclick = () => {
+      if(!currentChap) return;
+      deleteChap(currentChap.id);
+      form.style.display = 'none';
+    };
+  </script>
+</body>
+</html>
