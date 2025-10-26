@@ -3,16 +3,15 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Admin — Ajouter une série</title>
+  <title>Admin — Ajouter un chapitre</title>
   <link rel="stylesheet" href="/styles/base.css"/>
   <style>
     .wrap{max-width:1100px;margin:22px auto;padding:0 16px}
-    .grid2{display:grid;grid-template-columns:1fr 320px;gap:18px}
+    .grid2{display:grid;grid-template-columns:1fr;gap:18px}
     .in{height:38px;border:1px solid var(--border);border-radius:10px;background:#101112;color:#eaecef;padding:0 12px}
-    textarea.in{height:120px;padding:10px}
-    .preview{border:1px solid var(--border);border-radius:12px;background:#0f1012;display:grid;place-items:center;color:var(--muted);min-height:220px}
-    .preview img{max-width:100%}
-    .row{display:flex;gap:10px;align-items:center}
+    .row{display:flex;gap:10px}
+    .thumbs{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
+    .thumbs img{width:100%;height:90px;object-fit:cover;border-radius:8px;border:1px solid var(--border)}
   </style>
 </head>
 <body>
@@ -26,31 +25,29 @@
 
   <div class="wrap grid2">
     <form class="card" id="form">
-      <h2 style="margin:0 0 12px 0">Ajouter une série</h2>
+      <h2 style="margin:0 0 12px 0">Ajouter un chapitre</h2>
 
-      <div class="label">Titre</div>
-      <input id="title" class="in" required />
+      <div class="label">Série</div>
+      <select id="series" class="in"></select>
 
       <div class="row" style="margin-top:8px">
         <div style="flex:1">
-          <div class="label">Tags (séparés par virgules)</div>
-          <input id="tags" class="in" placeholder="action, aventure" />
+          <div class="label">Numéro</div>
+          <input id="number" class="in" type="number" min="0" step="1" />
         </div>
-        <div style="width:210px">
-          <div class="label">Statut</div>
-          <select id="status" class="in">
-            <option value="en-cours">En cours</option>
-            <option value="termine">Terminé</option>
-            <option value="drop">Drop</option>
-          </select>
+        <div style="flex:1">
+          <div class="label">Langue</div>
+          <input id="lang" class="in" placeholder="FR, EN…" />
         </div>
       </div>
 
-      <div class="label" style="margin-top:6px">Description</div>
-      <textarea id="desc" class="in" placeholder="Pitch rapide"></textarea>
+      <div class="label" style="margin-top:6px">Nom du chapitre</div>
+      <input id="name" class="in" />
 
-      <div class="label" style="margin-top:6px">Cover</div>
-      <input id="cover" type="file" accept="image/*" />
+      <div class="label" style="margin-top:6px">Pages (images)</div>
+      <input id="pages" class="in" type="file" multiple accept="image/*" />
+
+      <div id="thumbs" class="thumbs" style="margin-top:10px"></div>
 
       <div class="row" style="margin-top:12px">
         <button class="btn acc" type="submit">Enregistrer</button>
@@ -58,49 +55,67 @@
       </div>
       <div id="msg" class="label" style="margin-top:8px"></div>
     </form>
-
-    <div class="card">
-      <h3 style="margin:0 0 8px 0">Aperçu cover</h3>
-      <div id="preview" class="preview">—</div>
-    </div>
   </div>
 
   <footer>© 2025 — Kyy’s Letters</footer>
 
   <script src="/js/storage.js"></script>
   <script>
-    const { uid, slugify, allSeries, saveSeries } = KyyStore;
+    const { uid, allSeries, saveSeries, allChapters, saveChapters } = KyyStore;
 
-    let coverData = "";
-    document.getElementById('cover').onchange = e=>{
-      const f = e.target.files?.[0]; if(!f) return;
-      const r = new FileReader();
-      r.onload = () => { coverData = String(r.result||''); document.getElementById('preview').innerHTML = `<img src="${coverData}" />`; };
-      r.readAsDataURL(f);
-    };
+    const select = document.getElementById('series');
+    const thumbs = document.getElementById('thumbs');
+    const list = allSeries();
+    if(!list.length){ alert("Aucune série. Ajoute d’abord."); location.href="/add-manga.html"; }
 
-    document.getElementById('form').onsubmit = e=>{
+    // peupler select
+    list.forEach(s=>{
+      const o=document.createElement('option');
+      o.value=s.id; o.textContent=s.title; select.appendChild(o);
+    });
+
+    // preview pages
+    document.getElementById('pages').addEventListener('change', async (e)=>{
+      thumbs.innerHTML = '';
+      const files = Array.from(e.target.files||[]);
+      for (const f of files) {
+        const r = new FileReader();
+        r.onload = ()=> thumbs.insertAdjacentHTML('beforeend', `<img src="${String(r.result||'')}" />`);
+        r.readAsDataURL(f);
+      }
+    });
+
+    document.getElementById('form').addEventListener('submit', async (e)=>{
       e.preventDefault();
-      const series = allSeries();
-      const title = document.getElementById('title').value.trim();
-      if(!title){ alert('Titre requis'); return; }
+      const files = Array.from(document.getElementById('pages').files||[]);
+      if(!files.length){ alert('Ajoute au moins une page.'); return; }
 
-      const s = {
+      // encodage pages -> base64
+      const pages = await Promise.all(files.map(f=>new Promise(res=>{
+        const r=new FileReader(); r.onload=()=>res(String(r.result||'')); r.readAsDataURL(f);
+      })));
+
+      const ch = {
         id: uid(),
-        title,
-        slug: slugify(title),
-        tags: document.getElementById('tags').value.split(',').map(s=>s.trim()).filter(Boolean),
-        status: document.getElementById('status').value,
-        description: document.getElementById('desc').value.trim(),
-        cover: coverData,
-        views: 0,
-        chapters: [] // logique côté accueil peut lire via allChapters()
+        seriesId: select.value,
+        number: Number(document.getElementById('number').value || 0),
+        name: document.getElementById('name').value.trim(),
+        lang: document.getElementById('lang').value.trim() || 'FR',
+        date: new Date().toISOString().slice(0,10),
+        pages
       };
-      series.push(s);
-      saveSeries(series);
-      document.getElementById('msg').textContent = 'Série enregistrée ✅';
+
+      // sauver
+      const chapters = allChapters(); chapters.push(ch); saveChapters(chapters);
+
+      // optionnel: compter côté série (si tu le veux)
+      const series = allSeries();
+      const s = series.find(x=>x.id===select.value);
+      if(s){ s.chapters = (s.chapters||[]); if(!s.chapters.includes(ch.id)) s.chapters.push(ch.id); saveSeries(series); }
+
+      document.getElementById('msg').textContent = 'Chapitre enregistré ✅';
       setTimeout(()=>location.href='/admin.html', 500);
-    };
+    });
   </script>
 </body>
 </html>
