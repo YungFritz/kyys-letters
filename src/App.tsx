@@ -338,50 +338,79 @@ export default function App() {
       <main className="container">
         {/* HERO / encadrement */}
         <div className="hero">
-          {/* Utilise une grille 2×2 : chaque ligne associe un texte et une image. */}
-          <div
-            className="hero-grid"
-            style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}
-          >
-            {/* Ligne 1 : message de bienvenue et première image */}
-            <div className="hero-card card-like">
+          {/* Carte de bienvenue avec image intégrée */}
+          <div className="hero-card card-like">
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "2fr 1fr",
+                gap: "12px",
+                alignItems: "center",
+              }}
+            >
               <div className="hero-message">
                 <h1>Bienvenue</h1>
                 <p className="muted">
                   Message d'accueil / accroche. Remplace par ton texte.
                 </p>
               </div>
+              <div>
+                {homeImg1 ? (
+                  <img
+                    src={homeImg1}
+                    alt="Image 1"
+                    style={{ width: "100%", borderRadius: "12px" }}
+                  />
+                ) : (
+                  <div className="muted">Image 1</div>
+                )}
+              </div>
             </div>
+          </div>
+
+          {/* Colonne latérale: Rejoindre + image, Statistiques */}
+          <div className="hero-side">
             <div className="side-card card-like">
-              {homeImg1 ? (
-                <img
-                  src={homeImg1}
-                  alt="Image 1"
-                  style={{ width: "100%", borderRadius: "12px" }}
-                />
-              ) : (
-                <div className="muted">Image 1</div>
-              )}
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "2fr 1fr",
+                  gap: "12px",
+                  alignItems: "center",
+                }}
+              >
+                <div>
+                  <div className="side-title">Rejoindre</div>
+                  <div className="muted">
+                    Lien discord / contact / bouton
+                  </div>
+                  <a className="btn" href="#" style={{ marginTop: 10 }}>
+                    Ouvrir
+                  </a>
+                </div>
+                <div>
+                  {homeImg2 ? (
+                    <img
+                      src={homeImg2}
+                      alt="Image 2"
+                      style={{ width: "100%", borderRadius: "12px" }}
+                    />
+                  ) : (
+                    <div className="muted">Image 2</div>
+                  )}
+                </div>
+              </div>
             </div>
 
-            {/* Ligne 2 : carte "Rejoindre" et deuxième image */}
             <div className="side-card card-like">
-              <div className="side-title">Rejoindre</div>
-              <div className="muted">Lien discord / contact / bouton</div>
-              <a className="btn" href="#" style={{ marginTop: 10 }}>
-                Ouvrir
-              </a>
-            </div>
-            <div className="side-card card-like">
-              {homeImg2 ? (
-                <img
-                  src={homeImg2}
-                  alt="Image 2"
-                  style={{ width: "100%", borderRadius: "12px" }}
-                />
-              ) : (
-                <div className="muted">Image 2</div>
-              )}
+              <div className="side-title">Statistiques</div>
+              <div className="muted">
+                Séries: {LIBRARY.length} • Chapitres:{" "}
+                {LIBRARY.reduce(
+                  (n, s) => n + (s.chapters?.length || 0),
+                  0
+                )}
+              </div>
             </div>
           </div>
         </div>
