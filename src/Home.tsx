@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import "./index.css";
 
 type Chapter = {
@@ -6,12 +6,9 @@ type Chapter = {
   name: string;
   number: number;
   lang: string;
-  date?: string;          // accepte "date" ou "releaseDate"
-  releaseDate?: string;   // compat
+  releaseDate: string;
   pages: string[];
-  seriesId: string;
 };
-
 type Series = {
   id: string;
   title: string;
@@ -24,15 +21,23 @@ type Series = {
   hot?: boolean;
 };
 
-// ====== Données placeholders (remplacées par le pont index.html) ======
-const LIBRARY: Series[] = (window as any).__LIBRARY || [];
-
-// Helpers
+// ------- helpers UI -------
 const fmtViews = (n?: number) => {
   if (!n) return "0 vues";
   if (n >= 1000) return `${(n / 1000).toFixed(1)}k vues`;
   return `${n} vues`;
 };
+
+// ------- lecture localStorage -------
+function getLibraryFromStorage(): Series[] {
+  try {
+    const raw = localStorage.getItem("kl_series");
+    const arr = raw ? JSON.parse(raw) : [];
+    return Array.isArray(arr) ? arr : [];
+  } catch {
+    return [];
+  }
+}
 
 function DesktopHeader({
   query,
@@ -46,19 +51,16 @@ function DesktopHeader({
   return (
     <div className="header">
       <div className="header-inner">
-        {/* Burger mobile */}
         <button className="burger" aria-label="Ouvrir le menu" onClick={openMenu}>
           <span />
           <span />
           <span />
         </button>
 
-        {/* Logo */}
         <a className="logo-badge" href="/" aria-label="Accueil">
           K
         </a>
 
-        {/* Recherche (desktop) */}
         <input
           className="search-input"
           value={query}
@@ -66,20 +68,11 @@ function DesktopHeader({
           placeholder="Rechercher une série, un tag, une langue..."
         />
 
-        {/* Boutons nav Desktop — liens directs vers /public */}
         <nav className="desktop-nav">
-          <a className="nav-btn" href="/personnelle.html">
-            Personnelle
-          </a>
-          <a className="nav-btn" href="/recrutement.html">
-            Recrutement
-          </a>
-          <a className="nav-btn" href="/admin.html">
-            Admin
-          </a>
-          <a className="nav-btn" href="/connexion.html">
-            Connexion
-          </a>
+          <a className="nav-btn" href="/personnelle.html">Personnelle</a>
+          <a className="nav-btn" href="/recrutement.html">Recrutement</a>
+          <a className="nav-btn" href="/admin.html">Admin</a>
+          <a className="nav-btn" href="/connexion.html">Connexion</a>
         </nav>
       </div>
     </div>
@@ -100,26 +93,12 @@ function MobileSheet({
       <div className="sheet-card" onClick={(e) => e.stopPropagation()}>
         <div className="sheet-head">
           <div className="logo-badge">K</div>
-          <button className="sheet-close" onClick={onClose} aria-label="Fermer">
-            ×
-          </button>
+          <button className="sheet-close" onClick={onClose} aria-label="Fermer">×</button>
         </div>
-
-        {/* Liens du menu mobile */}
-        <a className="sheet-link" href="/personnelle.html">
-          Personnelle
-        </a>
-        <a className="sheet-link" href="/recrutement.html">
-          Recrutement
-        </a>
-        <a className="sheet-link" href="/admin.html">
-          Admin
-        </a>
-        <a className="sheet-link" href="/connexion.html">
-          Connexion
-        </a>
-
-        {/* Recherche mobile */}
+        <a className="sheet-link" href="/personnelle.html">Personnelle</a>
+        <a className="sheet-link" href="/recrutement.html">Recrutement</a>
+        <a className="sheet-link" href="/admin.html">Admin</a>
+        <a className="sheet-link" href="/connexion.html">Connexion</a>
         <input
           className="search-input"
           value={query}
@@ -131,25 +110,11 @@ function MobileSheet({
   );
 }
 
-/* Card */
 function Card({ s }: { s: Series }) {
   return (
-    <a
-      style={{ textDecoration: "none", color: "inherit" }}
-      href={`/manga/${s.slug}`}
-    >
+    <a style={{ textDecoration: "none", color: "inherit" }} href={`/series/${s.slug}`}>
       <div className="card">
-        <div className="cover">
-          {s.cover ? (
-            <img
-              src={s.cover}
-              alt={s.title}
-              style={{ width: "100%", height: "100%", objectFit: "cover" }}
-            />
-          ) : (
-            "COVER"
-          )}
-        </div>
+        <div className="cover">{s.cover ? <img src={s.cover} alt={s.title} style={{width:'100%',height:'100%',objectFit:'cover'}}/> : "COVER"}</div>
         <div className="card-body">
           <div className="card-title">{s.title}</div>
           <div className="card-meta">
@@ -171,44 +136,43 @@ export default function Home() {
   const [query, setQuery] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
 
-  // Populaire: top vues
+  // bibliothèque dynamique depuis localStorage
+  const [library, setLibrary] = useState<Series[]>(getLibraryFromStorage());
+
+  // rafraîchir quand on revient sur l’onglet
+  useEffect(() => {
+    const onFocus = () => setLibrary(getLibraryFromStorage());
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
+  }, []);
+
   const popular = useMemo(
-    () => LIBRARY.slice().sort((a, b) => (b.views || 0) - (a.views || 0)).slice(0, 8),
-    []
+    () => library.slice().sort((a, b) => (b.views || 0) - (a.views || 0)).slice(0, 8),
+    [library]
   );
 
-  // Derniers chapitres: date/releaseDate
   const latest = useMemo(() => {
-    const all = LIBRARY.flatMap((s) =>
-      (s.chapters || []).map((c) => ({ series: s, chapter: c }))
-    );
+    const all = library.flatMap((s) => (s.chapters || []).map((c) => ({ series: s, chapter: c })));
     return all
-      .sort(
-        (a, b) =>
-          +new Date(b.chapter.releaseDate || b.chapter.date || 0) -
-          +new Date(a.chapter.releaseDate || a.chapter.date || 0)
-      )
+      .sort((a, b) => +new Date(b.chapter.releaseDate) - +new Date(a.chapter.releaseDate))
       .slice(0, 8);
-  }, []);
+  }, [library]);
 
   const filtered = popular.filter((s) => {
     const q = query.trim().toLowerCase();
     if (!q) return true;
     return (
       s.title.toLowerCase().includes(q) ||
-      s.tags.some((t) => t.toLowerCase().includes(q))
+      (s.tags || []).some((t) => t.toLowerCase().includes(q))
     );
   });
 
+  const totalChapters = library.reduce((n, s) => n + (s.chapters?.length || 0), 0);
+
   return (
     <div style={{ minHeight: "100vh", background: "var(--bg)", color: "inherit" }}>
-      {/* header */}
       <DesktopHeader query={query} setQuery={setQuery} openMenu={() => setMenuOpen(true)} />
-
-      {/* menu mobile (sheet) */}
-      {menuOpen && (
-        <MobileSheet query={query} setQuery={setQuery} onClose={() => setMenuOpen(false)} />
-      )}
+      {menuOpen && <MobileSheet query={query} setQuery={setQuery} onClose={() => setMenuOpen(false)} />}
 
       <main className="container">
         {/* HERO */}
@@ -235,8 +199,7 @@ export default function Home() {
             <div className="side-card">
               <div style={{ fontWeight: 700, marginBottom: 6 }}>Statistiques</div>
               <div style={{ color: "var(--muted)" }}>
-                Séries: {LIBRARY.length} • Chapitres:{" "}
-                {LIBRARY.reduce((n, s) => n + (s.chapters?.length || 0), 0)}
+                Séries: {library.length} • Chapitres: {totalChapters}
               </div>
             </div>
           </div>
@@ -246,7 +209,7 @@ export default function Home() {
         <section className="section" style={{ marginTop: 20 }}>
           <div className="section-header">
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <div style={{ fontSize: 18 }}>🔥</div>
+              <div style={{ fontSize: 18 }}>❤️‍🔥</div>
               <div className="section-title">Populaire aujourd'hui</div>
             </div>
             <div style={{ marginLeft: "auto" }}>
@@ -254,7 +217,6 @@ export default function Home() {
             </div>
           </div>
 
-          {/* si pas de séries */}
           {filtered.length === 0 ? (
             <div className="empty-box">Aucune série ajoutée pour le moment.</div>
           ) : (
@@ -293,12 +255,7 @@ export default function Home() {
             ) : (
               <div className="latest-grid">
                 {latest.map(({ series, chapter }) => (
-                  <a
-                    href={`/reader.html?id=${chapter.id}`}
-                    key={chapter.id}
-                    className="card"
-                    style={{ textDecoration: "none", color: "inherit" }}
-                  >
+                  <div key={chapter.id} className="card">
                     <div className="cover">PAGE</div>
                     <div style={{ padding: 12 }}>
                       <div style={{ fontWeight: 800 }}>{series.title}</div>
@@ -306,10 +263,10 @@ export default function Home() {
                         Chapitre {chapter.number} — {chapter.name}
                       </div>
                       <div style={{ marginTop: 8, color: "var(--muted)" }}>
-                        {chapter.lang} • {chapter.releaseDate || chapter.date || ""}
+                        {chapter.lang} • {chapter.releaseDate}
                       </div>
                     </div>
-                  </a>
+                  </div>
                 ))}
               </div>
             )}
@@ -322,13 +279,11 @@ export default function Home() {
               <div style={{ marginTop: 12, display: "grid", gap: 10 }}>
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
                   <span style={{ color: "var(--muted)" }}>Séries</span>
-                  <strong>{LIBRARY.length}</strong>
+                  <strong>{library.length}</strong>
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
                   <span style={{ color: "var(--muted)" }}>Chapitres</span>
-                  <strong>
-                    {LIBRARY.reduce((n, s) => n + (s.chapters?.length || 0), 0)}
-                  </strong>
+                  <strong>{totalChapters}</strong>
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
                   <span style={{ color: "var(--muted)" }}>Langue</span>
@@ -346,24 +301,12 @@ export default function Home() {
         </div>
       </main>
 
-      {/* Barre d’onglets mobile (liens réels) */}
+      {/* Barre d’onglets mobile */}
       <nav className="mobile-tabbar">
-        <a className="tab" href="/">
-          <span>🏠</span>
-          <span>Accueil</span>
-        </a>
-        <a className="tab" href="/recherche.html">
-          <span>🔍</span>
-          <span>Recherche</span>
-        </a>
-        <a className="tab" href="/tendances.html">
-          <span>🔥</span>
-          <span>Tendances</span>
-        </a>
-        <a className="tab" href="/admin.html">
-          <span>⚙️</span>
-          <span>Admin</span>
-        </a>
+        <a className="tab" href="/"><span>🏠</span><span>Accueil</span></a>
+        <a className="tab" href="/recherche.html"><span>🔍</span><span>Recherche</span></a>
+        <a className="tab" href="/tendances.html"><span>❤️‍🔥</span><span>Tendances</span></a>
+        <a className="tab" href="/admin.html"><span>⚙️</span><span>Admin</span></a>
       </nav>
     </div>
   );
