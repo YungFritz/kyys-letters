@@ -1,17 +1,16 @@
 <!doctype html>
 <html lang="fr">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Admin — Ajouter un chapitre</title>
-  <link rel="stylesheet" href="/styles/base.css">
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Admin — Éditer un chapitre</title>
+  <link rel="stylesheet" href="/styles/base.css"/>
   <style>
-    .wrap{max-width:1100px;margin:22px auto;padding:0 16px}
-    .grid2{display:grid;grid-template-columns:1fr;gap:18px}
-    .in{height:38px;border:1px solid var(--border);border-radius:10px;background:#101112;color:#eaecef;padding:0 12px}
+    .container{max-width:1100px;margin:22px auto;padding:0 16px}
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+    .in{height:38px;border:1px solid var(--border);border-radius:10px;background:#101112;color:#eaecef;padding:0 12px;width:100%}
     .row{display:flex;gap:10px}
-    .thumbs{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
-    .thumbs img{width:100%;height:90px;object-fit:cover;border-radius:8px;border:1px solid var(--border)}
+    .msg{color:var(--muted);font-size:13px;margin-top:8px}
   </style>
 </head>
 <body>
@@ -23,14 +22,19 @@
     </div>
   </div>
 
-  <div class="wrap grid2">
-    <form class="card" id="form">
-      <h2 style="margin:0 0 12px 0">Ajouter un chapitre</h2>
+  <div class="container grid2">
+    <div class="card">
+      <div class="label">Choisir une série</div>
+      <select id="pickSeries" class="in"></select>
+    </div>
+    <div class="card">
+      <div class="label">Choisir un chapitre</div>
+      <select id="pickChap" class="in"></select>
+    </div>
 
-      <div class="label">Série</div>
-      <select id="series" class="in"></select>
-
-      <div class="row" style="margin-top:8px">
+    <form class="card" id="form" style="grid-column:1 / span 2;display:none">
+      <h2 style="margin:0 0 12px 0" id="formTitle">Modifier chapitre</h2>
+      <div class="row">
         <div style="flex:1">
           <div class="label">Numéro</div>
           <input id="number" class="in" type="number" min="0" step="1" />
@@ -40,114 +44,130 @@
           <input id="lang" class="in" placeholder="FR, EN…" />
         </div>
       </div>
-
-      <div class="label" style="margin-top:6px">Nom du chapitre</div>
-      <input id="name" class="in" />
-
-      <div class="label" style="margin-top:6px">Pages - (images)</div>
-      <!-- accepte JPG, PNG, WebP… -->
-      <input id="pages" class="in" type="file" multiple accept="image/*" />
-
-      <div id="thumbs" class="thumbs" style="margin-top:10px"></div>
-
-      <div class="row" style="margin-top:12px">
-        <button class="btn acc" type="submit">Enregistrer</button>
-        <a class="btn" href="/admin.html">Annuler</a>
+      <div class="label" style="margin-top:6px">Titre du chapitre</div>
+      <input id="title" class="in" />
+      <div class="row" style="margin-top:14px">
+        <button class="btn acc" type="submit">Sauvegarder</button>
+        <button class="btn danger" id="del" type="button">Supprimer</button>
       </div>
-      <div id="msg" class="label" style="margin-top:8px"></div>
+      <div id="msg" class="msg"></div>
     </form>
   </div>
 
   <footer>© 2025 — Kyy’s Letters</footer>
 
-  <!-- Scripts : IndexedDB puis stockage -->
-  <script src="/js/db.js"></script>
   <script src="/js/storage.js"></script>
   <script>
-    // Tri naturel des fichiers (nombres et lettres)
-    const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
-    function sortFilesNaturally(files) {
-      return files.sort((a, b) => collator.compare(a.name, b.name));
-    }
-
-    (async () => {
-      const { uid, allSeries, saveSeries, allChapters, saveChapters, addPageBlob } = KyyStore;
-
-      const select = document.getElementById('series');
-      const thumbs = document.getElementById('thumbs');
-      const list = allSeries();
-      if(!list.length){
-        alert("Aucune série. Ajoute d’abord.");
-        location.href="/add-manga.html";
+    (function(){
+      // Redirige si non connecté
+      if (!KyyStore.isLogged()) {
+        location.href = '/';
         return;
       }
-
-      // Peupler le select
-      list.forEach(s=>{
-        const o=document.createElement('option');
-        o.value=s.id;
-        o.textContent=s.title;
-        select.appendChild(o);
+      const { allSeries, allChapters, saveSeries, saveChapters, slugify } = KyyStore;
+      const pickSeries = document.getElementById('pickSeries');
+      const pickChap = document.getElementById('pickChap');
+      const form = document.getElementById('form');
+      const msgEl = document.getElementById('msg');
+      const seriesList = allSeries();
+      const chaptersList = allChapters();
+      if (!seriesList.length) {
+        alert('Aucune série. Ajoute d’abord.');
+        location.href = '/add-manga.html';
+        return;
+      }
+      // Remplir le select des séries
+      seriesList.forEach(s => {
+        const o = document.createElement('option');
+        o.value = s.id;
+        o.textContent = s.title || '—';
+        pickSeries.appendChild(o);
       });
+      let currentSeries = null;
+      let currentCh = null;
 
-      // Prévisualisation des miniatures triées
-      document.getElementById('pages').addEventListener('change', (e)=>{
-        thumbs.innerHTML = '';
-        let files = Array.from(e.target.files||[]);
-        files = sortFilesNaturally(files);
-        files.forEach(f=>{
-          const r = new FileReader();
-          r.onload = () => thumbs.insertAdjacentHTML('beforeend', `<img src="${String(r.result||'')}" />`);
-          r.readAsDataURL(f);
-        });
-      });
-
-      document.getElementById('form').addEventListener('submit', async (e)=>{
-        e.preventDefault();
-        let files = Array.from(document.getElementById('pages').files||[]);
-        if(!files.length){
-          alert('Ajoute au moins une page.');
+      function loadSeries(id){
+        currentSeries = seriesList.find(s => s.id === id);
+        // filtrer les chapitres par série
+        const chs = chaptersList.filter(c => c.seriesId === id);
+        pickChap.innerHTML = '';
+        if (!chs.length) {
+          pickChap.insertAdjacentHTML('beforeend', '<option disabled selected>(Aucun chapitre)</option>');
+          form.style.display = 'none';
           return;
         }
+        chs.sort((a,b) => (a.number || 0) - (b.number || 0));
+        chs.forEach(ch => {
+          const o = document.createElement('option');
+          o.value = ch.id;
+          o.textContent = `#${ch.number ?? ''} ${ch.title || ch.name || ''}`;
+          pickChap.appendChild(o);
+        });
+        loadChap(chs[0].id);
+        pickChap.onchange = () => loadChap(pickChap.value);
+      }
+      function loadChap(id) {
+        currentCh = chaptersList.find(c => c.id === id);
+        if (!currentCh) { form.style.display = 'none'; return; }
+        form.style.display = 'block';
+        document.getElementById('formTitle').textContent = `Modifier — ${currentCh.title || currentCh.name || ''}`;
+        document.getElementById('number').value = currentCh.number ?? 0;
+        document.getElementById('lang').value = currentCh.lang || '';
+        document.getElementById('title').value = currentCh.title || currentCh.name || '';
+        msg('');
+      }
+      pickSeries.onchange = () => loadSeries(pickSeries.value);
+      // initial load
+      loadSeries(seriesList[0].id);
 
-        // Tri naturel avant enregistrement
-        files = sortFilesNaturally(files);
-
-        // Enregistrer chaque image dans IndexedDB et collecter l’ID
-        const pagesRef = [];
-        for(const f of files){
-          const id = await addPageBlob(f);
-          pagesRef.push(id);
+      // Save modifications
+      form.onsubmit = (e) => {
+        e.preventDefault();
+        if (!currentCh) return;
+        const newNumber = Number(document.getElementById('number').value || 0);
+        const newLang = document.getElementById('lang').value.trim() || 'FR';
+        const newTitle = document.getElementById('title').value.trim();
+        currentCh.number = newNumber;
+        currentCh.lang = newLang;
+        currentCh.title = newTitle || currentCh.title || '';
+        // mettre à jour la date de modification
+        currentCh.date = new Date().toISOString().slice(0,10);
+        // Sauvegarder les chapitres
+        saveChapters(chaptersList);
+        // Mettre à jour l’ordre dans la série
+        if (currentSeries && currentSeries.chapters) {
+          // trier l’ID dans l’ordre des numéros
+          currentSeries.chapters.sort((aId,bId)=>{
+            const aCh = chaptersList.find(x=>x.id===aId);
+            const bCh = chaptersList.find(x=>x.id===bId);
+            return (aCh?.number || 0) - (bCh?.number || 0);
+          });
+          saveSeries(seriesList);
         }
-
-        // Création du chapitre
-        const ch = {
-          id: uid(),
-          seriesId: select.value,
-          number: Number(document.getElementById('number').value || 0),
-          name: document.getElementById('name').value.trim(),
-          lang: document.getElementById('lang').value.trim() || 'FR',
-          date: new Date().toISOString().slice(0,10),
-          pagesRef
-        };
-
-        // Sauvegarde dans localStorage
-        const chapters = allChapters();
-        chapters.push(ch);
-        saveChapters(chapters);
-
-        // Met à jour la série (liste des chapitres)
-        const series = allSeries();
-        const s = series.find(x=>x.id===select.value);
-        if(s){
-          s.chapters = (s.chapters||[]);
-          if(!s.chapters.includes(ch.id)) s.chapters.push(ch.id);
-          saveSeries(series);
+        msg('Chapitre mis à jour ✅');
+        // recharger liste chapitres pour refléter le tri
+        loadSeries(currentSeries.id);
+      };
+      // Delete chapitre
+      document.getElementById('del').onclick = () => {
+        if (!currentCh) return;
+        if (!confirm('Supprimer ce chapitre ?')) return;
+        // retirer du tableau de chapitres
+        const idx = chaptersList.findIndex(c => c.id === currentCh.id);
+        if (idx >= 0) {
+          chaptersList.splice(idx, 1);
+          saveChapters(chaptersList);
         }
-
-        document.getElementById('msg').textContent = 'Chapitre enregistré ✅';
-        setTimeout(()=>location.href='/admin.html', 500);
-      });
+        // retirer de la série
+        if (currentSeries && currentSeries.chapters) {
+          currentSeries.chapters = currentSeries.chapters.filter(cid => cid !== currentCh.id);
+          saveSeries(seriesList);
+        }
+        alert('Chapitre supprimé.');
+        // rafraîchir
+        loadSeries(currentSeries.id);
+      };
+      function msg(t){ msgEl.textContent = t; }
     })();
   </script>
 </body>
