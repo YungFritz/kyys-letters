@@ -8,85 +8,73 @@
   <body>
     <div id="root"></div>
 
-    <!-- script principal React -->
+    <!-- 1) Ton store minimal (déjà présent dans /public/js/storage.js) -->
+    <script src="/js/storage.js"></script>
+
+    <!-- 2) Pont : on prépare window.__LIBRARY pour Home.tsx -->
+    <script>
+      (function () {
+        if (!window.KyyStore) { window.__LIBRARY = []; return; }
+        const { allSeries, allChapters } = KyyStore;
+
+        const series = allSeries();
+        const chaps  = allChapters();
+
+        // On insère les chapitres dans leur série, au format attendu par ton Home
+        window.__LIBRARY = series.map(s => {
+          const cs = chaps
+            .filter(c => c.seriesId === s.id)
+            .sort((a,b) => (+a.number||0) - (+b.number||0))
+            .map(c => ({
+              id: c.id,
+              name: c.title || "",
+              number: +c.number || 0,
+              lang: c.lang || "FR",
+              releaseDate: c.date || "",
+              pages: c.pages || []
+            }));
+          return {
+            id: s.id,
+            title: s.title,
+            slug: s.slug,
+            tags: s.tags || [],
+            cover: s.cover || "",
+            description: s.description || "",
+            chapters: cs,
+            views: s.views || 0,
+            hot: !!s.hot
+          };
+        });
+      })();
+    </script>
+
+    <!-- 3) Démarrage de ton app React -->
     <script type="module" src="/src/main.tsx"></script>
 
-    <!-- Patch 1 : "Perso" -> "Personnelle" -->
+    <!-- Patch libellés Perso → Personnelle et liens menu -->
     <script>
       window.addEventListener('DOMContentLoaded', function () {
         document
           .querySelectorAll('.nav-btn, .sheet-item, .desktop-nav a, .desktop-nav button')
           .forEach(function (el) {
-            const txt = (el.textContent || '').trim();
-            if (txt === 'Perso' || txt === 'PERSO') el.textContent = 'Personnelle';
+            const t = (el.textContent||"").trim();
+            if (t === "Perso" || t === "PERSO") el.textContent = "Personnelle";
           });
-      });
-    </script>
 
-    <!-- Patch 2 : forcer la navigation pour <a> ET <button> -->
-    <script>
-      (function () {
         const MAP = {
-          'Perso': '/personnelle.html',
           'Personnelle': '/personnelle.html',
           'Recrutement': '/recrutement.html',
           'Admin': '/admin.html',
           'Connexion': '/connexion.html',
           'Accueil': '/'
         };
-        function labelOf(el) { return (el.textContent || '').trim(); }
-
-        function fixTargets(root) {
-          root.querySelectorAll('a.nav-btn, a.sheet-item, a.tab-item, button.nav-btn, button.sheet-item')
-            .forEach(function (el) {
-              const lbl = labelOf(el);
-              const target = MAP[lbl];
-              if (!target) return;
-              if (el.tagName === 'A') {
-                if (!el.getAttribute('href') || el.getAttribute('href') === '#') {
-                  el.setAttribute('href', target);
-                }
-              } else {
-                el.setAttribute('data-target', target);
-                el.setAttribute('type', 'button');
-              }
-            });
-        }
-
-        window.addEventListener('DOMContentLoaded', function () {
-          fixTargets(document);
-        });
-
-        const obs = new MutationObserver(function (muts) {
-          for (const m of muts) {
-            m.addedNodes && m.addedNodes.forEach(function (n) {
-              if (n.nodeType === 1) fixTargets(n);
-            });
-          }
-        });
-        obs.observe(document.documentElement, { childList: true, subtree: true });
-
-        document.addEventListener('click', function (e) {
-          const targetEl = e.target && (e.target.closest
-            ? e.target.closest('a.nav-btn, a.sheet-item, a.tab-item, button.nav-btn, button.sheet-item')
-            : null);
-          if (!targetEl) return;
-
-          const lbl = labelOf(targetEl);
-          const mapped = MAP[lbl];
-          const attrHref = targetEl.getAttribute('href');
-          const dataTarget = targetEl.getAttribute('data-target');
-          const dest = mapped || dataTarget || attrHref || '';
-
-          if (!dest || dest === '#') {
-            e.preventDefault();
-            return;
-          }
-
-          e.preventDefault();
-          window.location.href = dest;
+        document.addEventListener('click', function(e){
+          const a = e.target.closest?.('a.nav-btn, a.sheet-item, a.tab-item, button.nav-btn, button.sheet-item');
+          if(!a) return;
+          const t = (a.textContent||'').trim();
+          if(MAP[t]) { e.preventDefault(); location.href = MAP[t]; }
         }, true);
-      })();
+      });
     </script>
   </body>
 </html>
