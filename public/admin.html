@@ -5,6 +5,12 @@
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Panneau Admin — Kyy’s Letters</title>
   <link rel="stylesheet" href="/styles/base.css"/>
+  <style>
+    /* Styles additionnels pour la gestion des comptes */
+    .admin-in { height: 36px; border: 1px solid var(--border); border-radius: 8px; background: #101112; color: var(--text); padding: 0 10px; width: 100%; }
+    .admin-form-row { display: flex; gap: 8px; align-items: flex-end; }
+    .admin-form-row > div { flex: 1; }
+  </style>
 </head>
 <body>
   <div class="header">
@@ -15,6 +21,7 @@
         <a class="btn" href="/">Accueil</a>
         <a class="btn" href="/add-manga.html">+ Série</a>
         <a class="btn" href="/add-chapitre.html">+ Chapitre</a>
+        <a class="btn" href="/edit-chapitre.html">Éditer un Chapitre</a>
         <a class="btn" href="/edit-manga.html">Éditer série</a>
         <a class="btn" href="/admin-add-profil.html">+ Profil</a>
         <a class="btn" href="/admin-edit-profil.html">Éditer profil</a>
@@ -34,6 +41,7 @@
           <a class="btn" href="/edit-manga.html">Modifier / supprimer série</a>
           <a class="btn" href="/admin-add-profil.html">Ajouter un profil</a>
           <a class="btn" href="/admin-edit-profil.html">Éditer un profil</a>
+          <a class="btn" href="/edit-home.html">Éditer l’accueil</a>
         </div>
       </div>
 
@@ -65,18 +73,37 @@
           <a class="btn" href="/admin-add-profil.html">+ Profil</a>
           <a class="btn" href="/admin-edit-profil.html">Éditer profil</a>
           <a class="btn" href="/edit-home.html">Éditer l’accueil</a>
-
-          <!-- Export / Import -->
           <button id="kl-exp" class="btn">Exporter la base</button>
           <button id="kl-imp-open" class="btn">Importer une base</button>
           <input id="kl-imp" type="file" accept="application/json" hidden>
-
           <button id="reset" class="btn danger">Vider la base locale</button>
         </div>
       </div>
       <div class="card">
         <h3 style="margin:0 8px 12px 0">Infos</h3>
         <div class="label">Les données sont locales (navigateur). Sur un vrai back, on branchera une API.</div>
+      </div>
+      <!-- Bloc de gestion des comptes -->
+      <div class="card">
+        <h3 style="margin:0 0 8px 0">Gestion des comptes</h3>
+        <p class="label">Ces comptes permettent de se connecter au panneau Admin.</p>
+        <form id="accForm" class="admin-form-row" onsubmit="return false;" style="margin-bottom:8px">
+          <div>
+            <div class="label">Identifiant</div>
+            <input id="accUsername" class="admin-in" placeholder="Identifiant" autocomplete="off" />
+          </div>
+          <div>
+            <div class="label">Mot de passe</div>
+            <input id="accPassword" class="admin-in" type="password" placeholder="Mot de passe" autocomplete="new-password" />
+          </div>
+          <div style="width:100px">
+            <button id="accAddBtn" class="btn acc" type="button" style="width:100%">Ajouter</button>
+          </div>
+        </form>
+        <table class="table">
+          <thead><tr><th>Identifiant</th><th style="width:80px">Action</th></tr></thead>
+          <tbody id="accBody"></tbody>
+        </table>
       </div>
     </aside>
   </div>
@@ -86,17 +113,19 @@
   <script src="/js/storage.js"></script>
   <script src="/js/backup.js"></script>
   <script>
-    const { allSeries, allChapters, saveSeries, saveChapters } = KyyStore;
+    // Redirection si non connecté
+    if (!KyyStore.isLogged()) {
+      location.href = '/';
+    }
+    const { allSeries, allChapters, saveSeries, saveChapters, allAccounts, addAccount, deleteAccount } = KyyStore;
 
     function render() {
       const s = allSeries();
       const c = allChapters();
-
       const sBody = document.getElementById("seriesBody");
       const cBody = document.getElementById("chapBody");
       sBody.innerHTML = s.length ? "" : `<tr><td colspan="4" class="label">Aucune série.</td></tr>`;
       cBody.innerHTML = c.length ? "" : `<tr><td colspan="5" class="label">Aucun chapitre.</td></tr>`;
-
       for (const serie of s) {
         const count = c.filter(x => x.seriesId === serie.id).length;
         sBody.insertAdjacentHTML(
@@ -109,21 +138,62 @@
           </tr>`
         );
       }
-
-      c.slice().sort((a,b)=>+new Date(b.date)-+new Date(a.date))
-       .slice(0,10).forEach(ch=>{
-         const serie = s.find(x=>x.id===ch.seriesId);
-         sBody && cBody.insertAdjacentHTML("beforeend",
-           `<tr>
-             <td>${serie ? serie.title : "—"}</td>
-             <td>${ch.title || "—"}</td>
-             <td>${ch.number ?? "—"}</td>
-             <td>${ch.lang || "—"}</td>
-             <td>${ch.date || "—"}</td>
-           </tr>`
-         );
-       });
+      c.slice().sort((a,b)=>+new Date(b.date)-+new Date(a.date)).slice(0,10).forEach(ch=>{
+        const serie = s.find(x=>x.id===ch.seriesId);
+        cBody.insertAdjacentHTML("beforeend",
+          `<tr>
+            <td>${serie ? serie.title : "—"}</td>
+            <td>${ch.title || ch.name || "—"}</td>
+            <td>${ch.number ?? "—"}</td>
+            <td>${ch.lang || "—"}</td>
+            <td>${ch.date || "—"}</td>
+          </tr>`
+        );
+      });
     }
+
+    // Gestion des comptes
+    function renderAccounts() {
+      const accounts = allAccounts();
+      const body = document.getElementById('accBody');
+      body.innerHTML = accounts.length ? "" : `<tr><td colspan="2" class="label">Aucun compte.</td></tr>`;
+      accounts.forEach(acc => {
+        body.insertAdjacentHTML('beforeend',
+          `<tr>
+            <td>${acc.username}</td>
+            <td><button class="btn danger" data-id="${acc.id}">Supprimer</button></td>
+          </tr>`
+        );
+      });
+      // attacher les handlers de suppression
+      body.querySelectorAll('button').forEach(btn => {
+        btn.onclick = () => {
+          const id = btn.getAttribute('data-id');
+          if (id && confirm('Supprimer ce compte ?')) {
+            deleteAccount(id);
+            renderAccounts();
+          }
+        };
+      });
+    }
+
+    document.getElementById('accAddBtn').onclick = () => {
+      const user = document.getElementById('accUsername').value.trim();
+      const pass = document.getElementById('accPassword').value;
+      if (!user || !pass) {
+        alert('Veuillez saisir un identifiant et un mot de passe.');
+        return;
+      }
+      const ok = addAccount({ username: user, password: pass });
+      if (ok) {
+        alert('Compte ajouté ✅');
+        document.getElementById('accUsername').value = '';
+        document.getElementById('accPassword').value = '';
+        renderAccounts();
+      } else {
+        alert('Cet identifiant existe déjà.');
+      }
+    };
 
     document.getElementById("reset").onclick = () => {
       if (confirm("Tout effacer du navigateur ?")) {
@@ -132,6 +202,7 @@
     };
 
     render();
+    renderAccounts();
   </script>
 </body>
 </html>
