@@ -1,21 +1,17 @@
-<!-- version complète cohérente avec le store -->
 <!doctype html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>Admin — Éditer un profil</title>
-  <link rel="stylesheet" href="/styles/base.css" />
+  <link rel="stylesheet" href="/styles/base.css"/>
   <style>
-    .wrap{max-width:1060px;margin:22px auto;padding:0 16px}
-    .cols{display:grid;grid-template-columns:300px 1fr;gap:18px}
-    .f{display:grid;gap:10px}
-    .in{height:38px;border:1px solid var(--border);border-radius:10px;background:#101112;color:#eaecef;padding:0 12px}
-    textarea.in{height:110px;padding:10px}
-    .row{display:flex;gap:10px;align-items:center}
-    .preview{width:100px;height:100px;border:1px solid var(--border);border-radius:12px;overflow:hidden;display:grid;place-items:center;background:#0f1012;color:var(--muted)}
+    .wrap{max-width:1100px;margin:22px auto;padding:0 16px}
+    .in{height:38px;border:1px solid var(--border);border-radius:10px;background:#101112;color:#eaecef;padding:0 12px;width:100%;}
+    .row{display:flex;gap:10px}
+    textarea.in{height:100px;resize:vertical}
+    .preview{width:120px;height:120px;border:1px solid var(--border);border-radius:10px;background:#0f1012;display:grid;place-items:center;overflow:hidden;margin-top:6px}
     .preview img{width:100%;height:100%;object-fit:cover}
-    .list button{width:100%;justify-content:flex-start}
   </style>
 </head>
 <body>
@@ -23,133 +19,116 @@
     <div class="bar">
       <div class="brand">K</div>
       <div class="badge">Admin</div>
-      <div class="right">
-        <a class="btn" href="/admin.html">Panneau</a>
-        <a class="btn" href="/personnelle.html">Équipe</a>
+      <div class="right"><a class="btn" href="/admin.html">Panneau</a></div>
+    </div>
+  </div>
+  <div class="wrap">
+    <div class="card">
+      <h2 style="margin:0 0 12px 0">Éditer un profil</h2>
+      <div class="label">Sélectionner un membre</div>
+      <select id="memberSelect" class="in"></select>
+      <div id="editForm" style="display:none;margin-top:12px">
+        <div class="label">Nom</div>
+        <input id="name" class="in" />
+        <div class="label" style="margin-top:6px">Rôle</div>
+        <input id="role" class="in" />
+        <div class="label" style="margin-top:6px">Bio</div>
+        <textarea id="bio" class="in"></textarea>
+        <div class="label" style="margin-top:6px">Contact</div>
+        <input id="contact" class="in" />
+        <div class="label" style="margin-top:6px">Photo</div>
+        <div class="preview" id="photoPrev">—</div>
+        <input id="photo" class="in" type="file" accept="image/*" />
+        <div class="row" style="margin-top:12px">
+          <button id="saveBtn" class="btn acc">Enregistrer</button>
+          <button id="delBtn" class="btn danger">Supprimer</button>
+          <a class="btn" href="/admin.html">Annuler</a>
+        </div>
+        <div id="msg" class="label" style="margin-top:8px"></div>
       </div>
     </div>
   </div>
-
-  <div class="wrap cols">
-    <div class="card">
-      <h3 style="margin:0 0 10px 0">Profils</h3>
-      <div id="list" class="grid list" style="grid-template-columns:1fr; gap:8px"></div>
-      <div class="label" id="empty" style="display:none">Aucun profil. <a href="/admin-add-profil.html">Ajouter</a></div>
-    </div>
-
-    <div class="card">
-      <h2 style="margin:0 0 12px 0">Éditer le profil</h2>
-      <form id="editForm" class="f">
-        <input id="name" class="in" placeholder="Nom" required />
-        <input id="role" class="in" placeholder="Rôle" />
-        <textarea id="bio" class="in" placeholder="Bio courte"></textarea>
-        <input id="contact" class="in" placeholder="Email / contact" />
-        <div class="row">
-          <div class="preview" id="pv"><span>IMG</span></div>
-          <input id="photo" type="file" accept="image/*" class="in" style="flex:1" />
-        </div>
-        <div class="row">
-          <button class="btn acc" type="submit">Enregistrer</button>
-          <button class="btn danger" id="del" type="button">Supprimer</button>
-          <a class="btn" href="/personnelle.html">Annuler</a>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <footer>© 2025 — Admin Kyy’s Letters</footer>
-
+  <footer>© 2025 — Kyy’s Letters</footer>
   <script src="/js/storage.js"></script>
   <script>
-    const { allMembers, saveMembers } = KyyStore;
-
-    const $ = (s)=>document.querySelector(s);
-    const listEl = $('#list');
-    const emptyEl = $('#empty');
-    const nameEl = $('#name'), roleEl = $('#role'), bioEl = $('#bio'), contactEl = $('#contact'), photoEl = $('#photo');
-    const pv = $('#pv');
+    // Redirection si non connecté
+    if (!KyyStore.isLogged()) {
+      location.href = '/';
+    }
+    const { allMembers, saveMembers, deleteMember, uid } = KyyStore;
+    const select = document.getElementById('memberSelect');
+    const form = document.getElementById('editForm');
+    const prev = document.getElementById('photoPrev');
     let currentId = null;
-
-    function loadMembers(){ return allMembers(); }
-
-    function renderList() {
-      const arr = loadMembers();
-      listEl.innerHTML = '';
-      emptyEl.style.display = arr.length ? 'none' : 'block';
-      for (const p of arr) {
-        const b = document.createElement('button');
-        b.type = 'button';
-        b.className = 'btn';
-        b.innerHTML = `<strong style="margin-right:8px">${p.name || 'Sans nom'}</strong><span class="badge">${p.role || '—'}</span>`;
-        b.onclick = () => loadForm(p.id);
-        listEl.appendChild(b);
-      }
-      if (!currentId && arr[0]) loadForm(arr[0].id);
-    }
-
-    function loadForm(id) {
-      const p = loadMembers().find(x => x.id === id);
-      if (!p) return;
-      currentId = id;
-      nameEl.value = p.name || '';
-      roleEl.value = p.role || '';
-      bioEl.value = p.bio || '';
-      contactEl.value = p.contact || '';
-      if (p.photo) { pv.innerHTML = '<img />'; pv.firstChild.src = p.photo; } else { pv.innerHTML = '<span>IMG</span>'; }
-    }
-
-    function fileToBase64(file){
-      return new Promise((res, rej) => {
-        const r = new FileReader();
-        r.onload = () => res(String(r.result));
-        r.onerror = rej;
-        r.readAsDataURL(file);
+    function loadMembers() {
+      const members = allMembers();
+      select.innerHTML = '<option value="">— Sélectionner —</option>';
+      members.forEach(m => {
+        const o = document.createElement('option');
+        o.value = m.id;
+        o.textContent = m.name;
+        select.appendChild(o);
       });
     }
-
-    photoEl.addEventListener('change', async () => {
-      const f = photoEl.files?.[0];
-      if (!f) return;
-      const b64 = await fileToBase64(f);
-      pv.innerHTML = '<img />'; pv.firstChild.src = b64;
-    });
-
-    document.getElementById('editForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      if (!currentId) { alert('Choisis un profil à gauche.'); return; }
-      const arr = loadMembers();
-      const idx = arr.findIndex(x => x.id === currentId);
-      if (idx < 0) return;
-
-      let photo = arr[idx].photo || '';
-      const f = photoEl.files?.[0];
-      if (f) photo = await fileToBase64(f);
-
-      arr[idx] = {
-        ...arr[idx],
-        name: nameEl.value.trim(),
-        role: roleEl.value.trim(),
-        bio: bioEl.value.trim(),
-        contact: contactEl.value.trim(),
-        photo
-      };
-      saveMembers(arr);
-      alert('Profil mis à jour.');
-      renderList();
-    });
-
-    document.getElementById('del').addEventListener('click', () => {
+    function showMember(id) {
+      const members = allMembers();
+      const m = members.find(x => x.id === id);
+      if (!m) { form.style.display='none'; return; }
+      currentId = id;
+      form.style.display = 'block';
+      document.getElementById('name').value = m.name;
+      document.getElementById('role').value = m.role;
+      document.getElementById('bio').value = m.bio || '';
+      document.getElementById('contact').value = m.contact || '';
+      prev.innerHTML = m.photo ? `<img src="${m.photo}" alt="">` : '—';
+    }
+    select.onchange = () => {
+      showMember(select.value);
+    };
+    document.getElementById('photo').onchange = (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => { prev.innerHTML = `<img src="${String(reader.result||'')}" alt="">`; };
+      reader.readAsDataURL(file);
+    };
+    document.getElementById('saveBtn').onclick = async () => {
       if (!currentId) return;
-      if (!confirm('Supprimer ce profil ?')) return;
-      const arr = loadMembers().filter(x => x.id !== currentId);
-      saveMembers(arr);
-      currentId = null;
-      nameEl.value = roleEl.value = bioEl.value = contactEl.value = '';
-      pv.innerHTML = '<span>IMG</span>';
-      renderList();
-    });
-
-    renderList();
+      const members = allMembers();
+      const idx = members.findIndex(m => m.id === currentId);
+      if (idx < 0) return;
+      const file = document.getElementById('photo').files[0];
+      let photoData = members[idx].photo;
+      if (file) {
+        const reader = new FileReader();
+        photoData = await new Promise(resolve => {
+          reader.onload = () => resolve(String(reader.result||''));
+          reader.readAsDataURL(file);
+        });
+      }
+      members[idx] = {
+        ...members[idx],
+        name: document.getElementById('name').value.trim(),
+        role: document.getElementById('role').value.trim(),
+        bio: document.getElementById('bio').value.trim(),
+        contact: document.getElementById('contact').value.trim(),
+        photo: photoData
+      };
+      saveMembers(members);
+      document.getElementById('msg').textContent = 'Profil mis à jour ✅';
+      loadMembers();
+    };
+    document.getElementById('delBtn').onclick = () => {
+      if (!currentId) return;
+      if (confirm('Supprimer ce profil ?')) {
+        deleteMember(currentId);
+        currentId = null;
+        loadMembers();
+        form.style.display = 'none';
+      }
+    };
+    // initial
+    loadMembers();
   </script>
 </body>
 </html>
