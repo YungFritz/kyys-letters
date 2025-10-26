@@ -11,7 +11,7 @@ type Chapter = {
   lang: string;
   releaseDate: string;
   pages: string[];
-  seriesId: string; // pour relier le chapitre à sa série
+  seriesId: string;
 };
 
 type Series = {
@@ -166,7 +166,16 @@ function Card({ s }: { s: Series }) {
             "COVER"
           )}
         </div>
-        <div className="card-body">
+        <div
+          className="card-body"
+          style={{
+            background: "linear-gradient(180deg,var(--panel),var(--panel-2))",
+            border: "1px solid var(--border)",
+            borderTop: "none",
+            borderRadius: "0 0 12px 12px",
+            padding: "10px",
+          }}
+        >
           <div className="card-title">{s.title}</div>
           <div className="card-meta">
             <div className="meta-left">
@@ -231,7 +240,7 @@ function MobileSheet({
 
           <div className="sheet-stats">
             <div className="muted">
-              Séries: {LIBRARY.length} • Chapitres:{" "}
+              Séries: {LIBRARY.length} • Chapitres: {" "}
               {LIBRARY.reduce(
                 (n, s) => n + (s.chapters?.length || 0),
                 0
@@ -274,6 +283,11 @@ function MobileTabBar() {
    Page
 ----------------------------------------------------------------- */
 export default function App() {
+  // Récupère les deux images personnalisables pour l'accueil.
+  // Ces clés sont enregistrées depuis edit-home.html dans le localStorage.
+  const homeImg1 = localStorage.getItem("home_img1") || "";
+  const homeImg2 = localStorage.getItem("home_img2") || "";
+
   const [query, setQuery] = useState("");
   const [sheetOpen, setSheetOpen] = useState(false);
 
@@ -333,7 +347,37 @@ export default function App() {
             </div>
           </div>
 
-          <div className="hero-side">
+          <div
+            className="hero-side"
+            style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}
+          >
+            {/* Case pour la première image d'accueil */}
+            <div className="side-card card-like">
+              {homeImg1 ? (
+                <img
+                  src={homeImg1}
+                  alt="Image 1"
+                  style={{ width: "100%", borderRadius: "12px" }}
+                />
+              ) : (
+                <div className="muted">Image 1</div>
+              )}
+            </div>
+
+            {/* Case pour la deuxième image d'accueil */}
+            <div className="side-card card-like">
+              {homeImg2 ? (
+                <img
+                  src={homeImg2}
+                  alt="Image 2"
+                  style={{ width: "100%", borderRadius: "12px" }}
+                />
+              ) : (
+                <div className="muted">Image 2</div>
+              )}
+            </div>
+
+            {/* Carte Rejoindre */}
             <div className="side-card card-like">
               <div className="side-title">Rejoindre</div>
               <div className="muted">Lien discord / contact / bouton</div>
@@ -342,14 +386,12 @@ export default function App() {
               </a>
             </div>
 
+            {/* Carte Statistiques */}
             <div className="side-card card-like">
               <div className="side-title">Statistiques</div>
               <div className="muted">
-                Séries: {LIBRARY.length} • Chapitres:{" "}
-                {LIBRARY.reduce(
-                  (n, s) => n + (s.chapters?.length || 0),
-                  0
-                )}
+                Séries: {LIBRARY.length} • Chapitres: {" "}
+                {LIBRARY.reduce((n, s) => n + (s.chapters?.length || 0), 0)}
               </div>
             </div>
           </div>
@@ -392,7 +434,17 @@ export default function App() {
                 {latest.map(({ series, chapter }) => (
                   <div key={chapter.id} className="card">
                     <div className="cover">PAGE</div>
-                    <div className="card-body">
+                    <div
+                      className="card-body"
+                      style={{
+                        background:
+                          "linear-gradient(180deg,var(--panel),var(--panel-2))",
+                        border: "1px solid var(--border)",
+                        borderTop: "none",
+                        borderRadius: "0 0 12px 12px",
+                        padding: "10px",
+                      }}
+                    >
                       <div className="card-title">
                         {series.title}
                       </div>
