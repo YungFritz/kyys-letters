@@ -1,10 +1,10 @@
 <!doctype html>
 <html lang="fr">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Admin — Ajouter un chapitre</title>
-  <link rel="stylesheet" href="/styles/base.css"/>
+  <link rel="stylesheet" href="/styles/base.css">
   <style>
     .wrap{max-width:1100px;margin:22px auto;padding:0 16px}
     .grid2{display:grid;grid-template-columns:1fr;gap:18px}
@@ -59,63 +59,85 @@
 
   <footer>© 2025 — Kyy’s Letters</footer>
 
+  <!-- Scripts : IndexedDB puis stockage -->
+  <script src="/js/db.js"></script>
   <script src="/js/storage.js"></script>
   <script>
-    const { uid, allSeries, saveSeries, allChapters, saveChapters } = KyyStore;
+    (async () => {
+      const { uid, allSeries, saveSeries, allChapters, saveChapters, addPageBlob } = KyyStore;
 
-    const select = document.getElementById('series');
-    const thumbs = document.getElementById('thumbs');
-    const list = allSeries();
-    if(!list.length){ alert("Aucune série. Ajoute d’abord."); location.href="/add-manga.html"; }
-
-    // peupler select
-    list.forEach(s=>{
-      const o=document.createElement('option');
-      o.value=s.id; o.textContent=s.title; select.appendChild(o);
-    });
-
-    // preview pages
-    document.getElementById('pages').addEventListener('change', async (e)=>{
-      thumbs.innerHTML = '';
-      const files = Array.from(e.target.files||[]);
-      for (const f of files) {
-        const r = new FileReader();
-        r.onload = ()=> thumbs.insertAdjacentHTML('beforeend', `<img src="${String(r.result||'')}" />`);
-        r.readAsDataURL(f);
+      const select = document.getElementById('series');
+      const thumbs = document.getElementById('thumbs');
+      const list = allSeries();
+      if(!list.length){
+        alert("Aucune série. Ajoute d’abord.");
+        location.href="/add-manga.html";
+        return;
       }
-    });
 
-    document.getElementById('form').addEventListener('submit', async (e)=>{
-      e.preventDefault();
-      const files = Array.from(document.getElementById('pages').files||[]);
-      if(!files.length){ alert('Ajoute au moins une page.'); return; }
+      // Peupler le select
+      list.forEach(s=>{
+        const o=document.createElement('option');
+        o.value=s.id;
+        o.textContent=s.title;
+        select.appendChild(o);
+      });
 
-      // encodage pages -> base64
-      const pages = await Promise.all(files.map(f=>new Promise(res=>{
-        const r=new FileReader(); r.onload=()=>res(String(r.result||'')); r.readAsDataURL(f);
-      })));
+      // Prévisualisation des miniatures
+      document.getElementById('pages').addEventListener('change', (e)=>{
+        thumbs.innerHTML = '';
+        const files = Array.from(e.target.files||[]);
+        files.forEach(f=>{
+          const r = new FileReader();
+          r.onload = () => thumbs.insertAdjacentHTML('beforeend', `<img src="${String(r.result||'')}" />`);
+          r.readAsDataURL(f);
+        });
+      });
 
-      const ch = {
-        id: uid(),
-        seriesId: select.value,
-        number: Number(document.getElementById('number').value || 0),
-        name: document.getElementById('name').value.trim(),
-        lang: document.getElementById('lang').value.trim() || 'FR',
-        date: new Date().toISOString().slice(0,10),
-        pages
-      };
+      document.getElementById('form').addEventListener('submit', async (e)=>{
+        e.preventDefault();
+        const files = Array.from(document.getElementById('pages').files||[]);
+        if(!files.length){
+          alert('Ajoute au moins une page.');
+          return;
+        }
 
-      // sauver
-      const chapters = allChapters(); chapters.push(ch); saveChapters(chapters);
+        // Enregistrer chaque image dans IndexedDB et collecter l’ID
+        const pagesRef = [];
+        for(const f of files){
+          const id = await addPageBlob(f);
+          pagesRef.push(id);
+        }
 
-      // optionnel: compter côté série (si tu le veux)
-      const series = allSeries();
-      const s = series.find(x=>x.id===select.value);
-      if(s){ s.chapters = (s.chapters||[]); if(!s.chapters.includes(ch.id)) s.chapters.push(ch.id); saveSeries(series); }
+        // Création du chapitre
+        const ch = {
+          id: uid(),
+          seriesId: select.value,
+          number: Number(document.getElementById('number').value || 0),
+          name: document.getElementById('name').value.trim(),
+          lang: document.getElementById('lang').value.trim() || 'FR',
+          date: new Date().toISOString().slice(0,10),
+          pagesRef
+        };
 
-      document.getElementById('msg').textContent = 'Chapitre enregistré ✅';
-      setTimeout(()=>location.href='/admin.html', 500);
-    });
+        // Sauvegarde dans localStorage
+        const chapters = allChapters();
+        chapters.push(ch);
+        saveChapters(chapters);
+
+        // Met à jour la série (liste des chapitres)
+        const series = allSeries();
+        const s = series.find(x=>x.id===select.value);
+        if(s){
+          s.chapters = (s.chapters||[]);
+          if(!s.chapters.includes(ch.id)) s.chapters.push(ch.id);
+          saveSeries(series);
+        }
+
+        document.getElementById('msg').textContent = 'Chapitre enregistré ✅';
+        setTimeout(()=>location.href='/admin.html', 500);
+      });
+    })();
   </script>
 </body>
 </html>
