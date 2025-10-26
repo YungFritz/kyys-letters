@@ -49,9 +49,9 @@ a{ color:inherit; text-decoration:none }
 .desktop-nav{ display:flex; gap:8px }
 .nav-btn{
   display:inline-grid; place-items:center;
-  height:34px; padding:0 18px; /* + de padding horizontal */
+  height:34px; padding:0 18px;
   background:#101112; border:1px solid var(--border); border-radius:10px;
-  white-space: nowrap;          /* empêche le texte de passer à la ligne */
+  white-space: nowrap;
 }
 .nav-btn.active{ background:#162017; border-color:#1d3b2a }
 
@@ -103,16 +103,29 @@ a{ color:inherit; text-decoration:none }
   display:grid; grid-template-columns: repeat(5,minmax(0,1fr)); gap:12px;
 }
 .card-link{ color:inherit }
+/* Cartes de mangas : séparation stricte de la cover et du texte */
 .card{
   background:#121315; border:1px solid var(--border);
   border-radius:12px; overflow:hidden;
+  display:flex; flex-direction:column;
 }
 .cover{
-  height:120px; display:grid; place-items:center;
+  height:160px;
+  position:relative;
+  display:grid; place-items:center;
   color:var(--muted); background:#0f1012;
   border-bottom:1px dashed rgba(255,255,255,.06);
 }
-.card-body{ padding:10px }
+.cover img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+}
+.card-body{
+  padding:10px;
+  background:linear-gradient(180deg,var(--panel),var(--panel-2));
+}
 .card-title{ font-weight:800 }
 .card-meta{ display:flex; align-items:center; gap:10px; margin-top:6px }
 .meta-left{ display:flex; align-items:center; gap:6px }
