@@ -1,28 +1,92 @@
 <!doctype html>
 <html lang="fr">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Kyy’s Letters — Accueil</title>
-    <link rel="stylesheet" href="/styles/base.css" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Kyy's letters — Accueil</title>
   </head>
   <body>
     <div id="root"></div>
 
-    <!-- Stockage -->
-    <script src="/js/db.js"></script>
-    <script src="/js/storage.js"></script>
+    <!-- script principal React -->
+    <script type="module" src="/src/main.tsx"></script>
 
-    <!-- Construire window.__LIBRARY pour Home -->
+    <!-- Patch 1 : "Perso" -> "Personnelle" -->
     <script>
-      (async () => {
-        const lib = await KyyStore.buildLibraryForHome();
-        window.__LIBRARY = lib;
-        document.dispatchEvent(new Event('kyy:library-ready'));
-      })();
+      window.addEventListener('DOMContentLoaded', function () {
+        document
+          .querySelectorAll('.nav-btn, .sheet-item, .desktop-nav a, .desktop-nav button')
+          .forEach(function (el) {
+            const txt = (el.textContent || '').trim();
+            if (txt === 'Perso' || txt === 'PERSO') el.textContent = 'Personnelle';
+          });
+      });
     </script>
 
-    <!-- Ton app React (Vite) -->
-    <script type="module" src="/src/main.tsx"></script>
+    <!-- Patch 2 : forcer la navigation pour <a> ET <button> -->
+    <script>
+      (function () {
+        const MAP = {
+          'Perso': '/personnelle.html',
+          'Personnelle': '/personnelle.html',
+          'Recrutement': '/recrutement.html',
+          'Admin': '/admin.html',
+          'Connexion': '/connexion.html',
+          'Accueil': '/'
+        };
+        function labelOf(el) { return (el.textContent || '').trim(); }
+
+        function fixTargets(root) {
+          root.querySelectorAll('a.nav-btn, a.sheet-item, a.tab-item, button.nav-btn, button.sheet-item')
+            .forEach(function (el) {
+              const lbl = labelOf(el);
+              const target = MAP[lbl];
+              if (!target) return;
+              if (el.tagName === 'A') {
+                if (!el.getAttribute('href') || el.getAttribute('href') === '#') {
+                  el.setAttribute('href', target);
+                }
+              } else {
+                el.setAttribute('data-target', target);
+                el.setAttribute('type', 'button');
+              }
+            });
+        }
+
+        window.addEventListener('DOMContentLoaded', function () {
+          fixTargets(document);
+        });
+
+        const obs = new MutationObserver(function (muts) {
+          for (const m of muts) {
+            m.addedNodes && m.addedNodes.forEach(function (n) {
+              if (n.nodeType === 1) fixTargets(n);
+            });
+          }
+        });
+        obs.observe(document.documentElement, { childList: true, subtree: true });
+
+        document.addEventListener('click', function (e) {
+          const targetEl = e.target && (e.target.closest
+            ? e.target.closest('a.nav-btn, a.sheet-item, a.tab-item, button.nav-btn, button.sheet-item')
+            : null);
+          if (!targetEl) return;
+
+          const lbl = labelOf(targetEl);
+          const mapped = MAP[lbl];
+          const attrHref = targetEl.getAttribute('href');
+          const dataTarget = targetEl.getAttribute('data-target');
+          const dest = mapped || dataTarget || attrHref || '';
+
+          if (!dest || dest === '#') {
+            e.preventDefault();
+            return;
+          }
+
+          e.preventDefault();
+          window.location.href = dest;
+        }, true);
+      })();
+    </script>
   </body>
 </html>
