@@ -17,7 +17,7 @@
     .chip{padding:4px 8px;border:1px solid var(--border);border-radius:999px;background:#101112}
     .grid{display:grid;grid-template-columns:1fr;gap:12px;margin-top:16px}
     .item{display:flex;align-items:center;gap:12px;border:1px solid var(--border);border-radius:10px;padding:10px;background:#121315}
-    .btn{display:inline-grid;place-items:center;height:36px;padding:0 12px;border:1px solid var(--border);border-radius:10px;background:#101112;color:#e9ebee;text-decoration:none}
+    .btn{display:inline-grid;place-items:center;height:36px;padding:0 12px;border:1px solid var(--border);border-radius:10px;background:#101112;color:#e9ebee}
     .nav{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
   </style>
 </head>
@@ -25,39 +25,28 @@
   <div class="wrap">
     <div class="nav">
       <a class="btn" href="/">Accueil</a>
-      <!-- Le lien Admin est affiché par défaut puis masqué si l'utilisateur n'est pas connecté -->
-      <a class="btn" href="/admin.html" id="adminBtn">Admin</a>
+      <a class="btn" href="/admin.html">Admin</a>
     </div>
 
     <div id="view"></div>
   </div>
 
-  <!-- Chargement de la bibliothèque de stockage unifiée -->
-  <script src="/public_js_storage.js"></script>
+  <script src="/js/storage.js"></script>
   <script>
-    (async () => {
-      // Masquer le lien Admin si aucun utilisateur n'est connecté
-      if (!KyyStore.isLogged()) {
-        const adminBtn = document.getElementById('adminBtn');
-        if (adminBtn) adminBtn.style.display = 'none';
-      }
+    const qs = new URLSearchParams(location.search);
+    const slug = qs.get('slug');
+    const { allSeries, allChapters } = KyyStore;
 
-      const qs = new URLSearchParams(location.search);
-      const slug = qs.get('slug');
-      const { allSeries, allChapters, pageURL } = KyyStore;
-      const s = allSeries().find(x => x.slug === slug);
-      const view = document.getElementById('view');
+    const s = allSeries().find(x => x.slug === slug);
+    const view = document.getElementById('view');
 
-      if(!s){
-        view.innerHTML = '<div class="item muted">Série introuvable.</div>';
-        return;
-      }
-
+    if(!s){
+      view.innerHTML = '<div class="item muted">Série introuvable.</div>';
+    } else {
       const cs = allChapters()
         .filter(c => c.seriesId === s.id)
         .sort((a,b) => (+a.number||0) - (+b.number||0));
 
-      // Construire la vue de la série
       view.innerHTML = `
         <div class="top">
           <div class="cover">${s.cover ? `<img src="${s.cover}" alt="${s.title}">` : '<div class="muted">Pas de cover</div>'}</div>
@@ -76,36 +65,21 @@
         </div>
       `;
 
-      const listEl = document.getElementById('chapList');
-      // Charger de manière asynchrone la première page de chaque chapitre pour l'aperçu
-      for (const c of cs) {
+      const list = document.getElementById('chapList');
+      cs.forEach(c=>{
         const div = document.createElement('a');
         div.href = `/reader.html?id=${c.id}`;
         div.className = 'item';
-        // Placeholder du thumbnail ; sera remplacé quand l'image sera chargée
-        let thumbHTML = '';
-        if (c.pagesRef && c.pagesRef.length) {
-          const ref = c.pagesRef[0];
-          try {
-            const url = await pageURL(ref);
-            if (url) {
-              thumbHTML = `<img src="${url}" style="width:100%; height:100%; object-fit:cover">`;
-            }
-          } catch {}
-        } else if (c.pages && c.pages.length) {
-          const url = c.pages[0];
-          thumbHTML = `<img src="${url}" style="width:100%; height:100%; object-fit:cover">`;
-        }
         div.innerHTML = `
           <div style="width:46px;height:46px; border:1px solid var(--border); border-radius:8px; overflow:hidden; background:#0e0f10;">
-            ${thumbHTML}
+            ${ (c.pages && c.pages[0]) ? `<img src="${c.pages[0]}" style="width:100%; height:100%; object-fit:cover">` : '' }
           </div>
-          <div style="font-weight:700">Chapitre ${c.number}${c.name? ' — '+c.name : ''}</div>
+          <div style="font-weight:700">Chapitre ${c.number}${c.title? ' — '+c.title : ''}</div>
           <div class="muted" style="margin-left:auto">${c.lang||'—'} • ${c.date||'—'}</div>
         `;
-        listEl.appendChild(div);
-      }
-    })();
+        list.appendChild(div);
+      });
+    }
   </script>
 </body>
 </html>
