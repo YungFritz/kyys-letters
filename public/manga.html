@@ -33,29 +33,38 @@
   </div>
 
   <!-- Chargement de la bibliothèque de stockage unifiée -->
-  <script src="/public_js_storage.js"></script>
+  <!-- Utilise le script de stockage situé dans /js afin d'être compatible avec la structure du site -->
+  <script src="/js/storage.js"></script>
   <script>
     (async () => {
+      // S'assure que l'API de stockage est chargée
+      const store = window.KyyStore || {};
+      // Fonction utilitaire pour savoir si un utilisateur est connecté
+      const isLogged = store.isLogged ? store.isLogged() : !!localStorage.getItem('kl_session');
       // Masquer le lien Admin si aucun utilisateur n'est connecté
-      if (!KyyStore.isLogged()) {
+      if (!isLogged) {
         const adminBtn = document.getElementById('adminBtn');
         if (adminBtn) adminBtn.style.display = 'none';
       }
 
       const qs = new URLSearchParams(location.search);
       const slug = qs.get('slug');
-      const { allSeries, allChapters, pageURL } = KyyStore;
+      // Fonctions de récupération des données avec fallback sur localStorage
+      const allSeries = store.allSeries || (() => JSON.parse(localStorage.getItem('kl_series') || '[]'));
+      const allChapters = store.allChapters || (() => JSON.parse(localStorage.getItem('kl_chapters') || '[]'));
+      const pageURL = store.pageURL || (async () => null);
+
       const s = allSeries().find(x => x.slug === slug);
       const view = document.getElementById('view');
 
-      if(!s){
+      if (!s) {
         view.innerHTML = '<div class="item muted">Série introuvable.</div>';
         return;
       }
 
       const cs = allChapters()
         .filter(c => c.seriesId === s.id)
-        .sort((a,b) => (+a.number||0) - (+b.number||0));
+        .sort((a,b) => ((+a.number||0) - (+b.number||0)));
 
       // Construire la vue de la série
       view.innerHTML = `
@@ -84,15 +93,18 @@
         div.className = 'item';
         // Placeholder du thumbnail ; sera remplacé quand l'image sera chargée
         let thumbHTML = '';
-        if (c.pagesRef && c.pagesRef.length) {
+        if (c.pagesRef && c.pagesRef.length && pageURL) {
           const ref = c.pagesRef[0];
           try {
             const url = await pageURL(ref);
             if (url) {
               thumbHTML = `<img src="${url}" style="width:100%; height:100%; object-fit:cover">`;
             }
-          } catch {}
-        } else if (c.pages && c.pages.length) {
+          } catch {
+            // ignore
+          }
+        }
+        if (!thumbHTML && c.pages && c.pages.length) {
           const url = c.pages[0];
           thumbHTML = `<img src="${url}" style="width:100%; height:100%; object-fit:cover">`;
         }
@@ -100,7 +112,7 @@
           <div style="width:46px;height:46px; border:1px solid var(--border); border-radius:8px; overflow:hidden; background:#0e0f10;">
             ${thumbHTML}
           </div>
-          <div style="font-weight:700">Chapitre ${c.number}${c.name? ' — '+c.name : ''}</div>
+          <div style="font-weight:700">Chapitre ${c.number}${c.name ? ' — ' + c.name : ''}</div>
           <div class="muted" style="margin-left:auto">${c.lang||'—'} • ${c.date||'—'}</div>
         `;
         listEl.appendChild(div);
