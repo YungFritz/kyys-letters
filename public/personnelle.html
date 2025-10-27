@@ -21,8 +21,9 @@
       <div class="badge">Équipe</div>
       <div class="right">
         <a class="btn" href="/">Accueil</a>
-        <a class="btn" href="/admin-add-profil.html">+ Profil</a>
-        <a class="btn" href="/admin-edit-profil.html">Éditer</a>
+        <!-- Les classes btn-profil et btn-edit permettent de masquer ces boutons si l'utilisateur n'est pas connecté -->
+        <a class="btn btn-profil" href="/admin-add-profil.html">+ Profil</a>
+        <a class="btn btn-edit" href="/admin-edit-profil.html">Éditer</a>
       </div>
     </div>
   </div>
@@ -37,15 +38,24 @@
 
   <footer>© 2025 — Kyy’s Letters</footer>
 
+  <!-- Chargement de la bibliothèque de stockage -->
+  <script src="/public_js_storage.js"></script>
   <script>
-    const key = 'kl_members';
-    const list = JSON.parse(localStorage.getItem(key) || '[]');
+    // Masquer les boutons + Profil et Éditer si aucun utilisateur n'est connecté
+    if (!KyyStore.isLogged()) {
+      document.querySelectorAll('.btn-profil, .btn-edit').forEach(el => {
+        el.style.display = 'none';
+      });
+    }
+
+    // Charger la liste des membres depuis localStorage ou KyyStore
+    const list = JSON.parse(localStorage.getItem('kl_members') || '[]');
     const box = document.getElementById('members');
     const empty = document.getElementById('empty');
-
-    if(!list.length){ empty.style.display='grid'; }
-    else{
-      for(const m of list){
+    if (!list.length) {
+      empty.style.display = 'grid';
+    } else {
+      for (const m of list) {
         const card=document.createElement('div');
         card.className='member';
         card.innerHTML=`
