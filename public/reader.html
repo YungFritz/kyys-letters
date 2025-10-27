@@ -1,10 +1,10 @@
 <!doctype html>
 <html lang="fr">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Lecteur — Kyy’s Letters</title>
-  <link rel="stylesheet" href="/styles/base.css">
+  <link rel="stylesheet" href="/styles/base.css" />
   <style>
     body{background:#0f1011;color:#e9ebee;margin:0}
     .wrap{max-width:980px;margin:0 auto;padding:10px}
@@ -12,13 +12,18 @@
     .page img{width:100%;display:block}
     .topbar{position:sticky;top:0;background:rgba(10,10,10,.85);backdrop-filter:blur(6px);border-bottom:1px solid rgba(255,255,255,.06);padding:10px}
     a.btn{display:inline-grid;place-items:center;height:34px;padding:0 12px;background:#101112;border:1px solid rgba(255,255,255,.06);border-radius:10px;text-decoration:none;color:#e9ebee}
+    /* Styles pour les contrôles et l'indicateur de page */
+    #controls{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+    #controls .left{display:flex;align-items:center;gap:8px}
+    #controls .right{display:flex;align-items:center;gap:8px}
+    #pageIndicator{color:var(--muted);margin-top:6px;text-align:center}
   </style>
 </head>
 <body>
   <div class="topbar">
     <div class="wrap">
       <a class="btn" href="/">Accueil</a>
-      <a class="btn" href="/admin.html" style="margin-left:8px">Admin</a>
+      <a class="btn" href="/admin.html" id="adminLink" style="margin-left:8px">Admin</a>
     </div>
   </div>
 
@@ -26,10 +31,16 @@
     <div class="label">Chargement…</div>
   </div>
 
+  <!-- Chargement de IndexedDB et stockage -->
   <script src="/js/db.js"></script>
-  <script src="/js/storage.js"></script>
+  <script src="/public_js_storage.js"></script>
   <script>
   (async () => {
+    // Masquer le lien Admin si aucun utilisateur n'est connecté
+    if (!KyyStore.isLogged()) {
+      const link = document.getElementById('adminLink');
+      if (link) link.style.display = 'none';
+    }
     const params = new URLSearchParams(location.search);
     const id = params.get('id');
     const chaps = KyyStore.allChapters();
@@ -40,25 +51,89 @@
       return;
     }
 
-    root.innerHTML = '';
-    // Utilise pagesRef si présent, sinon fallback sur pages (ancienne structure)
+    // Récupère toutes les pages (URLs) du chapitre
     const pages = chap.pagesRef || chap.pages || [];
+    const pageURLs = [];
     for (const ref of pages) {
       let url = null;
       if (chap.pagesRef) {
-        // pagesRef -> IndexedDB
-        url = await KyyStore.pageURL(ref);
+        try {
+          url = await KyyStore.pageURL(ref);
+        } catch {
+          url = null;
+        }
       } else {
-        // pages -> data URLs déjà présentes
         url = ref;
       }
-      const div = document.createElement('div');
-      div.className = 'page';
-      div.innerHTML = url
-        ? `<img loading="lazy" src="${url}" alt="">`
-        : `<div class="label">Image manquante</div>`;
-      root.appendChild(div);
+      if (url) pageURLs.push(url);
     }
+
+    // Obtenir les autres chapitres de la même série et déterminer précédent/suivant
+    const seriesChaps = chaps.filter(c => c.seriesId === chap.seriesId)
+      .sort((a,b) => (+a.number||0) - (+b.number||0));
+    const currentIndex = seriesChaps.findIndex(c => c.id === chap.id);
+    const prevChap = currentIndex > 0 ? seriesChaps[currentIndex-1] : null;
+    const nextChap = currentIndex < seriesChaps.length -1 ? seriesChaps[currentIndex+1] : null;
+
+    // Crée la structure HTML pour le lecteur
+    root.innerHTML = `
+      <div id="controls">
+        <div class="left">
+          <button id="modeBtn" class="btn">Mode: Manhwa</button>
+        </div>
+        <div class="right">
+          ${prevChap ? `<a class="btn" href="/reader.html?id=${prevChap.id}">Chapitre précédent</a>` : ''}
+          ${nextChap ? `<a class="btn" href="/reader.html?id=${nextChap.id}">Chapitre suivant</a>` : ''}
+        </div>
+      </div>
+      <div id="pagesContainer"></div>
+      <div id="pageIndicator"></div>
+    `;
+
+    let mode = 'manhwa'; // par défaut, défilement vertical
+    let pageIndex = 0;
+    const pagesContainer = document.getElementById('pagesContainer');
+    const modeBtn = document.getElementById('modeBtn');
+    const pageIndicator = document.getElementById('pageIndicator');
+
+    function render() {
+      if (mode === 'manhwa') {
+        // Affichage vertical de toutes les pages
+        pagesContainer.innerHTML = pageURLs.map(u => `<div class="page"><img src="${u}" loading="lazy" alt=""></div>`).join('');
+        modeBtn.textContent = 'Mode: Manhwa';
+        pageIndicator.textContent = '';
+      } else {
+        // Affichage d'une seule page à la fois
+        const url = pageURLs[pageIndex];
+        pagesContainer.innerHTML = `<div class="page" style="cursor:pointer"><img src="${url}" alt=""></div>`;
+        modeBtn.textContent = 'Mode: Manga';
+        pageIndicator.textContent = `Page ${pageIndex+1} / ${pageURLs.length}`;
+      }
+    }
+
+    // Basculer entre les modes
+    modeBtn.addEventListener('click', () => {
+      mode = (mode === 'manhwa') ? 'manga' : 'manhwa';
+      pageIndex = 0;
+      render();
+    });
+
+    // Navigation page par page en cliquant à gauche/droite
+    pagesContainer.addEventListener('click', (e) => {
+      if (mode !== 'manga') return;
+      const rect = pagesContainer.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      if (x < rect.width / 2) {
+        // zone gauche -> page précédente
+        if (pageIndex > 0) pageIndex--;
+      } else {
+        // zone droite -> page suivante
+        if (pageIndex < pageURLs.length -1) pageIndex++;
+      }
+      render();
+    });
+
+    render();
   })();
   </script>
 </body>
