@@ -33,18 +33,21 @@
 
   <!-- Chargement de IndexedDB et stockage -->
   <script src="/js/db.js"></script>
-  <script src="/public_js_storage.js"></script>
+  <script src="/js/storage.js"></script>
   <script>
   (async () => {
+    const store = window.KyyStore || {};
     // Masquer le lien Admin si aucun utilisateur n'est connecté
-    if (!KyyStore.isLogged()) {
+    const isLogged = store.isLogged ? store.isLogged() : !!localStorage.getItem('kl_session');
+    if (!isLogged) {
       const link = document.getElementById('adminLink');
       if (link) link.style.display = 'none';
     }
     const params = new URLSearchParams(location.search);
     const id = params.get('id');
-    const chaps = KyyStore.allChapters();
-    const chap = chaps.find(c => c.id === id);
+    const allChapters = store.allChapters || (() => JSON.parse(localStorage.getItem('kl_chapters') || '[]'));
+    const chapters = allChapters();
+    const chap = chapters.find(c => c.id === id);
     const root = document.getElementById('root');
     if (!chap) {
       root.innerHTML = '<div class="label">Chapitre introuvable.</div>';
@@ -56,9 +59,9 @@
     const pageURLs = [];
     for (const ref of pages) {
       let url = null;
-      if (chap.pagesRef) {
+      if (chap.pagesRef && store.pageURL) {
         try {
-          url = await KyyStore.pageURL(ref);
+          url = await store.pageURL(ref);
         } catch {
           url = null;
         }
@@ -69,8 +72,8 @@
     }
 
     // Obtenir les autres chapitres de la même série et déterminer précédent/suivant
-    const seriesChaps = chaps.filter(c => c.seriesId === chap.seriesId)
-      .sort((a,b) => (+a.number||0) - (+b.number||0));
+    const seriesChaps = chapters.filter(c => c.seriesId === chap.seriesId)
+      .sort((a,b) => ((+a.number||0) - (+b.number||0)));
     const currentIndex = seriesChaps.findIndex(c => c.id === chap.id);
     const prevChap = currentIndex > 0 ? seriesChaps[currentIndex-1] : null;
     const nextChap = currentIndex < seriesChaps.length -1 ? seriesChaps[currentIndex+1] : null;
