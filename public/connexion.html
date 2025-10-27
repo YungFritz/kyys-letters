@@ -67,5 +67,20 @@
       });
     })();
   </script>
+
+  <script>
+    // Seed auto du premier compte si aucun n'existe (premier démarrage)
+    (function(){
+      try {
+        if (window.KyyStore && typeof KyyStore.allAccounts === 'function' && typeof KyyStore.addAccount === 'function') {
+          const accs = KyyStore.allAccounts();
+          if (!Array.isArray(accs) || accs.length === 0) {
+            KyyStore.addAccount({ username: 'nattsury', password: 'Nattsury1234' });
+            console.log('[Kyy] Premier compte seedé: nattsury / Nattsury1234');
+          }
+        }
+      } catch(e) { console.warn('Seed compte échoué:', e); }
+    })();
+  </script>
 </body>
 </html>
