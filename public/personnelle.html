@@ -39,7 +39,8 @@
   <footer>© 2025 — Kyy’s Letters</footer>
 
   <!-- Chargement de la bibliothèque de stockage -->
-  <script src="/public_js_storage.js"></script>
+  <!-- Utilise le script de stockage dans /js pour assurer le chargement correct des fonctions -->
+  <script src="/js/storage.js"></script>
   <script>
     // Masquer les boutons + Profil et Éditer si aucun utilisateur n'est connecté
     if (!KyyStore.isLogged()) {
